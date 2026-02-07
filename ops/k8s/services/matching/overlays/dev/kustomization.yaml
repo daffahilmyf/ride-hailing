@@ -8,7 +8,7 @@ resources:
 
 images:
   - name: ride-hailing-matching
-    newTag: dev
+    newTag: gitsha-REPLACE
 
 patches:
   - target:
