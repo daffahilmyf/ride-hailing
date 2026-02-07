@@ -26,129 +26,125 @@ type CreateRideCmd struct {
 }
 
 func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain.Ride, error) {
-	if cmd.IdempotencyKey != "" && s.Idempotency != nil {
-		if val, ok, err := s.Idempotency.Get(ctx, cmd.IdempotencyKey); err == nil && ok {
-			var ride domain.Ride
-			if err := json.Unmarshal([]byte(val), &ride); err == nil {
-				return ride, nil
-			}
+	return s.withIdempotency(ctx, cmd.IdempotencyKey, func() (domain.Ride, error) {
+		now := time.Now().UTC()
+		ride := domain.Ride{
+			ID:         uuid.NewString(),
+			RiderID:    cmd.RiderID,
+			Status:     domain.StatusRequested,
+			PickupLat:  cmd.PickupLat,
+			PickupLng:  cmd.PickupLng,
+			DropoffLat: cmd.DropoffLat,
+			DropoffLng: cmd.DropoffLng,
 		}
-	}
 
-	now := time.Now().UTC()
-	ride := domain.Ride{
-		ID:         uuid.NewString(),
-		RiderID:    cmd.RiderID,
-		Status:     domain.StatusRequested,
-		PickupLat:  cmd.PickupLat,
-		PickupLng:  cmd.PickupLng,
-		DropoffLat: cmd.DropoffLat,
-		DropoffLng: cmd.DropoffLng,
-	}
-
-	err := s.Repo.Create(ctx, outbound.Ride{
-		ID:         ride.ID,
-		RiderID:    ride.RiderID,
-		DriverID:   ride.DriverID,
-		Status:     string(ride.Status),
-		PickupLat:  ride.PickupLat,
-		PickupLng:  ride.PickupLng,
-		DropoffLat: ride.DropoffLat,
-		DropoffLng: ride.DropoffLng,
-		CreatedAt:  now,
-		UpdatedAt:  now,
+		err := s.Repo.Create(ctx, outbound.Ride{
+			ID:         ride.ID,
+			RiderID:    ride.RiderID,
+			DriverID:   ride.DriverID,
+			Status:     string(ride.Status),
+			PickupLat:  ride.PickupLat,
+			PickupLng:  ride.PickupLng,
+			DropoffLat: ride.DropoffLat,
+			DropoffLng: ride.DropoffLng,
+			CreatedAt:  now,
+			UpdatedAt:  now,
+		})
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		return ride, nil
 	})
-	if err != nil {
-		return domain.Ride{}, err
-	}
+}
 
-	if cmd.IdempotencyKey != "" && s.Idempotency != nil {
-		if b, err := json.Marshal(ride); err == nil {
-			_ = s.Idempotency.Save(ctx, cmd.IdempotencyKey, string(b))
+func (s *RideService) CancelRide(ctx context.Context, id string, reason string, idempotencyKey string) (domain.Ride, error) {
+	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, id)
+		if err != nil {
+			return domain.Ride{}, err
 		}
-	}
 
-	return ride, nil
+		updated, err := ride.Transition(domain.StatusCancelled)
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+			return domain.Ride{}, err
+		}
+		_ = reason
+		return updated, nil
+	})
 }
 
-func (s *RideService) CancelRide(ctx context.Context, id string, reason string) (domain.Ride, error) {
-	ride, err := s.loadRide(ctx, id)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-
-	updated, err := ride.Transition(domain.StatusCancelled)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
-		return domain.Ride{}, err
-	}
-	_ = reason
-	return updated, nil
+func (s *RideService) StartMatching(ctx context.Context, rideID string, idempotencyKey string) (domain.Ride, error) {
+	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, rideID)
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		updated, err := ride.Transition(domain.StatusMatching)
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+			return domain.Ride{}, err
+		}
+		return updated, nil
+	})
 }
 
-func (s *RideService) StartMatching(ctx context.Context, rideID string) (domain.Ride, error) {
-	ride, err := s.loadRide(ctx, rideID)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	updated, err := ride.Transition(domain.StatusMatching)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
-		return domain.Ride{}, err
-	}
-	return updated, nil
+func (s *RideService) AssignDriver(ctx context.Context, rideID, driverID string, idempotencyKey string) (domain.Ride, error) {
+	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, rideID)
+		if err != nil {
+			return domain.Ride{}, err
+		}
+
+		next, err := ride.Transition(domain.StatusDriverAssigned)
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		next.DriverID = &driverID
+
+		if err := s.Repo.AssignDriver(ctx, next.ID, driverID, string(next.Status), time.Now().UTC()); err != nil {
+			return domain.Ride{}, err
+		}
+		return next, nil
+	})
 }
 
-func (s *RideService) AssignDriver(ctx context.Context, rideID, driverID string) (domain.Ride, error) {
-	ride, err := s.loadRide(ctx, rideID)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-
-	next, err := ride.Transition(domain.StatusDriverAssigned)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	next.DriverID = &driverID
-
-	if err := s.Repo.AssignDriver(ctx, next.ID, driverID, string(next.Status), time.Now().UTC()); err != nil {
-		return domain.Ride{}, err
-	}
-	return next, nil
+func (s *RideService) StartRide(ctx context.Context, rideID string, idempotencyKey string) (domain.Ride, error) {
+	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, rideID)
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		updated, err := ride.Transition(domain.StatusInProgress)
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+			return domain.Ride{}, err
+		}
+		return updated, nil
+	})
 }
 
-func (s *RideService) StartRide(ctx context.Context, rideID string) (domain.Ride, error) {
-	ride, err := s.loadRide(ctx, rideID)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	updated, err := ride.Transition(domain.StatusInProgress)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
-		return domain.Ride{}, err
-	}
-	return updated, nil
-}
-
-func (s *RideService) CompleteRide(ctx context.Context, rideID string) (domain.Ride, error) {
-	ride, err := s.loadRide(ctx, rideID)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	updated, err := ride.Transition(domain.StatusCompleted)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
-		return domain.Ride{}, err
-	}
-	return updated, nil
+func (s *RideService) CompleteRide(ctx context.Context, rideID string, idempotencyKey string) (domain.Ride, error) {
+	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, rideID)
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		updated, err := ride.Transition(domain.StatusCompleted)
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+			return domain.Ride{}, err
+		}
+		return updated, nil
+	})
 }
 
 func (s *RideService) loadRide(ctx context.Context, id string) (domain.Ride, error) {
@@ -167,4 +163,27 @@ func (s *RideService) loadRide(ctx context.Context, id string) (domain.Ride, err
 		DropoffLat: rideRow.DropoffLat,
 		DropoffLng: rideRow.DropoffLng,
 	}, nil
+}
+
+func (s *RideService) withIdempotency(ctx context.Context, key string, fn func() (domain.Ride, error)) (domain.Ride, error) {
+	if key != "" && s.Idempotency != nil {
+		if val, ok, err := s.Idempotency.Get(ctx, key); err == nil && ok {
+			var ride domain.Ride
+			if err := json.Unmarshal([]byte(val), &ride); err == nil {
+				return ride, nil
+			}
+		}
+	}
+
+	ride, err := fn()
+	if err != nil {
+		return domain.Ride{}, err
+	}
+
+	if key != "" && s.Idempotency != nil {
+		if b, err := json.Marshal(ride); err == nil {
+			_ = s.Idempotency.Save(ctx, key, string(b))
+		}
+	}
+	return ride, nil
 }

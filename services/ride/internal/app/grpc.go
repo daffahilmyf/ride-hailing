@@ -39,7 +39,8 @@ func (s *RideServer) CreateRide(ctx context.Context, req *ridev1.CreateRideReque
 }
 
 func (s *RideServer) StartMatching(ctx context.Context, req *ridev1.StartMatchingRequest) (*ridev1.StartMatchingResponse, error) {
-	ride, err := s.usecase.StartMatching(ctx, req.GetRideId())
+	key := req.GetRequestId()
+	ride, err := s.usecase.StartMatching(ctx, req.GetRideId(), key)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidTransition) {
 			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
@@ -50,7 +51,7 @@ func (s *RideServer) StartMatching(ctx context.Context, req *ridev1.StartMatchin
 }
 
 func (s *RideServer) AssignDriver(ctx context.Context, req *ridev1.AssignDriverRequest) (*ridev1.AssignDriverResponse, error) {
-	ride, err := s.usecase.AssignDriver(ctx, req.GetRideId(), req.GetDriverId())
+	ride, err := s.usecase.AssignDriver(ctx, req.GetRideId(), req.GetDriverId(), req.GetIdempotencyKey())
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidTransition) {
 			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
@@ -61,7 +62,8 @@ func (s *RideServer) AssignDriver(ctx context.Context, req *ridev1.AssignDriverR
 }
 
 func (s *RideServer) CancelRide(ctx context.Context, req *ridev1.CancelRideRequest) (*ridev1.CancelRideResponse, error) {
-	ride, err := s.usecase.CancelRide(ctx, req.GetRideId(), req.GetReason())
+	key := req.GetRequestId()
+	ride, err := s.usecase.CancelRide(ctx, req.GetRideId(), req.GetReason(), key)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidTransition) {
 			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
@@ -72,7 +74,8 @@ func (s *RideServer) CancelRide(ctx context.Context, req *ridev1.CancelRideReque
 }
 
 func (s *RideServer) StartRide(ctx context.Context, req *ridev1.AssignDriverRequest) (*ridev1.AssignDriverResponse, error) {
-	ride, err := s.usecase.StartRide(ctx, req.GetRideId())
+	key := req.GetRequestId()
+	ride, err := s.usecase.StartRide(ctx, req.GetRideId(), key)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidTransition) {
 			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
@@ -83,7 +86,8 @@ func (s *RideServer) StartRide(ctx context.Context, req *ridev1.AssignDriverRequ
 }
 
 func (s *RideServer) CompleteRide(ctx context.Context, req *ridev1.AssignDriverRequest) (*ridev1.AssignDriverResponse, error) {
-	ride, err := s.usecase.CompleteRide(ctx, req.GetRideId())
+	key := req.GetRequestId()
+	ride, err := s.usecase.CompleteRide(ctx, req.GetRideId(), key)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidTransition) {
 			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
