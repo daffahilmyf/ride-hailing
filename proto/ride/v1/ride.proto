@@ -6,12 +6,40 @@ option go_package = "github.com/daffahilmyf/ride-hailing/proto/ride/v1;ridev1";
 
 // RideService defines ride lifecycle operations for internal use.
 service RideService {
+  // CreateRide creates a new ride request.
+  rpc CreateRide(CreateRideRequest) returns (CreateRideResponse);
   // StartMatching transitions a ride into matching state.
   rpc StartMatching(StartMatchingRequest) returns (StartMatchingResponse);
   // AssignDriver assigns a driver to a ride.
   rpc AssignDriver(AssignDriverRequest) returns (AssignDriverResponse);
   // CancelRide cancels a ride with a reason.
   rpc CancelRide(CancelRideRequest) returns (CancelRideResponse);
+}
+
+message CreateRideRequest {
+  // Rider identifier.
+  string rider_id = 1;
+  // Pickup latitude.
+  double pickup_lat = 2;
+  // Pickup longitude.
+  double pickup_lng = 3;
+  // Dropoff latitude.
+  double dropoff_lat = 4;
+  // Dropoff longitude.
+  double dropoff_lng = 5;
+  // Idempotency key for retry-safe calls.
+  string idempotency_key = 6;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 7;
+  // Request identifier for idempotency/tracing.
+  string request_id = 8;
+}
+
+message CreateRideResponse {
+  // Ride identifier.
+  string ride_id = 1;
+  // Current ride status.
+  string status = 2;
 }
 
 message StartMatchingRequest {
