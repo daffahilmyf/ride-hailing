@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   gateway:
+    container_name: ride-gateway
     build:
       context: ./services/gateway
     ports:
@@ -9,19 +10,25 @@ services:
     environment:
       - GATEWAY_HTTP_ADDR=:8080
       - GATEWAY_AUTH_ENABLED=false
+    mem_limit: 256m
+    cpus: "0.50"
     depends_on:
       - nats
       - postgres
       - redis
 
   nats:
+    container_name: ride-nats
     image: nats:2.10
     command: ["-js"]
     ports:
       - "4222:4222"
       - "8222:8222"
+    mem_limit: 128m
+    cpus: "0.25"
 
   postgres:
+    container_name: ride-postgres
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=ride
@@ -29,8 +36,13 @@ services:
       - POSTGRES_DB=rides
     ports:
       - "5432:5432"
+    mem_limit: 512m
+    cpus: "1.0"
 
   redis:
+    container_name: ride-redis
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    mem_limit: 128m
+    cpus: "0.25"
