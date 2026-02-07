@@ -85,6 +85,42 @@ func (r *LocationRepo) Get(ctx context.Context, driverID string) (outbound.Locat
 	}, nil
 }
 
+func (r *LocationRepo) Nearby(ctx context.Context, lat float64, lng float64, radiusMeters float64, limit int) ([]outbound.NearbyDriver, error) {
+	if r == nil || r.client == nil {
+		return nil, outbound.ErrNotFound
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	results, err := r.client.GeoRadius(ctx, r.geoKey, lng, lat, &redis.GeoRadiusQuery{
+		Radius:    radiusMeters,
+		Unit:      "m",
+		WithDist:  true,
+		WithCoord: true,
+		Count:     limit,
+		Sort:      "ASC",
+	}).Result()
+	if err != nil {
+		return nil, err
+	}
+	if len(results) == 0 {
+		return []outbound.NearbyDriver{}, nil
+	}
+	drivers := make([]outbound.NearbyDriver, 0, len(results))
+	for _, item := range results {
+		if item.Name == "" || item.Position == nil {
+			continue
+		}
+		drivers = append(drivers, outbound.NearbyDriver{
+			DriverID:  item.Name,
+			Lat:       item.Position.Latitude,
+			Lng:       item.Position.Longitude,
+			DistanceM: item.Dist,
+		})
+	}
+	return drivers, nil
+}
+
 func (r *LocationRepo) key(driverID string) string {
 	return r.keyPrefix + driverID
 }

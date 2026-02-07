@@ -10,6 +10,9 @@ type Config struct {
 	LocationTTLSeconds     int
 	LocationKeyPrefix      string
 	GeoKey                 string
+	RateLimitEnabled       bool
+	RateLimitMinGapMs      int
+	RateLimitKeyPrefix     string
 	NATSURL                string
 	EventsEnabled          bool
 	InternalAuthEnabled    bool
@@ -28,6 +31,9 @@ func DefaultConfig() Config {
 		LocationTTLSeconds:     60,
 		LocationKeyPrefix:      "driver:location:",
 		GeoKey:                 "drivers:geo",
+		RateLimitEnabled:       true,
+		RateLimitMinGapMs:      300,
+		RateLimitKeyPrefix:     "driver:location:rate:",
 		NATSURL:                "nats://nats:4222",
 		EventsEnabled:          true,
 		InternalAuthEnabled:    false,

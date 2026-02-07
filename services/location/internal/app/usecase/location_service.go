@@ -12,11 +12,27 @@ import (
 type LocationService struct {
 	Repo           outbound.LocationRepo
 	Publisher      outbound.EventPublisher
+	RateLimiter    outbound.RateLimiter
 	PublishEnabled bool
 	LocationTTL    time.Duration
+	MinUpdateGap   time.Duration
+	RateKeyPrefix  string
 }
 
 func (s *LocationService) UpdateDriverLocation(ctx context.Context, driverID string, lat float64, lng float64, accuracy float64) (domain.DriverLocation, error) {
+	if s.MinUpdateGap > 0 && s.RateLimiter != nil {
+		keyPrefix := s.RateKeyPrefix
+		if keyPrefix == "" {
+			keyPrefix = "driver:location:rate:"
+		}
+		allowed, err := s.RateLimiter.Allow(ctx, keyPrefix+driverID, s.MinUpdateGap)
+		if err != nil {
+			return domain.DriverLocation{}, err
+		}
+		if !allowed {
+			return domain.DriverLocation{}, nil
+		}
+	}
 	location, err := domain.NewDriverLocation(driverID, lat, lng, accuracy, time.Now().UTC())
 	if err != nil {
 		return domain.DriverLocation{}, err
@@ -67,6 +83,10 @@ func (s *LocationService) GetDriverLocation(ctx context.Context, driverID string
 		AccuracyM:  location.AccuracyM,
 		RecordedAt: location.RecordedAt,
 	}, nil
+}
+
+func (s *LocationService) ListNearbyDrivers(ctx context.Context, lat float64, lng float64, radiusMeters float64, limit int) ([]outbound.NearbyDriver, error) {
+	return s.Repo.Nearby(ctx, lat, lng, radiusMeters, limit)
 }
 
 func getStringFromContext(ctx context.Context, key string) string {

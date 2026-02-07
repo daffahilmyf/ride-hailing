@@ -28,6 +28,12 @@ func (f *fakeRepo) Get(_ context.Context, _ string) (outbound.Location, error) {
 	return f.location, nil
 }
 
+func (f *fakeRepo) Nearby(_ context.Context, _ float64, _ float64, _ float64, _ int) ([]outbound.NearbyDriver, error) {
+	return []outbound.NearbyDriver{
+		{DriverID: "driver-1", Lat: 1, Lng: 2, DistanceM: 10},
+	}, nil
+}
+
 func TestGetDriverLocation(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -73,5 +79,45 @@ func TestGetDriverLocation(t *testing.T) {
 				t.Fatalf("unexpected code: %v", status.Code(err))
 			}
 		})
+	}
+}
+
+func TestListNearbyDrivers(t *testing.T) {
+	repo := &fakeRepo{
+		location: outbound.Location{
+			DriverID:   "driver-1",
+			Lat:        1,
+			Lng:        2,
+			AccuracyM:  3,
+			RecordedAt: time.Unix(10, 0).UTC(),
+		},
+	}
+	svc := &usecase.LocationService{
+		Repo: repo,
+	}
+	server := &LocationServer{usecase: svc}
+
+	resp, err := server.ListNearbyDrivers(context.Background(), &locationv1.ListNearbyDriversRequest{
+		Lat:       1,
+		Lng:       2,
+		RadiusM:   1000,
+		Limit:     5,
+		TraceId:   "trace",
+		RequestId: "req",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(resp.GetDrivers()) != 1 {
+		t.Fatalf("expected 1 driver, got %d", len(resp.GetDrivers()))
+	}
+
+	_, err = server.ListNearbyDrivers(context.Background(), &locationv1.ListNearbyDriversRequest{
+		Lat:     1,
+		Lng:     2,
+		RadiusM: 0,
+	})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("expected invalid argument, got %v", status.Code(err))
 	}
 }

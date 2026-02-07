@@ -49,6 +49,33 @@ func (s *LocationServer) UpdateDriverLocation(ctx context.Context, req *location
 	return &locationv1.UpdateDriverLocationResponse{Status: "OK"}, nil
 }
 
+func (s *LocationServer) ListNearbyDrivers(ctx context.Context, req *locationv1.ListNearbyDriversRequest) (*locationv1.ListNearbyDriversResponse, error) {
+	radius := req.GetRadiusM()
+	if radius <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "radius must be > 0")
+	}
+	limit := int(req.GetLimit())
+	if limit <= 0 {
+		limit = 10
+	}
+	drivers, err := s.usecase.ListNearbyDrivers(ctx, req.GetLat(), req.GetLng(), radius, limit)
+	if err != nil {
+		return nil, mapError(err, "failed to list nearby drivers")
+	}
+	resp := &locationv1.ListNearbyDriversResponse{
+		Drivers: make([]*locationv1.NearbyDriver, 0, len(drivers)),
+	}
+	for _, driver := range drivers {
+		resp.Drivers = append(resp.Drivers, &locationv1.NearbyDriver{
+			DriverId:  driver.DriverID,
+			Lat:       driver.Lat,
+			Lng:       driver.Lng,
+			DistanceM: driver.DistanceM,
+		})
+	}
+	return resp, nil
+}
+
 func mapError(err error, msg string) error {
 	switch {
 	case errors.Is(err, domain.ErrInvalidLocation):

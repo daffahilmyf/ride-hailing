@@ -17,6 +17,11 @@ location:
   key_prefix: "driver:location:"
   geo_key: "drivers:geo"
 
+rate_limit:
+  enabled: true
+  min_gap_ms: 300
+  key_prefix: "driver:location:rate:"
+
 nats:
   url: "nats://nats:4222"
 

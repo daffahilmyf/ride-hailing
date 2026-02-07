@@ -35,7 +35,7 @@ var serveCmd = &cobra.Command{
 		logger := infra.NewLogger()
 		defer logger.Sync()
 
-		if cfg.LocationKeyPrefix == "" || cfg.GeoKey == "" {
+		if cfg.LocationKeyPrefix == "" || cfg.GeoKey == "" || cfg.RateLimitKeyPrefix == "" {
 			logger.Fatal("config.invalid_location_keys")
 		}
 
@@ -58,6 +58,10 @@ var serveCmd = &cobra.Command{
 		defer redisClient.Close()
 
 		repo := redisadapter.NewLocationRepo(redisClient, cfg.LocationKeyPrefix, cfg.GeoKey)
+		var limiter *redisadapter.RateLimiter
+		if cfg.RateLimitEnabled {
+			limiter = redisadapter.NewRateLimiter(redisClient)
+		}
 
 		var publisher *broker.Publisher
 		var nc *nats.Conn
@@ -80,8 +84,11 @@ var serveCmd = &cobra.Command{
 		uc := &usecase.LocationService{
 			Repo:           repo,
 			Publisher:      publisher,
+			RateLimiter:    limiter,
 			PublishEnabled: cfg.EventsEnabled,
 			LocationTTL:    time.Duration(cfg.LocationTTLSeconds) * time.Second,
+			MinUpdateGap:   time.Duration(cfg.RateLimitMinGapMs) * time.Millisecond,
+			RateKeyPrefix:  cfg.RateLimitKeyPrefix,
 		}
 
 		grpcMetrics := grpcadapter.NewMetrics()
