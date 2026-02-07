@@ -750,6 +750,150 @@ func (x *CreateOfferResponse) GetExpiresAt() int64 {
 	return 0
 }
 
+type OfferActionRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Offer identifier.
+	OfferId string `protobuf:"bytes,1,opt,name=offer_id,json=offerId,proto3" json:"offer_id,omitempty"`
+	// Idempotency key for retry-safe calls.
+	IdempotencyKey string `protobuf:"bytes,2,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	// Trace identifier for cross-service correlation.
+	TraceId string `protobuf:"bytes,3,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
+	// Request identifier for idempotency/tracing.
+	RequestId     string `protobuf:"bytes,4,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OfferActionRequest) Reset() {
+	*x = OfferActionRequest{}
+	mi := &file_ride_v1_ride_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OfferActionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OfferActionRequest) ProtoMessage() {}
+
+func (x *OfferActionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ride_v1_ride_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OfferActionRequest.ProtoReflect.Descriptor instead.
+func (*OfferActionRequest) Descriptor() ([]byte, []int) {
+	return file_ride_v1_ride_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *OfferActionRequest) GetOfferId() string {
+	if x != nil {
+		return x.OfferId
+	}
+	return ""
+}
+
+func (x *OfferActionRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
+}
+
+func (x *OfferActionRequest) GetTraceId() string {
+	if x != nil {
+		return x.TraceId
+	}
+	return ""
+}
+
+func (x *OfferActionRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+type OfferActionResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Offer identifier.
+	OfferId string `protobuf:"bytes,1,opt,name=offer_id,json=offerId,proto3" json:"offer_id,omitempty"`
+	// Ride identifier.
+	RideId string `protobuf:"bytes,2,opt,name=ride_id,json=rideId,proto3" json:"ride_id,omitempty"`
+	// Driver identifier.
+	DriverId string `protobuf:"bytes,3,opt,name=driver_id,json=driverId,proto3" json:"driver_id,omitempty"`
+	// Offer status.
+	Status        string `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OfferActionResponse) Reset() {
+	*x = OfferActionResponse{}
+	mi := &file_ride_v1_ride_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OfferActionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OfferActionResponse) ProtoMessage() {}
+
+func (x *OfferActionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ride_v1_ride_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OfferActionResponse.ProtoReflect.Descriptor instead.
+func (*OfferActionResponse) Descriptor() ([]byte, []int) {
+	return file_ride_v1_ride_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *OfferActionResponse) GetOfferId() string {
+	if x != nil {
+		return x.OfferId
+	}
+	return ""
+}
+
+func (x *OfferActionResponse) GetRideId() string {
+	if x != nil {
+		return x.RideId
+	}
+	return ""
+}
+
+func (x *OfferActionResponse) GetDriverId() string {
+	if x != nil {
+		return x.DriverId
+	}
+	return ""
+}
+
+func (x *OfferActionResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 var File_ride_v1_ride_proto protoreflect.FileDescriptor
 
 const file_ride_v1_ride_proto_rawDesc = "" +
@@ -815,7 +959,18 @@ const file_ride_v1_ride_proto_rawDesc = "" +
 	"\tdriver_id\x18\x03 \x01(\tR\bdriverId\x12\x16\n" +
 	"\x06status\x18\x04 \x01(\tR\x06status\x12\x1d\n" +
 	"\n" +
-	"expires_at\x18\x05 \x01(\x03R\texpiresAt2\x82\x03\n" +
+	"expires_at\x18\x05 \x01(\x03R\texpiresAt\"\x92\x01\n" +
+	"\x12OfferActionRequest\x12\x19\n" +
+	"\boffer_id\x18\x01 \x01(\tR\aofferId\x12'\n" +
+	"\x0fidempotency_key\x18\x02 \x01(\tR\x0eidempotencyKey\x12\x19\n" +
+	"\btrace_id\x18\x03 \x01(\tR\atraceId\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x04 \x01(\tR\trequestId\"~\n" +
+	"\x13OfferActionResponse\x12\x19\n" +
+	"\boffer_id\x18\x01 \x01(\tR\aofferId\x12\x17\n" +
+	"\aride_id\x18\x02 \x01(\tR\x06rideId\x12\x1b\n" +
+	"\tdriver_id\x18\x03 \x01(\tR\bdriverId\x12\x16\n" +
+	"\x06status\x18\x04 \x01(\tR\x06status2\xe1\x04\n" +
 	"\vRideService\x12E\n" +
 	"\n" +
 	"CreateRide\x12\x1a.ride.v1.CreateRideRequest\x1a\x1b.ride.v1.CreateRideResponse\x12N\n" +
@@ -823,7 +978,10 @@ const file_ride_v1_ride_proto_rawDesc = "" +
 	"\fAssignDriver\x12\x1c.ride.v1.AssignDriverRequest\x1a\x1d.ride.v1.AssignDriverResponse\x12E\n" +
 	"\n" +
 	"CancelRide\x12\x1a.ride.v1.CancelRideRequest\x1a\x1b.ride.v1.CancelRideResponse\x12H\n" +
-	"\vCreateOffer\x12\x1b.ride.v1.CreateOfferRequest\x1a\x1c.ride.v1.CreateOfferResponseB:Z8github.com/daffahilmyf/ride-hailing/proto/ride/v1;ridev1b\x06proto3"
+	"\vCreateOffer\x12\x1b.ride.v1.CreateOfferRequest\x1a\x1c.ride.v1.CreateOfferResponse\x12H\n" +
+	"\vAcceptOffer\x12\x1b.ride.v1.OfferActionRequest\x1a\x1c.ride.v1.OfferActionResponse\x12I\n" +
+	"\fDeclineOffer\x12\x1b.ride.v1.OfferActionRequest\x1a\x1c.ride.v1.OfferActionResponse\x12H\n" +
+	"\vExpireOffer\x12\x1b.ride.v1.OfferActionRequest\x1a\x1c.ride.v1.OfferActionResponseB:Z8github.com/daffahilmyf/ride-hailing/proto/ride/v1;ridev1b\x06proto3"
 
 var (
 	file_ride_v1_ride_proto_rawDescOnce sync.Once
@@ -837,7 +995,7 @@ func file_ride_v1_ride_proto_rawDescGZIP() []byte {
 	return file_ride_v1_ride_proto_rawDescData
 }
 
-var file_ride_v1_ride_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_ride_v1_ride_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_ride_v1_ride_proto_goTypes = []any{
 	(*CreateRideRequest)(nil),     // 0: ride.v1.CreateRideRequest
 	(*CreateRideResponse)(nil),    // 1: ride.v1.CreateRideResponse
@@ -849,23 +1007,31 @@ var file_ride_v1_ride_proto_goTypes = []any{
 	(*CancelRideResponse)(nil),    // 7: ride.v1.CancelRideResponse
 	(*CreateOfferRequest)(nil),    // 8: ride.v1.CreateOfferRequest
 	(*CreateOfferResponse)(nil),   // 9: ride.v1.CreateOfferResponse
+	(*OfferActionRequest)(nil),    // 10: ride.v1.OfferActionRequest
+	(*OfferActionResponse)(nil),   // 11: ride.v1.OfferActionResponse
 }
 var file_ride_v1_ride_proto_depIdxs = []int32{
-	0, // 0: ride.v1.RideService.CreateRide:input_type -> ride.v1.CreateRideRequest
-	2, // 1: ride.v1.RideService.StartMatching:input_type -> ride.v1.StartMatchingRequest
-	4, // 2: ride.v1.RideService.AssignDriver:input_type -> ride.v1.AssignDriverRequest
-	6, // 3: ride.v1.RideService.CancelRide:input_type -> ride.v1.CancelRideRequest
-	8, // 4: ride.v1.RideService.CreateOffer:input_type -> ride.v1.CreateOfferRequest
-	1, // 5: ride.v1.RideService.CreateRide:output_type -> ride.v1.CreateRideResponse
-	3, // 6: ride.v1.RideService.StartMatching:output_type -> ride.v1.StartMatchingResponse
-	5, // 7: ride.v1.RideService.AssignDriver:output_type -> ride.v1.AssignDriverResponse
-	7, // 8: ride.v1.RideService.CancelRide:output_type -> ride.v1.CancelRideResponse
-	9, // 9: ride.v1.RideService.CreateOffer:output_type -> ride.v1.CreateOfferResponse
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: ride.v1.RideService.CreateRide:input_type -> ride.v1.CreateRideRequest
+	2,  // 1: ride.v1.RideService.StartMatching:input_type -> ride.v1.StartMatchingRequest
+	4,  // 2: ride.v1.RideService.AssignDriver:input_type -> ride.v1.AssignDriverRequest
+	6,  // 3: ride.v1.RideService.CancelRide:input_type -> ride.v1.CancelRideRequest
+	8,  // 4: ride.v1.RideService.CreateOffer:input_type -> ride.v1.CreateOfferRequest
+	10, // 5: ride.v1.RideService.AcceptOffer:input_type -> ride.v1.OfferActionRequest
+	10, // 6: ride.v1.RideService.DeclineOffer:input_type -> ride.v1.OfferActionRequest
+	10, // 7: ride.v1.RideService.ExpireOffer:input_type -> ride.v1.OfferActionRequest
+	1,  // 8: ride.v1.RideService.CreateRide:output_type -> ride.v1.CreateRideResponse
+	3,  // 9: ride.v1.RideService.StartMatching:output_type -> ride.v1.StartMatchingResponse
+	5,  // 10: ride.v1.RideService.AssignDriver:output_type -> ride.v1.AssignDriverResponse
+	7,  // 11: ride.v1.RideService.CancelRide:output_type -> ride.v1.CancelRideResponse
+	9,  // 12: ride.v1.RideService.CreateOffer:output_type -> ride.v1.CreateOfferResponse
+	11, // 13: ride.v1.RideService.AcceptOffer:output_type -> ride.v1.OfferActionResponse
+	11, // 14: ride.v1.RideService.DeclineOffer:output_type -> ride.v1.OfferActionResponse
+	11, // 15: ride.v1.RideService.ExpireOffer:output_type -> ride.v1.OfferActionResponse
+	8,  // [8:16] is the sub-list for method output_type
+	0,  // [0:8] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_ride_v1_ride_proto_init() }
@@ -879,7 +1045,7 @@ func file_ride_v1_ride_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ride_v1_ride_proto_rawDesc), len(file_ride_v1_ride_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

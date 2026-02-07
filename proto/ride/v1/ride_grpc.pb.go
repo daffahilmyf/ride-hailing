@@ -24,6 +24,9 @@ const (
 	RideService_AssignDriver_FullMethodName  = "/ride.v1.RideService/AssignDriver"
 	RideService_CancelRide_FullMethodName    = "/ride.v1.RideService/CancelRide"
 	RideService_CreateOffer_FullMethodName   = "/ride.v1.RideService/CreateOffer"
+	RideService_AcceptOffer_FullMethodName   = "/ride.v1.RideService/AcceptOffer"
+	RideService_DeclineOffer_FullMethodName  = "/ride.v1.RideService/DeclineOffer"
+	RideService_ExpireOffer_FullMethodName   = "/ride.v1.RideService/ExpireOffer"
 )
 
 // RideServiceClient is the client API for RideService service.
@@ -42,6 +45,12 @@ type RideServiceClient interface {
 	CancelRide(ctx context.Context, in *CancelRideRequest, opts ...grpc.CallOption) (*CancelRideResponse, error)
 	// CreateOffer creates a ride offer for a driver.
 	CreateOffer(ctx context.Context, in *CreateOfferRequest, opts ...grpc.CallOption) (*CreateOfferResponse, error)
+	// AcceptOffer marks a pending offer as accepted.
+	AcceptOffer(ctx context.Context, in *OfferActionRequest, opts ...grpc.CallOption) (*OfferActionResponse, error)
+	// DeclineOffer marks a pending offer as declined.
+	DeclineOffer(ctx context.Context, in *OfferActionRequest, opts ...grpc.CallOption) (*OfferActionResponse, error)
+	// ExpireOffer marks a pending offer as expired.
+	ExpireOffer(ctx context.Context, in *OfferActionRequest, opts ...grpc.CallOption) (*OfferActionResponse, error)
 }
 
 type rideServiceClient struct {
@@ -102,6 +111,36 @@ func (c *rideServiceClient) CreateOffer(ctx context.Context, in *CreateOfferRequ
 	return out, nil
 }
 
+func (c *rideServiceClient) AcceptOffer(ctx context.Context, in *OfferActionRequest, opts ...grpc.CallOption) (*OfferActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OfferActionResponse)
+	err := c.cc.Invoke(ctx, RideService_AcceptOffer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rideServiceClient) DeclineOffer(ctx context.Context, in *OfferActionRequest, opts ...grpc.CallOption) (*OfferActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OfferActionResponse)
+	err := c.cc.Invoke(ctx, RideService_DeclineOffer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rideServiceClient) ExpireOffer(ctx context.Context, in *OfferActionRequest, opts ...grpc.CallOption) (*OfferActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OfferActionResponse)
+	err := c.cc.Invoke(ctx, RideService_ExpireOffer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RideServiceServer is the server API for RideService service.
 // All implementations must embed UnimplementedRideServiceServer
 // for forward compatibility.
@@ -118,6 +157,12 @@ type RideServiceServer interface {
 	CancelRide(context.Context, *CancelRideRequest) (*CancelRideResponse, error)
 	// CreateOffer creates a ride offer for a driver.
 	CreateOffer(context.Context, *CreateOfferRequest) (*CreateOfferResponse, error)
+	// AcceptOffer marks a pending offer as accepted.
+	AcceptOffer(context.Context, *OfferActionRequest) (*OfferActionResponse, error)
+	// DeclineOffer marks a pending offer as declined.
+	DeclineOffer(context.Context, *OfferActionRequest) (*OfferActionResponse, error)
+	// ExpireOffer marks a pending offer as expired.
+	ExpireOffer(context.Context, *OfferActionRequest) (*OfferActionResponse, error)
 	mustEmbedUnimplementedRideServiceServer()
 }
 
@@ -142,6 +187,15 @@ func (UnimplementedRideServiceServer) CancelRide(context.Context, *CancelRideReq
 }
 func (UnimplementedRideServiceServer) CreateOffer(context.Context, *CreateOfferRequest) (*CreateOfferResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateOffer not implemented")
+}
+func (UnimplementedRideServiceServer) AcceptOffer(context.Context, *OfferActionRequest) (*OfferActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcceptOffer not implemented")
+}
+func (UnimplementedRideServiceServer) DeclineOffer(context.Context, *OfferActionRequest) (*OfferActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeclineOffer not implemented")
+}
+func (UnimplementedRideServiceServer) ExpireOffer(context.Context, *OfferActionRequest) (*OfferActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExpireOffer not implemented")
 }
 func (UnimplementedRideServiceServer) mustEmbedUnimplementedRideServiceServer() {}
 func (UnimplementedRideServiceServer) testEmbeddedByValue()                     {}
@@ -254,6 +308,60 @@ func _RideService_CreateOffer_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RideService_AcceptOffer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OfferActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RideServiceServer).AcceptOffer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RideService_AcceptOffer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RideServiceServer).AcceptOffer(ctx, req.(*OfferActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RideService_DeclineOffer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OfferActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RideServiceServer).DeclineOffer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RideService_DeclineOffer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RideServiceServer).DeclineOffer(ctx, req.(*OfferActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RideService_ExpireOffer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OfferActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RideServiceServer).ExpireOffer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RideService_ExpireOffer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RideServiceServer).ExpireOffer(ctx, req.(*OfferActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RideService_ServiceDesc is the grpc.ServiceDesc for RideService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -280,6 +388,18 @@ var RideService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateOffer",
 			Handler:    _RideService_CreateOffer_Handler,
+		},
+		{
+			MethodName: "AcceptOffer",
+			Handler:    _RideService_AcceptOffer_Handler,
+		},
+		{
+			MethodName: "DeclineOffer",
+			Handler:    _RideService_DeclineOffer_Handler,
+		},
+		{
+			MethodName: "ExpireOffer",
+			Handler:    _RideService_ExpireOffer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

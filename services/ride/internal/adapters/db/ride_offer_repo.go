@@ -43,3 +43,34 @@ func (r *RideOfferRepo) Create(ctx context.Context, offer outbound.RideOffer) er
 	}
 	return r.DB.WithContext(ctx).Create(&m).Error
 }
+
+func (r *RideOfferRepo) Get(ctx context.Context, id string) (outbound.RideOffer, error) {
+	var m rideOfferModel
+	if err := r.DB.WithContext(ctx).First(&m, "id = ?", id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return outbound.RideOffer{}, outbound.ErrNotFound
+		}
+		return outbound.RideOffer{}, err
+	}
+	return outbound.RideOffer{
+		ID:        m.ID,
+		RideID:    m.RideID,
+		DriverID:  m.DriverID,
+		Status:    m.Status,
+		ExpiresAt: m.ExpiresAt.Unix(),
+		CreatedAt: m.CreatedAt.Unix(),
+	}, nil
+}
+
+func (r *RideOfferRepo) UpdateStatus(ctx context.Context, id string, status string) error {
+	result := r.DB.WithContext(ctx).Model(&rideOfferModel{}).
+		Where("id = ?", id).
+		Update("status", status)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return outbound.ErrNotFound
+	}
+	return nil
+}

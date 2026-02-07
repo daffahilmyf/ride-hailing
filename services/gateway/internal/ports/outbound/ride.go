@@ -11,4 +11,7 @@ type RideService interface {
 	CreateRide(ctx context.Context, in *ridev1.CreateRideRequest, opts ...grpc.CallOption) (*ridev1.CreateRideResponse, error)
 	CancelRide(ctx context.Context, in *ridev1.CancelRideRequest, opts ...grpc.CallOption) (*ridev1.CancelRideResponse, error)
 	CreateOffer(ctx context.Context, in *ridev1.CreateOfferRequest, opts ...grpc.CallOption) (*ridev1.CreateOfferResponse, error)
+	AcceptOffer(ctx context.Context, in *ridev1.OfferActionRequest, opts ...grpc.CallOption) (*ridev1.OfferActionResponse, error)
+	DeclineOffer(ctx context.Context, in *ridev1.OfferActionRequest, opts ...grpc.CallOption) (*ridev1.OfferActionResponse, error)
+	ExpireOffer(ctx context.Context, in *ridev1.OfferActionRequest, opts ...grpc.CallOption) (*ridev1.OfferActionResponse, error)
 }

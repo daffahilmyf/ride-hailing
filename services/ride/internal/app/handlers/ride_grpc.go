@@ -107,6 +107,54 @@ func (s *RideServer) CreateOffer(ctx context.Context, req *ridev1.CreateOfferReq
 	}, nil
 }
 
+func (s *RideServer) AcceptOffer(ctx context.Context, req *ridev1.OfferActionRequest) (*ridev1.OfferActionResponse, error) {
+	offer, err := s.usecase.AcceptOffer(ctx, usecase.OfferActionCmd{
+		OfferID:        req.GetOfferId(),
+		IdempotencyKey: req.GetIdempotencyKey(),
+	})
+	if err != nil {
+		return nil, mapError(err, "failed to accept offer")
+	}
+	return &ridev1.OfferActionResponse{
+		OfferId:  offer.ID,
+		RideId:   offer.RideID,
+		DriverId: offer.DriverID,
+		Status:   string(offer.Status),
+	}, nil
+}
+
+func (s *RideServer) DeclineOffer(ctx context.Context, req *ridev1.OfferActionRequest) (*ridev1.OfferActionResponse, error) {
+	offer, err := s.usecase.DeclineOffer(ctx, usecase.OfferActionCmd{
+		OfferID:        req.GetOfferId(),
+		IdempotencyKey: req.GetIdempotencyKey(),
+	})
+	if err != nil {
+		return nil, mapError(err, "failed to decline offer")
+	}
+	return &ridev1.OfferActionResponse{
+		OfferId:  offer.ID,
+		RideId:   offer.RideID,
+		DriverId: offer.DriverID,
+		Status:   string(offer.Status),
+	}, nil
+}
+
+func (s *RideServer) ExpireOffer(ctx context.Context, req *ridev1.OfferActionRequest) (*ridev1.OfferActionResponse, error) {
+	offer, err := s.usecase.ExpireOffer(ctx, usecase.OfferActionCmd{
+		OfferID:        req.GetOfferId(),
+		IdempotencyKey: req.GetIdempotencyKey(),
+	})
+	if err != nil {
+		return nil, mapError(err, "failed to expire offer")
+	}
+	return &ridev1.OfferActionResponse{
+		OfferId:  offer.ID,
+		RideId:   offer.RideID,
+		DriverId: offer.DriverID,
+		Status:   string(offer.Status),
+	}, nil
+}
+
 func mapError(err error, msg string) error {
 	switch {
 	case errors.Is(err, domain.ErrInvalidTransition):
@@ -115,6 +163,8 @@ func mapError(err error, msg string) error {
 		return status.Error(codes.NotFound, "ride not found")
 	case errors.Is(err, outbound.ErrConflict):
 		return status.Error(codes.Aborted, "state conflict")
+	case errors.Is(err, domain.ErrInvalidOfferTransition):
+		return status.Error(codes.FailedPrecondition, "invalid offer transition")
 	default:
 		return status.Error(codes.Internal, msg)
 	}

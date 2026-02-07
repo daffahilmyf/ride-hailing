@@ -16,6 +16,12 @@ service RideService {
   rpc CancelRide(CancelRideRequest) returns (CancelRideResponse);
   // CreateOffer creates a ride offer for a driver.
   rpc CreateOffer(CreateOfferRequest) returns (CreateOfferResponse);
+  // AcceptOffer marks a pending offer as accepted.
+  rpc AcceptOffer(OfferActionRequest) returns (OfferActionResponse);
+  // DeclineOffer marks a pending offer as declined.
+  rpc DeclineOffer(OfferActionRequest) returns (OfferActionResponse);
+  // ExpireOffer marks a pending offer as expired.
+  rpc ExpireOffer(OfferActionRequest) returns (OfferActionResponse);
 }
 
 message CreateRideRequest {
@@ -128,4 +134,26 @@ message CreateOfferResponse {
   string status = 4;
   // Offer expiry epoch seconds.
   int64 expires_at = 5;
+}
+
+message OfferActionRequest {
+  // Offer identifier.
+  string offer_id = 1;
+  // Idempotency key for retry-safe calls.
+  string idempotency_key = 2;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 3;
+  // Request identifier for idempotency/tracing.
+  string request_id = 4;
+}
+
+message OfferActionResponse {
+  // Offer identifier.
+  string offer_id = 1;
+  // Ride identifier.
+  string ride_id = 2;
+  // Driver identifier.
+  string driver_id = 3;
+  // Offer status.
+  string status = 4;
 }

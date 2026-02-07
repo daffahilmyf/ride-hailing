@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +25,8 @@ type RideOffer struct {
 	CreatedAt time.Time
 }
 
+var ErrInvalidOfferTransition = errors.New("invalid offer transition")
+
 func NewRideOffer(rideID, driverID string, ttl time.Duration) RideOffer {
 	now := time.Now().UTC()
 	return RideOffer{
@@ -34,4 +37,20 @@ func NewRideOffer(rideID, driverID string, ttl time.Duration) RideOffer {
 		ExpiresAt: now.Add(ttl),
 		CreatedAt: now,
 	}
+}
+
+func (o RideOffer) Transition(next RideOfferStatus) (RideOffer, error) {
+	if o.Status == next {
+		return o, nil
+	}
+	switch o.Status {
+	case OfferPending:
+		if next == OfferAccepted || next == OfferDeclined || next == OfferExpired {
+			o.Status = next
+			return o, nil
+		}
+	case OfferAccepted, OfferDeclined, OfferExpired:
+		return o, ErrInvalidOfferTransition
+	}
+	return o, ErrInvalidOfferTransition
 }

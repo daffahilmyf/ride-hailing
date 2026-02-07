@@ -13,4 +13,6 @@ type RideOffer struct {
 
 type RideOfferRepo interface {
 	Create(ctx context.Context, offer RideOffer) error
+	Get(ctx context.Context, id string) (RideOffer, error)
+	UpdateStatus(ctx context.Context, id string, status string) error
 }

@@ -35,6 +35,11 @@ type StartMatchingCmd struct {
 	IdempotencyKey string
 }
 
+type OfferActionCmd struct {
+	OfferID        string
+	IdempotencyKey string
+}
+
 func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain.Ride, error) {
 	return s.withIdempotency(ctx, cmd.IdempotencyKey, func(repo outbound.RideRepo, idem outbound.IdempotencyRepo, outbox outbound.OutboxRepo) (domain.Ride, error) {
 		now := time.Now().UTC()
@@ -225,6 +230,18 @@ func (s *RideService) CreateOffer(ctx context.Context, cmd StartMatchingCmd) (do
 	})
 }
 
+func (s *RideService) AcceptOffer(ctx context.Context, cmd OfferActionCmd) (domain.RideOffer, error) {
+	return s.updateOffer(ctx, cmd, domain.OfferAccepted, "ride.offer.accepted")
+}
+
+func (s *RideService) DeclineOffer(ctx context.Context, cmd OfferActionCmd) (domain.RideOffer, error) {
+	return s.updateOffer(ctx, cmd, domain.OfferDeclined, "ride.offer.declined")
+}
+
+func (s *RideService) ExpireOffer(ctx context.Context, cmd OfferActionCmd) (domain.RideOffer, error) {
+	return s.updateOffer(ctx, cmd, domain.OfferExpired, "ride.offer.expired")
+}
+
 func (s *RideService) loadRide(ctx context.Context, id string, repo outbound.RideRepo) (domain.Ride, error) {
 	rideRow, err := repo.Get(ctx, id)
 	if err != nil {
@@ -353,5 +370,39 @@ func enqueueEvent(ctx context.Context, outbox outbound.OutboxRepo, topic string,
 		ID:      event.ID,
 		Topic:   event.Topic,
 		Payload: string(event.Payload),
+	})
+}
+
+func (s *RideService) updateOffer(ctx context.Context, cmd OfferActionCmd, next domain.RideOfferStatus, topic string) (domain.RideOffer, error) {
+	return s.withIdempotencyOffer(ctx, cmd.IdempotencyKey, func(offers outbound.RideOfferRepo, _ outbound.IdempotencyRepo, outbox outbound.OutboxRepo) (domain.RideOffer, error) {
+		row, err := offers.Get(ctx, cmd.OfferID)
+		if err != nil {
+			return domain.RideOffer{}, err
+		}
+		offer := domain.RideOffer{
+			ID:        row.ID,
+			RideID:    row.RideID,
+			DriverID:  row.DriverID,
+			Status:    domain.RideOfferStatus(row.Status),
+			ExpiresAt: time.Unix(row.ExpiresAt, 0).UTC(),
+			CreatedAt: time.Unix(row.CreatedAt, 0).UTC(),
+		}
+
+		updated, err := offer.Transition(next)
+		if err != nil {
+			return domain.RideOffer{}, err
+		}
+		if err := offers.UpdateStatus(ctx, updated.ID, string(updated.Status)); err != nil {
+			return domain.RideOffer{}, err
+		}
+		if err := enqueueEvent(ctx, outbox, topic, map[string]string{
+			"offer_id":  updated.ID,
+			"ride_id":   updated.RideID,
+			"driver_id": updated.DriverID,
+			"status":    string(updated.Status),
+		}); err != nil {
+			return domain.RideOffer{}, err
+		}
+		return updated, nil
 	})
 }
