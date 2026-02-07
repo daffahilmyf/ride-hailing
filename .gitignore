@@ -1,0 +1,25 @@
+# Go
+**/bin/
+**/tmp/
+**/dist/
+**/*.test
+**/*.out
+
+# Go workspace/cache
+**/go.work
+**/go.work.sum
+
+# Editor
+.DS_Store
+.idea/
+.vscode/
+
+# Env/config
+**/.env
+**/.env.*
+
+# Docs (not committed per request)
+docs/
+
+# OS
+.DS_Store
