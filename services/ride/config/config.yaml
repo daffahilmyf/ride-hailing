@@ -1,0 +1,11 @@
+service:
+  name: "ride-service"
+
+grpc:
+  addr: ":50051"
+
+shutdown:
+  timeout: 10
+
+postgres:
+  dsn: "postgres://ride:ride@postgres:5432/rides?sslmode=disable"
