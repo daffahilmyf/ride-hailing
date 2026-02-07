@@ -26,6 +26,8 @@ func LoadConfig() Config {
 	cfg.Redis.Addr = viper.GetString("redis.addr")
 	cfg.Redis.Password = viper.GetString("redis.password")
 	cfg.Redis.DB = viper.GetInt("redis.db")
+	cfg.Cache.Enabled = viper.GetBool("cache.enabled")
+	cfg.Cache.DefaultTTLSeconds = viper.GetInt("cache.default_ttl_seconds")
 
 	return cfg
 }

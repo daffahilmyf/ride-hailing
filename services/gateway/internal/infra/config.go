@@ -9,6 +9,7 @@ type Config struct {
 	RateLimit              RateLimitConfig
 	MaxBodyBytes           int64
 	Redis                  RedisConfig
+	Cache                  CacheConfig
 }
 
 type AuthConfig struct {
@@ -36,6 +37,11 @@ type RedisConfig struct {
 	Addr     string
 	Password string
 	DB       int
+}
+
+type CacheConfig struct {
+	Enabled           bool
+	DefaultTTLSeconds int
 }
 
 func DefaultConfig() Config {
@@ -66,6 +72,10 @@ func DefaultConfig() Config {
 			Addr:     "localhost:6379",
 			Password: "",
 			DB:       0,
+		},
+		Cache: CacheConfig{
+			Enabled:           true,
+			DefaultTTLSeconds: 60,
 		},
 	}
 }
