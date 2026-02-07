@@ -45,6 +45,9 @@ func setupRideRouter() *gin.Engine {
 	r.POST("/rides", CreateRide(&fakeRideClient{}))
 	r.POST("/rides/:ride_id/cancel", CancelRide(&fakeRideClient{}))
 	r.POST("/rides/:ride_id/offers", CreateOffer(&fakeRideClient{}))
+	r.POST("/offers/:offer_id/accept", AcceptOffer(&fakeRideClient{}))
+	r.POST("/offers/:offer_id/decline", DeclineOffer(&fakeRideClient{}))
+	r.POST("/offers/:offer_id/expire", ExpireOffer(&fakeRideClient{}))
 	return r
 }
 
@@ -116,6 +119,30 @@ func TestCreateOfferValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("POST", tt.path, bytes.NewBufferString(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			r.ServeHTTP(w, req)
+			if w.Code != tt.status {
+				t.Fatalf("expected %d, got %d", tt.status, w.Code)
+			}
+		})
+	}
+}
+
+func TestOfferActionValidation(t *testing.T) {
+	tests := []struct {
+		name   string
+		path   string
+		status int
+	}{
+		{"bad_id", "/offers/123/accept", http.StatusBadRequest},
+		{"ok", "/offers/11111111-1111-1111-1111-111111111111/accept", http.StatusOK},
+	}
+
+	r := setupRideRouter()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", tt.path, bytes.NewBufferString(`{}`))
 			req.Header.Set("Content-Type", "application/json")
 			r.ServeHTTP(w, req)
 			if w.Code != tt.status {

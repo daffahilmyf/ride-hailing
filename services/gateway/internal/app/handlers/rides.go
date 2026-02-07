@@ -150,3 +150,67 @@ func CreateOffer(rideClient outbound.RideService) gin.HandlerFunc {
 		})
 	}
 }
+
+func AcceptOffer(rideClient outbound.RideService) gin.HandlerFunc {
+	return offerAction(rideClient, "accept")
+}
+
+func DeclineOffer(rideClient outbound.RideService) gin.HandlerFunc {
+	return offerAction(rideClient, "decline")
+}
+
+func ExpireOffer(rideClient outbound.RideService) gin.HandlerFunc {
+	return offerAction(rideClient, "expire")
+}
+
+func offerAction(rideClient outbound.RideService, action string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		offerID := c.Param("offer_id")
+		if _, err := uuid.Parse(offerID); err != nil {
+			responses.RespondErrorCode(c, responses.CodeValidationError, map[string]string{"field": "offer_id"})
+			return
+		}
+
+		ctx := grpcadapter.WithRequestMetadata(
+			c.Request.Context(),
+			contextdata.GetTraceID(c),
+			contextdata.GetRequestID(c),
+		)
+		ctx = grpcadapter.WithTraceContext(ctx)
+		WithGRPCMeta(c, "ride-service")
+
+		idempotencyKey := c.GetHeader("Idempotency-Key")
+		req := &ridev1.OfferActionRequest{
+			OfferId:        offerID,
+			IdempotencyKey: idempotencyKey,
+			TraceId:        contextdata.GetTraceID(c),
+			RequestId:      contextdata.GetRequestID(c),
+		}
+
+		var resp *ridev1.OfferActionResponse
+		var err error
+		switch action {
+		case "accept":
+			resp, err = rideClient.AcceptOffer(ctx, req)
+		case "decline":
+			resp, err = rideClient.DeclineOffer(ctx, req)
+		case "expire":
+			resp, err = rideClient.ExpireOffer(ctx, req)
+		default:
+			responses.RespondErrorCode(c, responses.CodeInternalError, map[string]string{"reason": "INVALID_ACTION"})
+			return
+		}
+		if err != nil {
+			code, details := responses.MapGRPCError(err)
+			responses.RespondErrorCode(c, code, details)
+			return
+		}
+
+		responses.RespondOK(c, 200, map[string]interface{}{
+			"offer_id":  resp.GetOfferId(),
+			"ride_id":   resp.GetRideId(),
+			"driver_id": resp.GetDriverId(),
+			"status":    resp.GetStatus(),
+		})
+	}
+}
