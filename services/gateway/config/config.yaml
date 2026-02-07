@@ -17,3 +17,6 @@ grpc:
   ride_addr: "localhost:50051"
   matching_addr: "localhost:50052"
   location_addr: "localhost:50053"
+  timeout_seconds: 2
+  retry_max: 2
+  retry_backoff_ms: 100

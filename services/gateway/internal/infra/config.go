@@ -16,9 +16,12 @@ type AuthConfig struct {
 }
 
 type GRPCConfig struct {
-	RideAddr     string
-	MatchingAddr string
-	LocationAddr string
+	RideAddr       string
+	MatchingAddr   string
+	LocationAddr   string
+	TimeoutSeconds int
+	RetryMax       int
+	RetryBackoffMs int
 }
 
 func DefaultConfig() Config {
@@ -33,9 +36,12 @@ func DefaultConfig() Config {
 			Audience:  "",
 		},
 		GRPC: GRPCConfig{
-			RideAddr:     "localhost:50051",
-			MatchingAddr: "localhost:50052",
-			LocationAddr: "localhost:50053",
+			RideAddr:       "localhost:50051",
+			MatchingAddr:   "localhost:50052",
+			LocationAddr:   "localhost:50053",
+			TimeoutSeconds: 2,
+			RetryMax:       2,
+			RetryBackoffMs: 100,
 		},
 	}
 }

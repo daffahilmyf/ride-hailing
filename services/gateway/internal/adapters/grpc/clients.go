@@ -9,7 +9,9 @@ import (
 	ridev1 "github.com/daffahilmyf/ride-hailing/proto/ride/v1"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/infra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 type Clients struct {
@@ -23,7 +25,13 @@ type Clients struct {
 }
 
 func NewClients(ctx context.Context, cfg infra.GRPCConfig) (*Clients, error) {
-	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	dialOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(
+			timeoutUnaryInterceptor(time.Duration(cfg.TimeoutSeconds)*time.Second),
+			retryUnaryInterceptor(cfg.RetryMax, time.Duration(cfg.RetryBackoffMs)*time.Millisecond),
+		),
+	}
 
 	rideConn, err := dialWithTimeout(ctx, cfg.RideAddr, dialOpts...)
 	if err != nil {
@@ -71,4 +79,51 @@ func dialWithTimeout(ctx context.Context, addr string, opts ...grpc.DialOption) 
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	return grpc.DialContext(ctx, addr, opts...)
+}
+
+func timeoutUnaryInterceptor(timeout time.Duration) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if timeout <= 0 {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+		if _, ok := ctx.Deadline(); ok {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+		tctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+		return invoker(tctx, method, req, reply, cc, opts...)
+	}
+}
+
+func retryUnaryInterceptor(maxRetries int, backoff time.Duration) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		var err error
+		attempts := maxRetries + 1
+		if attempts < 1 {
+			attempts = 1
+		}
+		for i := 0; i < attempts; i++ {
+			err = invoker(ctx, method, req, reply, cc, opts...)
+			if err == nil || !isRetryable(err) {
+				return err
+			}
+			if backoff > 0 {
+				time.Sleep(backoff)
+			}
+		}
+		return err
+	}
+}
+
+func isRetryable(err error) bool {
+	st, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+	switch st.Code() {
+	case codes.Unavailable, codes.DeadlineExceeded:
+		return true
+	default:
+		return false
+	}
 }
