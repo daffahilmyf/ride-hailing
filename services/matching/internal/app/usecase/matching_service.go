@@ -118,7 +118,7 @@ func (s *MatchingService) HandleRideRequested(ctx context.Context, payload []byt
 		req := &ridev1.CreateOfferRequest{
 			RideId:          rideID,
 			DriverId:        candidate.DriverID,
-			OfferTtlSeconds: int32(offerTTL),
+			OfferTtlSeconds: int64(offerTTL),
 			IdempotencyKey:  envelope.RequestID,
 		}
 		ctx = withInternalToken(ctx, s.InternalToken)

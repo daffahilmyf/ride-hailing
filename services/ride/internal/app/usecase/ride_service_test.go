@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/domain"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/ports/outbound"
 )
 
@@ -174,6 +175,10 @@ func TestAssignStartComplete(t *testing.T) {
 	_, err = svc.StartMatching(context.Background(), ride.ID, "")
 	if err != nil {
 		t.Fatalf("start matching error: %v", err)
+	}
+
+	if err := repo.UpdateStatusIfCurrent(context.Background(), ride.ID, string(domain.StatusMatching), string(domain.StatusOffered), time.Now().UTC()); err != nil {
+		t.Fatalf("mark offered error: %v", err)
 	}
 
 	_, err = svc.AssignDriver(context.Background(), ride.ID, "d1", "")

@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 
 	ridev1 "github.com/daffahilmyf/ride-hailing/proto/ride/v1"
+	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/contextdata"
 )
 
 type fakeRideClient struct{}
@@ -42,6 +43,10 @@ func (f *fakeRideClient) ExpireOffer(ctx context.Context, in *ridev1.OfferAction
 func setupRideRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		contextdata.SetUserContext(c, "11111111-1111-1111-1111-111111111111", "rider")
+		c.Next()
+	})
 	r.POST("/rides", CreateRide(&fakeRideClient{}, ""))
 	r.POST("/rides/:ride_id/cancel", CancelRide(&fakeRideClient{}, ""))
 	r.POST("/rides/:ride_id/offers", CreateOffer(&fakeRideClient{}, ""))

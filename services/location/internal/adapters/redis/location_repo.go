@@ -108,13 +108,13 @@ func (r *LocationRepo) Nearby(ctx context.Context, lat float64, lng float64, rad
 	}
 	drivers := make([]outbound.NearbyDriver, 0, len(results))
 	for _, item := range results {
-		if item.Name == "" || item.Position == nil {
+		if item.Name == "" {
 			continue
 		}
 		drivers = append(drivers, outbound.NearbyDriver{
 			DriverID:  item.Name,
-			Lat:       item.Position.Latitude,
-			Lng:       item.Position.Longitude,
+			Lat:       item.Latitude,
+			Lng:       item.Longitude,
 			DistanceM: item.Dist,
 		})
 	}
