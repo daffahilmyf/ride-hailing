@@ -71,10 +71,13 @@ var serveCmd = &cobra.Command{
 			if err != nil {
 				logger.Fatal("nats.connect_failed", zap.Error(err))
 			}
+			logger.Info("nats.connected", zap.String("url", cfg.NATSURL))
 			js, err := nc.JetStream()
 			if err != nil {
 				logger.Fatal("nats.jetstream_failed", zap.Error(err))
 			}
+			logger.Info("nats.jetstream_ready")
+			ensureStream(logger, js, "DRIVERS", []string{"driver.*"})
 			publisher = broker.NewPublisher(js)
 		}
 		if nc != nil {
@@ -160,4 +163,24 @@ func serveMetrics(addr string, registry *prometheus.Registry, logger *zap.Logger
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		logger.Warn("metrics.listen_failed", zap.Error(err))
 	}
+}
+
+func ensureStream(logger *zap.Logger, js nats.JetStreamContext, name string, subjects []string) {
+	if js == nil {
+		return
+	}
+	if _, err := js.StreamInfo(name); err == nil {
+		return
+	}
+	_, err := js.AddStream(&nats.StreamConfig{
+		Name:      name,
+		Subjects:  subjects,
+		Storage:   nats.FileStorage,
+		Retention: nats.LimitsPolicy,
+	})
+	if err != nil {
+		logger.Warn("nats.stream_create_failed", zap.String("stream", name), zap.Error(err))
+		return
+	}
+	logger.Info("nats.stream_created", zap.String("stream", name))
 }

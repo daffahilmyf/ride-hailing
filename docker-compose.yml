@@ -82,6 +82,19 @@ services:
     mem_limit: 128m
     cpus: "0.25"
 
+  nats-init:
+    image: natsio/nats-box:latest
+    container_name: nats-init
+    depends_on:
+      - nats
+    command:
+      [
+        "sh",
+        "-c",
+        "nats --server nats:4222 stream add RIDES --subjects 'ride.*' --storage file --retention limits || true; nats --server nats:4222 stream add DRIVERS --subjects 'driver.*' --storage file --retention limits || true"
+      ]
+    restart: "no"
+
   postgres:
     container_name: postgres
     image: postgres:16-alpine

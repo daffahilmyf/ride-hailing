@@ -48,6 +48,9 @@ services:
     volumes:
       - nats_data:/data
 
+  nats-init:
+    restart: "no"
+
   postgres:
     restart: unless-stopped
     volumes:

@@ -52,6 +52,9 @@ services:
     volumes:
       - nats_data:/data
 
+  nats-init:
+    restart: "no"
+
   postgres:
     restart: unless-stopped
     mem_limit: 1024m

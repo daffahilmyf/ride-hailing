@@ -70,10 +70,13 @@ var serveCmd = &cobra.Command{
 			if err != nil {
 				logger.Fatal("nats.connect_failed", zap.Error(err))
 			}
+			logger.Info("nats.connected", zap.String("url", cfg.NATSURL))
 			js, err := nc.JetStream()
 			if err != nil {
 				logger.Fatal("nats.jetstream_failed", zap.Error(err))
 			}
+			logger.Info("nats.jetstream_ready")
+			ensureStream(logger, js, "RIDES", []string{"ride.*"})
 			publisher := broker.NewPublisher(js)
 			outboxMetrics := &metrics.OutboxMetrics{}
 			worker := &workers.OutboxWorker{
@@ -126,11 +129,36 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
+		logger.Info("service.started",
+			zap.String("service", cfg.ServiceName),
+			zap.String("grpc_addr", cfg.GRPCAddr),
+		)
+
 		healthSrv.SetServingStatus("ride.v1.RideService", healthpb.HealthCheckResponse_SERVING)
 		startIdempotencyCleanup(logger, idemCleanup, time.Duration(cfg.IdempotencyTTLSeconds)*time.Second)
 		waitForShutdown(srv.GRPC(), cfg.ShutdownTimeoutSeconds, logger, cancel)
 		return nil
 	},
+}
+
+func ensureStream(logger *zap.Logger, js nats.JetStreamContext, name string, subjects []string) {
+	if js == nil {
+		return
+	}
+	if _, err := js.StreamInfo(name); err == nil {
+		return
+	}
+	_, err := js.AddStream(&nats.StreamConfig{
+		Name:      name,
+		Subjects:  subjects,
+		Storage:   nats.FileStorage,
+		Retention: nats.LimitsPolicy,
+	})
+	if err != nil {
+		logger.Warn("nats.stream_create_failed", zap.String("stream", name), zap.Error(err))
+		return
+	}
+	logger.Info("nats.stream_created", zap.String("stream", name))
 }
 
 func startIdempotencyCleanup(logger *zap.Logger, cleaner *db.IdempotencyCleanup, ttl time.Duration) {
