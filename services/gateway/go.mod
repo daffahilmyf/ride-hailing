@@ -3,6 +3,7 @@ module github.com/daffahilmyf/ride-hailing/services/gateway
 go 1.22
 
 require (
+	github.com/daffahilmyf/ride-hailing/proto v0.0.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -12,6 +13,8 @@ require (
 	go.uber.org/zap v1.26.0
 	google.golang.org/grpc v1.63.2
 )
+
+replace github.com/daffahilmyf/ride-hailing/proto => ../../proto
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
