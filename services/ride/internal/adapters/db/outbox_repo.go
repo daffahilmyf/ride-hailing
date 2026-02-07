@@ -142,3 +142,24 @@ func (r *OutboxRepo) DeleteSentBefore(ctx context.Context, cutoff time.Time) (in
 	}
 	return result.RowsAffected, nil
 }
+
+func (r *OutboxRepo) ResetFailed(ctx context.Context, limit int) (int64, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	sub := r.DB.WithContext(ctx).Model(&outboxModel{}).
+		Select("id").
+		Where("status = ?", "FAILED").
+		Order("created_at").
+		Limit(limit)
+	result := r.DB.WithContext(ctx).Model(&outboxModel{}).
+		Where("id IN (?)", sub).
+		Updates(map[string]interface{}{
+			"status":       "PENDING",
+			"available_at": time.Now().UTC(),
+		})
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return result.RowsAffected, nil
+}

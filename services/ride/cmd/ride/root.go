@@ -25,6 +25,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(replayOutboxCmd)
 
 	rootCmd.PersistentFlags().String("config", "", "config file (default is ./config/config.yaml)")
 	rootCmd.PersistentFlags().String("grpc.addr", ":50051", "gRPC listen address")

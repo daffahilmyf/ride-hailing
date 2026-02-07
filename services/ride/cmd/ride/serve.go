@@ -72,16 +72,24 @@ var serveCmd = &cobra.Command{
 				logger.Fatal("nats.jetstream_failed", zap.Error(err))
 			}
 			publisher := broker.NewPublisher(js)
+			outboxMetrics := &metrics.OutboxMetrics{}
 			worker := &workers.OutboxWorker{
 				Repo:        outbox,
 				Publisher:   publisher,
 				Logger:      logger,
-				Metrics:     &metrics.OutboxMetrics{},
+				Metrics:     outboxMetrics,
 				BatchSize:   cfg.OutboxBatchSize,
 				MaxAttempts: cfg.OutboxMaxAttempts,
 				Interval:    time.Duration(cfg.OutboxIntervalMillis) * time.Millisecond,
 			}
 			go worker.Run(ctx)
+
+			reporter := &workers.MetricsReporter{
+				Outbox:   outboxMetrics,
+				Logger:   logger,
+				Interval: 30 * time.Second,
+			}
+			go reporter.Run(ctx)
 
 			retention := time.Duration(cfg.OutboxRetentionHours) * time.Hour
 			cleanup := &workers.OutboxCleanupWorker{
