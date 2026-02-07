@@ -56,6 +56,16 @@ func (w *OutboxWorker) flush(ctx context.Context, batch int, maxAttempts int) {
 	for _, msg := range messages {
 		if err := w.Publisher.Publish(ctx, msg.Topic, []byte(msg.Payload)); err != nil {
 			nextAttempt := time.Now().UTC().Add(backoffDuration(msg.Attempt))
+			if msg.Attempt >= maxAttempts {
+				_ = w.Repo.MarkFailed(ctx, msg.ID, err.Error(), time.Time{})
+				w.Logger.Warn("outbox.dlq",
+					zap.String("id", msg.ID),
+					zap.String("topic", msg.Topic),
+					zap.Int("attempt", msg.Attempt),
+					zap.Error(err),
+				)
+				continue
+			}
 			_ = w.Repo.MarkFailed(ctx, msg.ID, err.Error(), nextAttempt)
 			w.Logger.Warn("outbox.publish_failed",
 				zap.String("id", msg.ID),

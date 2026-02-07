@@ -19,6 +19,9 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	health "google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 var serveCmd = &cobra.Command{
@@ -50,6 +53,9 @@ var serveCmd = &cobra.Command{
 
 		metrics := grpcadapter.NewMetrics()
 		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, metrics)
+		healthSrv := health.NewServer()
+		healthpb.RegisterHealthServer(srv.GRPC(), healthSrv)
+		reflection.Register(srv.GRPC())
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -106,6 +112,7 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
+		healthSrv.SetServingStatus("ride.v1.RideService", healthpb.HealthCheckResponse_SERVING)
 		startIdempotencyCleanup(logger, idemCleanup, time.Duration(cfg.IdempotencyTTLSeconds)*time.Second)
 		waitForShutdown(srv.GRPC(), cfg.ShutdownTimeoutSeconds, logger, cancel)
 		return nil

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS outbox (
 CREATE INDEX IF NOT EXISTS outbox_topic_idx ON outbox (topic);
 CREATE INDEX IF NOT EXISTS outbox_created_at_idx ON outbox (created_at);
 CREATE INDEX IF NOT EXISTS outbox_status_idx ON outbox (status, available_at, attempt_count);
+CREATE INDEX IF NOT EXISTS outbox_failed_idx ON outbox (status);
 
 -- +goose Down
 DROP TABLE IF EXISTS outbox;

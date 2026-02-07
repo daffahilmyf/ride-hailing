@@ -116,7 +116,13 @@ func (r *OutboxRepo) MarkSent(ctx context.Context, id string) error {
 
 func (r *OutboxRepo) MarkFailed(ctx context.Context, id string, reason string, nextAttemptAt time.Time) error {
 	if nextAttemptAt.IsZero() {
-		nextAttemptAt = time.Now().UTC().Add(5 * time.Second)
+		return r.DB.WithContext(ctx).Model(&outboxModel{}).
+			Where("id = ?", id).
+			Updates(map[string]interface{}{
+				"status":       "FAILED",
+				"last_error":   reason,
+				"available_at": time.Now().UTC(),
+			}).Error
 	}
 	return r.DB.WithContext(ctx).Model(&outboxModel{}).
 		Where("id = ?", id).
