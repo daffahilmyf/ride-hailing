@@ -1,0 +1,19 @@
+service:
+  name: "api-gateway"
+
+http:
+  addr: ":8080"
+
+shutdown:
+  timeout: 10
+
+auth:
+  enabled: false
+  jwt_secret: ""
+  issuer: "ride-hailing"
+  audience: "ride-hailing-clients"
+
+grpc:
+  ride_addr: "localhost:50051"
+  matching_addr: "localhost:50052"
+  location_addr: "localhost:50053"
