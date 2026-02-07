@@ -1,11 +1,11 @@
 package infra
 
 type Config struct {
-	ServiceName string
-	HTTPAddr    string
+	ServiceName            string
+	HTTPAddr               string
 	ShutdownTimeoutSeconds int
-	Auth AuthConfig
-	GRPC GRPCConfig
+	Auth                   AuthConfig
+	GRPC                   GRPCConfig
 }
 
 type AuthConfig struct {
@@ -23,8 +23,8 @@ type GRPCConfig struct {
 
 func DefaultConfig() Config {
 	return Config{
-		ServiceName: "api-gateway",
-		HTTPAddr:    ":8080",
+		ServiceName:            "api-gateway",
+		HTTPAddr:               ":8080",
 		ShutdownTimeoutSeconds: 10,
 		Auth: AuthConfig{
 			Enabled:   false,
