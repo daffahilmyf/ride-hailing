@@ -6,8 +6,16 @@ type OutboxMessage struct {
 	ID      string
 	Topic   string
 	Payload string
+	Attempt int
 }
 
 type OutboxRepo interface {
 	Enqueue(ctx context.Context, msg OutboxMessage) error
+	Claim(ctx context.Context, limit int, maxAttempts int) ([]OutboxMessage, error)
+	MarkSent(ctx context.Context, id string) error
+	MarkFailed(ctx context.Context, id string, reason string) error
+}
+
+type OutboxPublisher interface {
+	Publish(ctx context.Context, subject string, payload []byte) error
 }

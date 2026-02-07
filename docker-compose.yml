@@ -26,10 +26,13 @@ services:
     environment:
       - RIDE_GRPC_ADDR=:50051
       - RIDE_POSTGRES_DSN=postgres://ride:ride@postgres:5432/rides?sslmode=disable
+      - RIDE_NATS_URL=nats://nats:4222
+      - RIDE_OUTBOX_ENABLED=true
     mem_limit: 256m
     cpus: "0.50"
     depends_on:
       - postgres
+      - nats
 
   nats:
     container_name: nats

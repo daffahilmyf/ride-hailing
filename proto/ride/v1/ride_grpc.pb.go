@@ -23,6 +23,7 @@ const (
 	RideService_StartMatching_FullMethodName = "/ride.v1.RideService/StartMatching"
 	RideService_AssignDriver_FullMethodName  = "/ride.v1.RideService/AssignDriver"
 	RideService_CancelRide_FullMethodName    = "/ride.v1.RideService/CancelRide"
+	RideService_CreateOffer_FullMethodName   = "/ride.v1.RideService/CreateOffer"
 )
 
 // RideServiceClient is the client API for RideService service.
@@ -39,6 +40,8 @@ type RideServiceClient interface {
 	AssignDriver(ctx context.Context, in *AssignDriverRequest, opts ...grpc.CallOption) (*AssignDriverResponse, error)
 	// CancelRide cancels a ride with a reason.
 	CancelRide(ctx context.Context, in *CancelRideRequest, opts ...grpc.CallOption) (*CancelRideResponse, error)
+	// CreateOffer creates a ride offer for a driver.
+	CreateOffer(ctx context.Context, in *CreateOfferRequest, opts ...grpc.CallOption) (*CreateOfferResponse, error)
 }
 
 type rideServiceClient struct {
@@ -89,6 +92,16 @@ func (c *rideServiceClient) CancelRide(ctx context.Context, in *CancelRideReques
 	return out, nil
 }
 
+func (c *rideServiceClient) CreateOffer(ctx context.Context, in *CreateOfferRequest, opts ...grpc.CallOption) (*CreateOfferResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateOfferResponse)
+	err := c.cc.Invoke(ctx, RideService_CreateOffer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RideServiceServer is the server API for RideService service.
 // All implementations must embed UnimplementedRideServiceServer
 // for forward compatibility.
@@ -103,6 +116,8 @@ type RideServiceServer interface {
 	AssignDriver(context.Context, *AssignDriverRequest) (*AssignDriverResponse, error)
 	// CancelRide cancels a ride with a reason.
 	CancelRide(context.Context, *CancelRideRequest) (*CancelRideResponse, error)
+	// CreateOffer creates a ride offer for a driver.
+	CreateOffer(context.Context, *CreateOfferRequest) (*CreateOfferResponse, error)
 	mustEmbedUnimplementedRideServiceServer()
 }
 
@@ -124,6 +139,9 @@ func (UnimplementedRideServiceServer) AssignDriver(context.Context, *AssignDrive
 }
 func (UnimplementedRideServiceServer) CancelRide(context.Context, *CancelRideRequest) (*CancelRideResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelRide not implemented")
+}
+func (UnimplementedRideServiceServer) CreateOffer(context.Context, *CreateOfferRequest) (*CreateOfferResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOffer not implemented")
 }
 func (UnimplementedRideServiceServer) mustEmbedUnimplementedRideServiceServer() {}
 func (UnimplementedRideServiceServer) testEmbeddedByValue()                     {}
@@ -218,6 +236,24 @@ func _RideService_CancelRide_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RideService_CreateOffer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOfferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RideServiceServer).CreateOffer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RideService_CreateOffer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RideServiceServer).CreateOffer(ctx, req.(*CreateOfferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RideService_ServiceDesc is the grpc.ServiceDesc for RideService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -240,6 +276,10 @@ var RideService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelRide",
 			Handler:    _RideService_CancelRide_Handler,
+		},
+		{
+			MethodName: "CreateOffer",
+			Handler:    _RideService_CreateOffer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

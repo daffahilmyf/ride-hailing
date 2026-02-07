@@ -21,6 +21,18 @@ func (f *fakeOutboxRepo) Enqueue(ctx context.Context, msg outbound.OutboxMessage
 	return nil
 }
 
+func (f *fakeOutboxRepo) Claim(ctx context.Context, limit int, maxAttempts int) ([]outbound.OutboxMessage, error) {
+	return nil, nil
+}
+
+func (f *fakeOutboxRepo) MarkSent(ctx context.Context, id string) error {
+	return nil
+}
+
+func (f *fakeOutboxRepo) MarkFailed(ctx context.Context, id string, reason string) error {
+	return nil
+}
+
 type fakeOfferRepo struct {
 	store []outbound.RideOffer
 }

@@ -14,6 +14,8 @@ service RideService {
   rpc AssignDriver(AssignDriverRequest) returns (AssignDriverResponse);
   // CancelRide cancels a ride with a reason.
   rpc CancelRide(CancelRideRequest) returns (CancelRideResponse);
+  // CreateOffer creates a ride offer for a driver.
+  rpc CreateOffer(CreateOfferRequest) returns (CreateOfferResponse);
 }
 
 message CreateRideRequest {
@@ -98,4 +100,32 @@ message CancelRideResponse {
   string ride_id = 1;
   // Current ride status.
   string status = 2;
+}
+
+message CreateOfferRequest {
+  // Ride identifier.
+  string ride_id = 1;
+  // Driver identifier.
+  string driver_id = 2;
+  // Offer TTL in seconds.
+  int64 offer_ttl_seconds = 3;
+  // Idempotency key for retry-safe calls.
+  string idempotency_key = 4;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 5;
+  // Request identifier for idempotency/tracing.
+  string request_id = 6;
+}
+
+message CreateOfferResponse {
+  // Offer identifier.
+  string offer_id = 1;
+  // Ride identifier.
+  string ride_id = 2;
+  // Driver identifier.
+  string driver_id = 3;
+  // Offer status.
+  string status = 4;
+  // Offer expiry epoch seconds.
+  int64 expires_at = 5;
 }

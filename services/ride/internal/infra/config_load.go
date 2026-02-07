@@ -9,5 +9,10 @@ func LoadConfig() Config {
 	cfg.ShutdownTimeoutSeconds = viper.GetInt("shutdown.timeout")
 	cfg.PostgresDSN = viper.GetString("postgres.dsn")
 	cfg.IdempotencyTTLSeconds = viper.GetInt("idempotency.ttl_seconds")
+	cfg.NATSURL = viper.GetString("nats.url")
+	cfg.OutboxEnabled = viper.GetBool("outbox.enabled")
+	cfg.OutboxIntervalMillis = viper.GetInt("outbox.interval_millis")
+	cfg.OutboxBatchSize = viper.GetInt("outbox.batch_size")
+	cfg.OutboxMaxAttempts = viper.GetInt("outbox.max_attempts")
 	return cfg
 }

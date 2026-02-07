@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"time"
 
 	ridev1 "github.com/daffahilmyf/ride-hailing/proto/ride/v1"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/usecase"
@@ -85,6 +86,25 @@ func (s *RideServer) CompleteRide(ctx context.Context, req *ridev1.AssignDriverR
 		return nil, mapError(err, "failed to complete ride")
 	}
 	return &ridev1.AssignDriverResponse{RideId: ride.ID, DriverId: req.GetDriverId(), Status: string(ride.Status)}, nil
+}
+
+func (s *RideServer) CreateOffer(ctx context.Context, req *ridev1.CreateOfferRequest) (*ridev1.CreateOfferResponse, error) {
+	offer, err := s.usecase.CreateOffer(ctx, usecase.StartMatchingCmd{
+		RideID:         req.GetRideId(),
+		DriverID:       req.GetDriverId(),
+		OfferTTL:       time.Duration(req.GetOfferTtlSeconds()) * time.Second,
+		IdempotencyKey: req.GetIdempotencyKey(),
+	})
+	if err != nil {
+		return nil, mapError(err, "failed to create offer")
+	}
+	return &ridev1.CreateOfferResponse{
+		OfferId:   offer.ID,
+		RideId:    offer.RideID,
+		DriverId:  offer.DriverID,
+		Status:    string(offer.Status),
+		ExpiresAt: offer.ExpiresAt.Unix(),
+	}, nil
 }
 
 func mapError(err error, msg string) error {

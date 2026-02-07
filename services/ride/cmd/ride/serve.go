@@ -8,11 +8,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/broker"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/db"
 	grpcadapter "github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/grpc"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/handlers"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/usecase"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/infra"
+	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -48,6 +51,30 @@ var serveCmd = &cobra.Command{
 		metrics := grpcadapter.NewMetrics()
 		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, metrics)
 
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		if cfg.OutboxEnabled {
+			nc, err := nats.Connect(cfg.NATSURL)
+			if err != nil {
+				logger.Fatal("nats.connect_failed", zap.Error(err))
+			}
+			js, err := nc.JetStream()
+			if err != nil {
+				logger.Fatal("nats.jetstream_failed", zap.Error(err))
+			}
+			publisher := broker.NewPublisher(js)
+			worker := &app.OutboxWorker{
+				Repo:        outbox,
+				Publisher:   publisher,
+				Logger:      logger,
+				BatchSize:   cfg.OutboxBatchSize,
+				MaxAttempts: cfg.OutboxMaxAttempts,
+				Interval:    time.Duration(cfg.OutboxIntervalMillis) * time.Millisecond,
+			}
+			go worker.Run(ctx)
+		}
+
 		lis, err := net.Listen("tcp", cfg.GRPCAddr)
 		if err != nil {
 			logger.Fatal("grpc.listen_failed", zap.Error(err))
@@ -60,7 +87,7 @@ var serveCmd = &cobra.Command{
 		}()
 
 		startIdempotencyCleanup(logger, idemCleanup, time.Duration(cfg.IdempotencyTTLSeconds)*time.Second)
-		waitForShutdown(srv.GRPC(), cfg.ShutdownTimeoutSeconds, logger)
+		waitForShutdown(srv.GRPC(), cfg.ShutdownTimeoutSeconds, logger, cancel)
 		return nil
 	},
 }
@@ -85,12 +112,13 @@ func startIdempotencyCleanup(logger *zap.Logger, cleaner *db.IdempotencyCleanup,
 	}()
 }
 
-func waitForShutdown(srv *grpc.Server, timeoutSeconds int, logger *zap.Logger) {
+func waitForShutdown(srv *grpc.Server, timeoutSeconds int, logger *zap.Logger, cancel context.CancelFunc) {
 	signals := []os.Signal{syscall.SIGINT, syscall.SIGTERM}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, signals...)
 
 	<-stop
+	cancel()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSeconds)*time.Second)
 	defer cancel()

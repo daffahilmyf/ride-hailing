@@ -579,6 +579,177 @@ func (x *CancelRideResponse) GetStatus() string {
 	return ""
 }
 
+type CreateOfferRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Ride identifier.
+	RideId string `protobuf:"bytes,1,opt,name=ride_id,json=rideId,proto3" json:"ride_id,omitempty"`
+	// Driver identifier.
+	DriverId string `protobuf:"bytes,2,opt,name=driver_id,json=driverId,proto3" json:"driver_id,omitempty"`
+	// Offer TTL in seconds.
+	OfferTtlSeconds int64 `protobuf:"varint,3,opt,name=offer_ttl_seconds,json=offerTtlSeconds,proto3" json:"offer_ttl_seconds,omitempty"`
+	// Idempotency key for retry-safe calls.
+	IdempotencyKey string `protobuf:"bytes,4,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	// Trace identifier for cross-service correlation.
+	TraceId string `protobuf:"bytes,5,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
+	// Request identifier for idempotency/tracing.
+	RequestId     string `protobuf:"bytes,6,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateOfferRequest) Reset() {
+	*x = CreateOfferRequest{}
+	mi := &file_ride_v1_ride_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateOfferRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateOfferRequest) ProtoMessage() {}
+
+func (x *CreateOfferRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ride_v1_ride_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateOfferRequest.ProtoReflect.Descriptor instead.
+func (*CreateOfferRequest) Descriptor() ([]byte, []int) {
+	return file_ride_v1_ride_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CreateOfferRequest) GetRideId() string {
+	if x != nil {
+		return x.RideId
+	}
+	return ""
+}
+
+func (x *CreateOfferRequest) GetDriverId() string {
+	if x != nil {
+		return x.DriverId
+	}
+	return ""
+}
+
+func (x *CreateOfferRequest) GetOfferTtlSeconds() int64 {
+	if x != nil {
+		return x.OfferTtlSeconds
+	}
+	return 0
+}
+
+func (x *CreateOfferRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
+}
+
+func (x *CreateOfferRequest) GetTraceId() string {
+	if x != nil {
+		return x.TraceId
+	}
+	return ""
+}
+
+func (x *CreateOfferRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+type CreateOfferResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Offer identifier.
+	OfferId string `protobuf:"bytes,1,opt,name=offer_id,json=offerId,proto3" json:"offer_id,omitempty"`
+	// Ride identifier.
+	RideId string `protobuf:"bytes,2,opt,name=ride_id,json=rideId,proto3" json:"ride_id,omitempty"`
+	// Driver identifier.
+	DriverId string `protobuf:"bytes,3,opt,name=driver_id,json=driverId,proto3" json:"driver_id,omitempty"`
+	// Offer status.
+	Status string `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	// Offer expiry epoch seconds.
+	ExpiresAt     int64 `protobuf:"varint,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateOfferResponse) Reset() {
+	*x = CreateOfferResponse{}
+	mi := &file_ride_v1_ride_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateOfferResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateOfferResponse) ProtoMessage() {}
+
+func (x *CreateOfferResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ride_v1_ride_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateOfferResponse.ProtoReflect.Descriptor instead.
+func (*CreateOfferResponse) Descriptor() ([]byte, []int) {
+	return file_ride_v1_ride_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *CreateOfferResponse) GetOfferId() string {
+	if x != nil {
+		return x.OfferId
+	}
+	return ""
+}
+
+func (x *CreateOfferResponse) GetRideId() string {
+	if x != nil {
+		return x.RideId
+	}
+	return ""
+}
+
+func (x *CreateOfferResponse) GetDriverId() string {
+	if x != nil {
+		return x.DriverId
+	}
+	return ""
+}
+
+func (x *CreateOfferResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *CreateOfferResponse) GetExpiresAt() int64 {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return 0
+}
+
 var File_ride_v1_ride_proto protoreflect.FileDescriptor
 
 const file_ride_v1_ride_proto_rawDesc = "" +
@@ -629,14 +800,30 @@ const file_ride_v1_ride_proto_rawDesc = "" +
 	"request_id\x18\x04 \x01(\tR\trequestId\"E\n" +
 	"\x12CancelRideResponse\x12\x17\n" +
 	"\aride_id\x18\x01 \x01(\tR\x06rideId\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status2\xb8\x02\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"\xd9\x01\n" +
+	"\x12CreateOfferRequest\x12\x17\n" +
+	"\aride_id\x18\x01 \x01(\tR\x06rideId\x12\x1b\n" +
+	"\tdriver_id\x18\x02 \x01(\tR\bdriverId\x12*\n" +
+	"\x11offer_ttl_seconds\x18\x03 \x01(\x03R\x0fofferTtlSeconds\x12'\n" +
+	"\x0fidempotency_key\x18\x04 \x01(\tR\x0eidempotencyKey\x12\x19\n" +
+	"\btrace_id\x18\x05 \x01(\tR\atraceId\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x06 \x01(\tR\trequestId\"\x9d\x01\n" +
+	"\x13CreateOfferResponse\x12\x19\n" +
+	"\boffer_id\x18\x01 \x01(\tR\aofferId\x12\x17\n" +
+	"\aride_id\x18\x02 \x01(\tR\x06rideId\x12\x1b\n" +
+	"\tdriver_id\x18\x03 \x01(\tR\bdriverId\x12\x16\n" +
+	"\x06status\x18\x04 \x01(\tR\x06status\x12\x1d\n" +
+	"\n" +
+	"expires_at\x18\x05 \x01(\x03R\texpiresAt2\x82\x03\n" +
 	"\vRideService\x12E\n" +
 	"\n" +
 	"CreateRide\x12\x1a.ride.v1.CreateRideRequest\x1a\x1b.ride.v1.CreateRideResponse\x12N\n" +
 	"\rStartMatching\x12\x1d.ride.v1.StartMatchingRequest\x1a\x1e.ride.v1.StartMatchingResponse\x12K\n" +
 	"\fAssignDriver\x12\x1c.ride.v1.AssignDriverRequest\x1a\x1d.ride.v1.AssignDriverResponse\x12E\n" +
 	"\n" +
-	"CancelRide\x12\x1a.ride.v1.CancelRideRequest\x1a\x1b.ride.v1.CancelRideResponseB:Z8github.com/daffahilmyf/ride-hailing/proto/ride/v1;ridev1b\x06proto3"
+	"CancelRide\x12\x1a.ride.v1.CancelRideRequest\x1a\x1b.ride.v1.CancelRideResponse\x12H\n" +
+	"\vCreateOffer\x12\x1b.ride.v1.CreateOfferRequest\x1a\x1c.ride.v1.CreateOfferResponseB:Z8github.com/daffahilmyf/ride-hailing/proto/ride/v1;ridev1b\x06proto3"
 
 var (
 	file_ride_v1_ride_proto_rawDescOnce sync.Once
@@ -650,7 +837,7 @@ func file_ride_v1_ride_proto_rawDescGZIP() []byte {
 	return file_ride_v1_ride_proto_rawDescData
 }
 
-var file_ride_v1_ride_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_ride_v1_ride_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_ride_v1_ride_proto_goTypes = []any{
 	(*CreateRideRequest)(nil),     // 0: ride.v1.CreateRideRequest
 	(*CreateRideResponse)(nil),    // 1: ride.v1.CreateRideResponse
@@ -660,18 +847,22 @@ var file_ride_v1_ride_proto_goTypes = []any{
 	(*AssignDriverResponse)(nil),  // 5: ride.v1.AssignDriverResponse
 	(*CancelRideRequest)(nil),     // 6: ride.v1.CancelRideRequest
 	(*CancelRideResponse)(nil),    // 7: ride.v1.CancelRideResponse
+	(*CreateOfferRequest)(nil),    // 8: ride.v1.CreateOfferRequest
+	(*CreateOfferResponse)(nil),   // 9: ride.v1.CreateOfferResponse
 }
 var file_ride_v1_ride_proto_depIdxs = []int32{
 	0, // 0: ride.v1.RideService.CreateRide:input_type -> ride.v1.CreateRideRequest
 	2, // 1: ride.v1.RideService.StartMatching:input_type -> ride.v1.StartMatchingRequest
 	4, // 2: ride.v1.RideService.AssignDriver:input_type -> ride.v1.AssignDriverRequest
 	6, // 3: ride.v1.RideService.CancelRide:input_type -> ride.v1.CancelRideRequest
-	1, // 4: ride.v1.RideService.CreateRide:output_type -> ride.v1.CreateRideResponse
-	3, // 5: ride.v1.RideService.StartMatching:output_type -> ride.v1.StartMatchingResponse
-	5, // 6: ride.v1.RideService.AssignDriver:output_type -> ride.v1.AssignDriverResponse
-	7, // 7: ride.v1.RideService.CancelRide:output_type -> ride.v1.CancelRideResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
+	8, // 4: ride.v1.RideService.CreateOffer:input_type -> ride.v1.CreateOfferRequest
+	1, // 5: ride.v1.RideService.CreateRide:output_type -> ride.v1.CreateRideResponse
+	3, // 6: ride.v1.RideService.StartMatching:output_type -> ride.v1.StartMatchingResponse
+	5, // 7: ride.v1.RideService.AssignDriver:output_type -> ride.v1.AssignDriverResponse
+	7, // 8: ride.v1.RideService.CancelRide:output_type -> ride.v1.CancelRideResponse
+	9, // 9: ride.v1.RideService.CreateOffer:output_type -> ride.v1.CreateOfferResponse
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -688,7 +879,7 @@ func file_ride_v1_ride_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ride_v1_ride_proto_rawDesc), len(file_ride_v1_ride_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

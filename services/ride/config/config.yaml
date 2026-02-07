@@ -12,3 +12,12 @@ postgres:
 
 idempotency:
   ttl_seconds: 86400
+
+nats:
+  url: "nats://nats:4222"
+
+outbox:
+  enabled: true
+  interval_millis: 2000
+  batch_size: 25
+  max_attempts: 10
