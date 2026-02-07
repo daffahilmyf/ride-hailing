@@ -52,6 +52,9 @@ func (r *RideRepo) Create(ctx context.Context, ride outbound.Ride) error {
 func (r *RideRepo) Get(ctx context.Context, id string) (outbound.Ride, error) {
 	var m rideModel
 	if err := r.DB.WithContext(ctx).First(&m, "id = ?", id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return outbound.Ride{}, outbound.ErrNotFound
+		}
 		return outbound.Ride{}, err
 	}
 	return outbound.Ride{
@@ -68,14 +71,50 @@ func (r *RideRepo) Get(ctx context.Context, id string) (outbound.Ride, error) {
 	}, nil
 }
 
-func (r *RideRepo) UpdateStatus(ctx context.Context, id string, status string, updatedAt time.Time) error {
-	return r.DB.WithContext(ctx).Model(&rideModel{}).
-		Where("id = ?", id).
-		Updates(map[string]interface{}{"status": status, "updated_at": updatedAt}).Error
+func (r *RideRepo) UpdateStatusIfCurrent(ctx context.Context, id string, currentStatus string, nextStatus string, updatedAt time.Time) error {
+	result := r.DB.WithContext(ctx).Model(&rideModel{}).
+		Where("id = ? AND status = ?", id, currentStatus).
+		Updates(map[string]interface{}{"status": nextStatus, "updated_at": updatedAt})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected > 0 {
+		return nil
+	}
+	if exists, err := r.exists(ctx, id); err != nil {
+		return err
+	} else if !exists {
+		return outbound.ErrNotFound
+	}
+	return outbound.ErrConflict
 }
 
-func (r *RideRepo) AssignDriver(ctx context.Context, id string, driverID string, status string, updatedAt time.Time) error {
-	return r.DB.WithContext(ctx).Model(&rideModel{}).
-		Where("id = ?", id).
-		Updates(map[string]interface{}{"driver_id": driverID, "status": status, "updated_at": updatedAt}).Error
+func (r *RideRepo) AssignDriverIfCurrent(ctx context.Context, id string, driverID string, currentStatus string, nextStatus string, updatedAt time.Time) error {
+	result := r.DB.WithContext(ctx).Model(&rideModel{}).
+		Where("id = ? AND status = ?", id, currentStatus).
+		Updates(map[string]interface{}{
+			"driver_id":  driverID,
+			"status":     nextStatus,
+			"updated_at": updatedAt,
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected > 0 {
+		return nil
+	}
+	if exists, err := r.exists(ctx, id); err != nil {
+		return err
+	} else if !exists {
+		return outbound.ErrNotFound
+	}
+	return outbound.ErrConflict
+}
+
+func (r *RideRepo) exists(ctx context.Context, id string) (bool, error) {
+	var count int64
+	if err := r.DB.WithContext(ctx).Model(&rideModel{}).Where("id = ?", id).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }

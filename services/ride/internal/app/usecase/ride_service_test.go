@@ -22,21 +22,37 @@ func (f *fakeRideRepo) Create(ctx context.Context, ride outbound.Ride) error {
 }
 
 func (f *fakeRideRepo) Get(ctx context.Context, id string) (outbound.Ride, error) {
-	return f.store[id], nil
+	ride, ok := f.store[id]
+	if !ok {
+		return outbound.Ride{}, outbound.ErrNotFound
+	}
+	return ride, nil
 }
 
-func (f *fakeRideRepo) UpdateStatus(ctx context.Context, id string, status string, updatedAt time.Time) error {
-	r := f.store[id]
-	r.Status = status
+func (f *fakeRideRepo) UpdateStatusIfCurrent(ctx context.Context, id string, currentStatus string, nextStatus string, updatedAt time.Time) error {
+	r, ok := f.store[id]
+	if !ok {
+		return outbound.ErrNotFound
+	}
+	if r.Status != currentStatus {
+		return outbound.ErrConflict
+	}
+	r.Status = nextStatus
 	r.UpdatedAt = updatedAt
 	f.store[id] = r
 	return nil
 }
 
-func (f *fakeRideRepo) AssignDriver(ctx context.Context, id string, driverID string, status string, updatedAt time.Time) error {
-	r := f.store[id]
+func (f *fakeRideRepo) AssignDriverIfCurrent(ctx context.Context, id string, driverID string, currentStatus string, nextStatus string, updatedAt time.Time) error {
+	r, ok := f.store[id]
+	if !ok {
+		return outbound.ErrNotFound
+	}
+	if r.Status != currentStatus {
+		return outbound.ErrConflict
+	}
 	r.DriverID = &driverID
-	r.Status = status
+	r.Status = nextStatus
 	r.UpdatedAt = updatedAt
 	f.store[id] = r
 	return nil

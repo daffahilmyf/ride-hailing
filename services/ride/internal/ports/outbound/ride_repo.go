@@ -2,7 +2,13 @@ package outbound
 
 import (
 	"context"
+	"errors"
 	"time"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
+	ErrConflict = errors.New("conflict")
 )
 
 type Ride struct {
@@ -21,6 +27,6 @@ type Ride struct {
 type RideRepo interface {
 	Create(ctx context.Context, ride Ride) error
 	Get(ctx context.Context, id string) (Ride, error)
-	UpdateStatus(ctx context.Context, id string, status string, updatedAt time.Time) error
-	AssignDriver(ctx context.Context, id string, driverID string, status string, updatedAt time.Time) error
+	UpdateStatusIfCurrent(ctx context.Context, id string, currentStatus string, nextStatus string, updatedAt time.Time) error
+	AssignDriverIfCurrent(ctx context.Context, id string, driverID string, currentStatus string, nextStatus string, updatedAt time.Time) error
 }

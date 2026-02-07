@@ -69,7 +69,7 @@ func (s *RideService) CancelRide(ctx context.Context, id string, reason string, 
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		_ = reason
@@ -87,7 +87,7 @@ func (s *RideService) StartMatching(ctx context.Context, rideID string, idempote
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		return updated, nil
@@ -107,7 +107,7 @@ func (s *RideService) AssignDriver(ctx context.Context, rideID, driverID string,
 		}
 		next.DriverID = &driverID
 
-		if err := repo.AssignDriver(ctx, next.ID, driverID, string(next.Status), time.Now().UTC()); err != nil {
+		if err := repo.AssignDriverIfCurrent(ctx, next.ID, driverID, string(ride.Status), string(next.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		return next, nil
@@ -124,7 +124,7 @@ func (s *RideService) StartRide(ctx context.Context, rideID string, idempotencyK
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		return updated, nil
@@ -141,7 +141,7 @@ func (s *RideService) CompleteRide(ctx context.Context, rideID string, idempoten
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		return updated, nil

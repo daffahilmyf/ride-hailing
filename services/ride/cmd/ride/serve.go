@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/db"
-	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app"
+	grpcadapter "github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/grpc"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/handlers"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/usecase"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/infra"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 )
 
 var serveCmd = &cobra.Command{
@@ -35,8 +35,8 @@ var serveCmd = &cobra.Command{
 		txMgr := db.NewTxManager(pg.DB)
 		uc := &usecase.RideService{Repo: repo, Idempotency: idem, TxManager: txMgr}
 
-		srv := grpc.NewServer()
-		app.RegisterGRPC(srv, logger, uc)
+		metrics := grpcadapter.NewMetrics()
+		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, metrics)
 
 		lis, err := net.Listen("tcp", cfg.GRPCAddr)
 		if err != nil {
@@ -44,12 +44,12 @@ var serveCmd = &cobra.Command{
 		}
 
 		go func() {
-			if err := srv.Serve(lis); err != nil {
+			if err := srv.GRPC().Serve(lis); err != nil {
 				logger.Fatal("grpc.serve_failed", zap.Error(err))
 			}
 		}()
 
-		waitForShutdown(srv, cfg.ShutdownTimeoutSeconds, logger)
+		waitForShutdown(srv.GRPC(), cfg.ShutdownTimeoutSeconds, logger)
 		return nil
 	},
 }
