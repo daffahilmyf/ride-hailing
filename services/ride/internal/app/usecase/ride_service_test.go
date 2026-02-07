@@ -57,7 +57,7 @@ func TestCreateAndCancelRide(t *testing.T) {
 		t.Fatalf("create error: %v", err)
 	}
 
-	_, err = svc.CancelRide(context.Background(), ride.ID, "test")
+	_, err = svc.CancelRide(context.Background(), ride.ID, "test", "")
 	if err != nil {
 		t.Fatalf("cancel error: %v", err)
 	}
@@ -78,22 +78,22 @@ func TestAssignStartComplete(t *testing.T) {
 		t.Fatalf("create error: %v", err)
 	}
 
-	_, err = svc.StartMatching(context.Background(), ride.ID)
+	_, err = svc.StartMatching(context.Background(), ride.ID, "")
 	if err != nil {
 		t.Fatalf("start matching error: %v", err)
 	}
 
-	_, err = svc.AssignDriver(context.Background(), ride.ID, "d1")
+	_, err = svc.AssignDriver(context.Background(), ride.ID, "d1", "")
 	if err != nil {
 		t.Fatalf("assign error: %v", err)
 	}
 
-	_, err = svc.StartRide(context.Background(), ride.ID)
+	_, err = svc.StartRide(context.Background(), ride.ID, "")
 	if err != nil {
 		t.Fatalf("start ride error: %v", err)
 	}
 
-	_, err = svc.CompleteRide(context.Background(), ride.ID)
+	_, err = svc.CompleteRide(context.Background(), ride.ID, "")
 	if err != nil {
 		t.Fatalf("complete error: %v", err)
 	}

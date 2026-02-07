@@ -31,7 +31,9 @@ var serveCmd = &cobra.Command{
 		}
 
 		repo := db.NewRideRepo(pg.DB)
-		uc := &usecase.RideService{Repo: repo}
+		idem := db.NewIdempotencyRepo(pg.DB)
+		txMgr := db.NewTxManager(pg.DB)
+		uc := &usecase.RideService{Repo: repo, Idempotency: idem, TxManager: txMgr}
 
 		srv := grpc.NewServer()
 		app.RegisterGRPC(srv, logger, uc)

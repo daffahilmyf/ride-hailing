@@ -14,6 +14,7 @@ import (
 type RideService struct {
 	Repo        outbound.RideRepo
 	Idempotency outbound.IdempotencyRepo
+	TxManager   outbound.TxManager
 }
 
 type CreateRideCmd struct {
@@ -26,7 +27,7 @@ type CreateRideCmd struct {
 }
 
 func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain.Ride, error) {
-	return s.withIdempotency(ctx, cmd.IdempotencyKey, func() (domain.Ride, error) {
+	return s.withIdempotency(ctx, cmd.IdempotencyKey, func(repo outbound.RideRepo, idem outbound.IdempotencyRepo) (domain.Ride, error) {
 		now := time.Now().UTC()
 		ride := domain.Ride{
 			ID:         uuid.NewString(),
@@ -38,7 +39,7 @@ func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain
 			DropoffLng: cmd.DropoffLng,
 		}
 
-		err := s.Repo.Create(ctx, outbound.Ride{
+		err := repo.Create(ctx, outbound.Ride{
 			ID:         ride.ID,
 			RiderID:    ride.RiderID,
 			DriverID:   ride.DriverID,
@@ -58,8 +59,8 @@ func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain
 }
 
 func (s *RideService) CancelRide(ctx context.Context, id string, reason string, idempotencyKey string) (domain.Ride, error) {
-	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
-		ride, err := s.loadRide(ctx, id)
+	return s.withIdempotency(ctx, idempotencyKey, func(repo outbound.RideRepo, _ outbound.IdempotencyRepo) (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, id, repo)
 		if err != nil {
 			return domain.Ride{}, err
 		}
@@ -68,7 +69,7 @@ func (s *RideService) CancelRide(ctx context.Context, id string, reason string, 
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		_ = reason
@@ -77,8 +78,8 @@ func (s *RideService) CancelRide(ctx context.Context, id string, reason string, 
 }
 
 func (s *RideService) StartMatching(ctx context.Context, rideID string, idempotencyKey string) (domain.Ride, error) {
-	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
-		ride, err := s.loadRide(ctx, rideID)
+	return s.withIdempotency(ctx, idempotencyKey, func(repo outbound.RideRepo, _ outbound.IdempotencyRepo) (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, rideID, repo)
 		if err != nil {
 			return domain.Ride{}, err
 		}
@@ -86,7 +87,7 @@ func (s *RideService) StartMatching(ctx context.Context, rideID string, idempote
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		return updated, nil
@@ -94,8 +95,8 @@ func (s *RideService) StartMatching(ctx context.Context, rideID string, idempote
 }
 
 func (s *RideService) AssignDriver(ctx context.Context, rideID, driverID string, idempotencyKey string) (domain.Ride, error) {
-	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
-		ride, err := s.loadRide(ctx, rideID)
+	return s.withIdempotency(ctx, idempotencyKey, func(repo outbound.RideRepo, _ outbound.IdempotencyRepo) (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, rideID, repo)
 		if err != nil {
 			return domain.Ride{}, err
 		}
@@ -106,7 +107,7 @@ func (s *RideService) AssignDriver(ctx context.Context, rideID, driverID string,
 		}
 		next.DriverID = &driverID
 
-		if err := s.Repo.AssignDriver(ctx, next.ID, driverID, string(next.Status), time.Now().UTC()); err != nil {
+		if err := repo.AssignDriver(ctx, next.ID, driverID, string(next.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		return next, nil
@@ -114,8 +115,8 @@ func (s *RideService) AssignDriver(ctx context.Context, rideID, driverID string,
 }
 
 func (s *RideService) StartRide(ctx context.Context, rideID string, idempotencyKey string) (domain.Ride, error) {
-	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
-		ride, err := s.loadRide(ctx, rideID)
+	return s.withIdempotency(ctx, idempotencyKey, func(repo outbound.RideRepo, _ outbound.IdempotencyRepo) (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, rideID, repo)
 		if err != nil {
 			return domain.Ride{}, err
 		}
@@ -123,7 +124,7 @@ func (s *RideService) StartRide(ctx context.Context, rideID string, idempotencyK
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		return updated, nil
@@ -131,8 +132,8 @@ func (s *RideService) StartRide(ctx context.Context, rideID string, idempotencyK
 }
 
 func (s *RideService) CompleteRide(ctx context.Context, rideID string, idempotencyKey string) (domain.Ride, error) {
-	return s.withIdempotency(ctx, idempotencyKey, func() (domain.Ride, error) {
-		ride, err := s.loadRide(ctx, rideID)
+	return s.withIdempotency(ctx, idempotencyKey, func(repo outbound.RideRepo, _ outbound.IdempotencyRepo) (domain.Ride, error) {
+		ride, err := s.loadRide(ctx, rideID, repo)
 		if err != nil {
 			return domain.Ride{}, err
 		}
@@ -140,15 +141,15 @@ func (s *RideService) CompleteRide(ctx context.Context, rideID string, idempoten
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
 			return domain.Ride{}, err
 		}
 		return updated, nil
 	})
 }
 
-func (s *RideService) loadRide(ctx context.Context, id string) (domain.Ride, error) {
-	rideRow, err := s.Repo.Get(ctx, id)
+func (s *RideService) loadRide(ctx context.Context, id string, repo outbound.RideRepo) (domain.Ride, error) {
+	rideRow, err := repo.Get(ctx, id)
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -165,7 +166,7 @@ func (s *RideService) loadRide(ctx context.Context, id string) (domain.Ride, err
 	}, nil
 }
 
-func (s *RideService) withIdempotency(ctx context.Context, key string, fn func() (domain.Ride, error)) (domain.Ride, error) {
+func (s *RideService) withIdempotency(ctx context.Context, key string, fn func(repo outbound.RideRepo, idem outbound.IdempotencyRepo) (domain.Ride, error)) (domain.Ride, error) {
 	if key != "" && s.Idempotency != nil {
 		if val, ok, err := s.Idempotency.Get(ctx, key); err == nil && ok {
 			var ride domain.Ride
@@ -175,14 +176,38 @@ func (s *RideService) withIdempotency(ctx context.Context, key string, fn func()
 		}
 	}
 
-	ride, err := fn()
+	repo := s.Repo
+	idem := s.Idempotency
+	var tx outbound.Tx
+	if s.TxManager != nil {
+		var err error
+		tx, err = s.TxManager.Begin()
+		if err != nil {
+			return domain.Ride{}, err
+		}
+		repo = tx.RideRepo()
+		idem = tx.IdempotencyRepo()
+		defer func() {
+			if tx != nil {
+				_ = tx.Rollback()
+			}
+		}()
+	}
+
+	ride, err := fn(repo, idem)
 	if err != nil {
 		return domain.Ride{}, err
 	}
 
-	if key != "" && s.Idempotency != nil {
+	if key != "" && idem != nil {
 		if b, err := json.Marshal(ride); err == nil {
-			_ = s.Idempotency.Save(ctx, key, string(b))
+			_ = idem.Save(ctx, key, string(b))
+		}
+	}
+
+	if tx != nil {
+		if err := tx.Commit(); err != nil {
+			return domain.Ride{}, err
 		}
 	}
 	return ride, nil
