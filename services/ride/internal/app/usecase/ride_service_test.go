@@ -34,11 +34,38 @@ func (f *fakeOutboxRepo) MarkFailed(ctx context.Context, id string, reason strin
 }
 
 type fakeOfferRepo struct {
-	store []outbound.RideOffer
+	store map[string]outbound.RideOffer
 }
 
 func (f *fakeOfferRepo) Create(ctx context.Context, offer outbound.RideOffer) error {
-	f.store = append(f.store, offer)
+	if f.store == nil {
+		f.store = map[string]outbound.RideOffer{}
+	}
+	f.store[offer.ID] = offer
+	return nil
+}
+
+func (f *fakeOfferRepo) Get(ctx context.Context, id string) (outbound.RideOffer, error) {
+	if f.store == nil {
+		return outbound.RideOffer{}, outbound.ErrNotFound
+	}
+	offer, ok := f.store[id]
+	if !ok {
+		return outbound.RideOffer{}, outbound.ErrNotFound
+	}
+	return offer, nil
+}
+
+func (f *fakeOfferRepo) UpdateStatus(ctx context.Context, id string, status string) error {
+	if f.store == nil {
+		return outbound.ErrNotFound
+	}
+	offer, ok := f.store[id]
+	if !ok {
+		return outbound.ErrNotFound
+	}
+	offer.Status = status
+	f.store[id] = offer
 	return nil
 }
 
