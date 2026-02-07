@@ -52,6 +52,26 @@ services:
       - redis
       - nats
 
+  matching:
+    container_name: service-matching
+    build:
+      context: .
+      dockerfile: services/matching/Dockerfile
+    ports:
+      - "50052:50052"
+    environment:
+      - MATCHING_GRPC_ADDR=:50052
+      - MATCHING_REDIS_ADDR=redis:6379
+      - MATCHING_NATS_URL=nats://nats:4222
+      - MATCHING_EVENTS_ENABLED=true
+      - MATCHING_RIDE_ADDR=ride:50051
+    mem_limit: 256m
+    cpus: "0.50"
+    depends_on:
+      - redis
+      - nats
+      - ride
+
   nats:
     container_name: nats
     image: nats:2.10
