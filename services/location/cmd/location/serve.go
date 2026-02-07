@@ -55,6 +55,7 @@ var serveCmd = &cobra.Command{
 		if err := redisClient.Ping(context.Background()).Err(); err != nil {
 			logger.Fatal("redis.connect_failed", zap.Error(err))
 		}
+		logger.Info("redis.connected", zap.String("addr", cfg.RedisAddr))
 		defer redisClient.Close()
 
 		repo := redisadapter.NewLocationRepo(redisClient, cfg.LocationKeyPrefix, cfg.GeoKey)

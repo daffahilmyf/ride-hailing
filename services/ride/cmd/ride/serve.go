@@ -37,6 +37,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal("db.connect_failed", zap.Error(err))
 		}
+		logger.Info("db.connected", zap.String("dsn", cfg.PostgresDSN))
 
 		repo := db.NewRideRepo(pg.DB)
 		idem := db.NewIdempotencyRepo(pg.DB)

@@ -40,12 +40,14 @@ var serveCmd = &cobra.Command{
 			if err != nil {
 				logger.Fatal("grpc.clients.failed", zap.Error(err))
 			}
+			logger.Info("grpc.clients.connected")
 			grpcClients = clients
 		} else {
 			clients, err := grpcadapter.NewClients(context.Background(), cfg.GRPC)
 			if err != nil {
 				logger.Warn("grpc.clients.failed", zap.Error(err))
 			}
+			logger.Info("grpc.clients.ready")
 			grpcClients = clients
 		}
 		if grpcClients != nil {
@@ -57,6 +59,10 @@ var serveCmd = &cobra.Command{
 			Password: cfg.Redis.Password,
 			DB:       cfg.Redis.DB,
 		})
+		if err := redisClient.Ping(context.Background()).Err(); err != nil {
+			logger.Fatal("redis.connect_failed", zap.Error(err))
+		}
+		logger.Info("redis.connected", zap.String("addr", cfg.Redis.Addr))
 		defer redisClient.Close()
 
 		deps := app.Deps{
@@ -76,6 +82,7 @@ var serveCmd = &cobra.Command{
 				logger.Fatal("http.server.failed", zap.Error(err))
 			}
 		}()
+		logger.Info("service.started", zap.String("service", cfg.ServiceName), zap.String("http_addr", cfg.HTTPAddr))
 
 		waitForShutdown(server, cfg.ShutdownTimeoutSeconds, logger)
 		return nil

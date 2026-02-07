@@ -53,6 +53,7 @@ var serveCmd = &cobra.Command{
 		if err := redisClient.Ping(context.Background()).Err(); err != nil {
 			logger.Fatal("redis.connect_failed", zap.Error(err))
 		}
+		logger.Info("redis.connected", zap.String("addr", cfg.RedisAddr))
 		defer redisClient.Close()
 
 		repo := redisadapter.NewDriverRepo(redisClient, cfg.GeoKey, cfg.StatusKey, cfg.AvailableKey, cfg.OfferKeyPrefix)
@@ -61,6 +62,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal("ride.connect_failed", zap.Error(err))
 		}
+		logger.Info("ride.connected", zap.String("addr", cfg.RideServiceAddr))
 		defer conn.Close()
 
 		uc := &usecase.MatchingService{
