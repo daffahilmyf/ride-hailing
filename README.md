@@ -39,6 +39,12 @@ This repo is a monorepo with four services + shared protobufs:
 ## Status
 This project is still under active development. It is a self‑learning journey built with help from LLMs to design the learning path and evolve the system.
 
+## End goal (learning outcomes)
+- Understand how ride‑hailing systems work end‑to‑end, even in a simplified model.
+- Learn how to deploy each service independently to a k3s cluster.
+- Practice microservice operations: config, rollout, observability, and troubleshooting.
+- Build confidence iterating on real‑world backend patterns while learning.
+
 ## Tests
 Run tests per service:
 - `cd services/gateway && go test ./...`
