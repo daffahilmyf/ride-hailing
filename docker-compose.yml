@@ -53,6 +53,11 @@ services:
       - POSTGRES_DB=rides
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ride -d rides"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     mem_limit: 512m
     cpus: "1.0"
 
@@ -63,3 +68,18 @@ services:
       - "6379:6379"
     mem_limit: 128m
     cpus: "0.25"
+
+  migrate:
+    image: kukymbr/goose-docker
+    container_name: migrate
+    restart: "no"
+    mem_limit: 256m
+    cpus: "0.25"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: postgresql://ride:ride@postgres:5432/rides?sslmode=disable
+    volumes:
+      - ./services/ride/migrations:/migrations
