@@ -4,6 +4,7 @@
 [![CI Matching (Test + Build)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-matching.yml/badge.svg)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-matching.yml)
 [![CI Location (Test + Build)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-location.yml/badge.svg)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-location.yml)
 [![CI Proto](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-proto.yml/badge.svg)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-proto.yml)
+
 A simplified ride‑hailing backend built for learning distributed systems, state machines, and event‑driven design.
 
 ## Study case
