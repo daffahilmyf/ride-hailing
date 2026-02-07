@@ -23,6 +23,10 @@ func (f *fakeRideClient) CancelRide(ctx context.Context, in *ridev1.CancelRideRe
 	return &ridev1.CancelRideResponse{RideId: in.RideId, Status: "CANCELLED"}, nil
 }
 
+func (f *fakeRideClient) CreateOffer(ctx context.Context, in *ridev1.CreateOfferRequest, opts ...grpc.CallOption) (*ridev1.CreateOfferResponse, error) {
+	return &ridev1.CreateOfferResponse{OfferId: "o1", RideId: in.RideId, DriverId: in.DriverId, Status: "PENDING"}, nil
+}
+
 func setupRideRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
