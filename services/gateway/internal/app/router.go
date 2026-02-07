@@ -88,6 +88,7 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		riderGroup.Use(middleware.AuditLogger(logger, "rides:write"))
 		riderGroup.POST("/rides", handlers.CreateRide(deps.RideClient))
 		riderGroup.POST("/rides/:ride_id/cancel", handlers.CancelRide(deps.RideClient))
+		riderGroup.POST("/rides/:ride_id/offers", handlers.CreateOffer(deps.RideClient))
 
 		driverGroup := authGroup.Group("/")
 		driverGroup.Use(middleware.RequireRole(middleware.RoleDriver))

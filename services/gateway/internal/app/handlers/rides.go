@@ -99,3 +99,54 @@ func CancelRide(rideClient outbound.RideService) gin.HandlerFunc {
 		})
 	}
 }
+
+func CreateOffer(rideClient outbound.RideService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req requests.CreateOfferRequest
+		if !validators.BindAndValidate(c, &req) {
+			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
+			return
+		}
+
+		rideID := c.Param("ride_id")
+		if _, err := uuid.Parse(rideID); err != nil {
+			responses.RespondErrorCode(c, responses.CodeValidationError, map[string]string{"field": "ride_id"})
+			return
+		}
+		if _, err := uuid.Parse(req.DriverID); err != nil {
+			responses.RespondErrorCode(c, responses.CodeValidationError, map[string]string{"field": "driver_id"})
+			return
+		}
+
+		ctx := grpcadapter.WithRequestMetadata(
+			c.Request.Context(),
+			contextdata.GetTraceID(c),
+			contextdata.GetRequestID(c),
+		)
+		ctx = grpcadapter.WithTraceContext(ctx)
+		WithGRPCMeta(c, "ride-service")
+
+		idempotencyKey := c.GetHeader("Idempotency-Key")
+		resp, err := rideClient.CreateOffer(ctx, &ridev1.CreateOfferRequest{
+			RideId:          rideID,
+			DriverId:        req.DriverID,
+			OfferTtlSeconds: req.OfferTTLSeconds,
+			IdempotencyKey:  idempotencyKey,
+			TraceId:         contextdata.GetTraceID(c),
+			RequestId:       contextdata.GetRequestID(c),
+		})
+		if err != nil {
+			code, details := responses.MapGRPCError(err)
+			responses.RespondErrorCode(c, code, details)
+			return
+		}
+
+		responses.RespondOK(c, 200, map[string]interface{}{
+			"offer_id":   resp.GetOfferId(),
+			"ride_id":    resp.GetRideId(),
+			"driver_id":  resp.GetDriverId(),
+			"status":     resp.GetStatus(),
+			"expires_at": resp.GetExpiresAt(),
+		})
+	}
+}

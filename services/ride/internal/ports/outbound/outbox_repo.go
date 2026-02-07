@@ -1,6 +1,9 @@
 package outbound
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type OutboxMessage struct {
 	ID      string
@@ -13,7 +16,7 @@ type OutboxRepo interface {
 	Enqueue(ctx context.Context, msg OutboxMessage) error
 	Claim(ctx context.Context, limit int, maxAttempts int) ([]OutboxMessage, error)
 	MarkSent(ctx context.Context, id string) error
-	MarkFailed(ctx context.Context, id string, reason string) error
+	MarkFailed(ctx context.Context, id string, reason string, nextAttemptAt time.Time) error
 }
 
 type OutboxPublisher interface {

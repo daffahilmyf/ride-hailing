@@ -10,3 +10,8 @@ type CreateRideRequest struct {
 type CancelRideRequest struct {
 	Reason string `json:"reason" binding:"required"`
 }
+
+type CreateOfferRequest struct {
+	DriverID        string `json:"driver_id" binding:"required"`
+	OfferTTLSeconds int64  `json:"offer_ttl_seconds" binding:"omitempty,min=1"`
+}

@@ -29,7 +29,7 @@ func (f *fakeOutboxRepo) MarkSent(ctx context.Context, id string) error {
 	return nil
 }
 
-func (f *fakeOutboxRepo) MarkFailed(ctx context.Context, id string, reason string) error {
+func (f *fakeOutboxRepo) MarkFailed(ctx context.Context, id string, reason string, nextAttemptAt time.Time) error {
 	return nil
 }
 
