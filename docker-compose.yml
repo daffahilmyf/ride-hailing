@@ -1,8 +1,9 @@
 services:
   gateway:
-    container_name: ride-gateway
+    container_name: service-gateway
     build:
-      context: ./services/gateway
+      context: .
+      dockerfile: services/gateway/Dockerfile
     ports:
       - "8080:8080"
     environment:
@@ -16,7 +17,7 @@ services:
       - redis
 
   nats:
-    container_name: ride-nats
+    container_name: nats
     image: nats:2.10
     command: ["-js"]
     ports:
@@ -26,7 +27,7 @@ services:
     cpus: "0.25"
 
   postgres:
-    container_name: ride-postgres
+    container_name: postgres
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=ride
@@ -38,7 +39,7 @@ services:
     cpus: "1.0"
 
   redis:
-    container_name: ride-redis
+    container_name: redis
     image: redis:7-alpine
     ports:
       - "6379:6379"
