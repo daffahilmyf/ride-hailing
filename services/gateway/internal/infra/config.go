@@ -6,6 +6,9 @@ type Config struct {
 	ShutdownTimeoutSeconds int
 	Auth                   AuthConfig
 	GRPC                   GRPCConfig
+	RateLimit              RateLimitConfig
+	MaxBodyBytes           int64
+	Redis                  RedisConfig
 }
 
 type AuthConfig struct {
@@ -22,6 +25,17 @@ type GRPCConfig struct {
 	TimeoutSeconds int
 	RetryMax       int
 	RetryBackoffMs int
+}
+
+type RateLimitConfig struct {
+	Requests      int
+	WindowSeconds int
+}
+
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
 }
 
 func DefaultConfig() Config {
@@ -42,6 +56,16 @@ func DefaultConfig() Config {
 			TimeoutSeconds: 2,
 			RetryMax:       2,
 			RetryBackoffMs: 100,
+		},
+		RateLimit: RateLimitConfig{
+			Requests:      100,
+			WindowSeconds: 60,
+		},
+		MaxBodyBytes: 1_048_576,
+		Redis: RedisConfig{
+			Addr:     "localhost:6379",
+			Password: "",
+			DB:       0,
 		},
 	}
 }

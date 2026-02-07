@@ -20,6 +20,12 @@ func LoadConfig() Config {
 	cfg.GRPC.TimeoutSeconds = viper.GetInt("grpc.timeout_seconds")
 	cfg.GRPC.RetryMax = viper.GetInt("grpc.retry_max")
 	cfg.GRPC.RetryBackoffMs = viper.GetInt("grpc.retry_backoff_ms")
+	cfg.RateLimit.Requests = viper.GetInt("rate_limit.requests")
+	cfg.RateLimit.WindowSeconds = viper.GetInt("rate_limit.window_seconds")
+	cfg.MaxBodyBytes = viper.GetInt64("http.max_body_bytes")
+	cfg.Redis.Addr = viper.GetString("redis.addr")
+	cfg.Redis.Password = viper.GetString("redis.password")
+	cfg.Redis.DB = viper.GetInt("redis.db")
 
 	return cfg
 }

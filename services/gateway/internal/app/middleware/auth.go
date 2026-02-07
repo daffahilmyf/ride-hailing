@@ -75,6 +75,9 @@ func AuthMiddleware(logger *zap.Logger, cfg AuthConfig) gin.HandlerFunc {
 			userID = sub
 		}
 		role, _ := claims["role"].(string)
+		if scopes, ok := claims["scopes"]; ok {
+			c.Set(scopesClaim, scopes)
+		}
 		contextdata.SetUserContext(c, userID, role)
 
 		c.Next()

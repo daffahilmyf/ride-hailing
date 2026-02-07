@@ -3,6 +3,7 @@ service:
 
 http:
   addr: ":8080"
+  max_body_bytes: 1048576
 
 shutdown:
   timeout: 10
@@ -20,3 +21,12 @@ grpc:
   timeout_seconds: 2
   retry_max: 2
   retry_backoff_ms: 100
+
+rate_limit:
+  requests: 100
+  window_seconds: 60
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
