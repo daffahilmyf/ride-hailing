@@ -26,3 +26,10 @@ events:
 internal_auth:
   enabled: false
   token: ""
+
+observability:
+  metrics_enabled: true
+  metrics_addr: ":9095"
+  tracing_enabled: false
+  tracing_endpoint: ""
+  tracing_insecure: true

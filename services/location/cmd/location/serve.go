@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,6 +16,8 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/app/usecase"
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/infra"
 	"github.com/nats-io/nats.go"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -31,6 +34,18 @@ var serveCmd = &cobra.Command{
 		cfg := infra.LoadConfig()
 		logger := infra.NewLogger()
 		defer logger.Sync()
+
+		if cfg.LocationKeyPrefix == "" || cfg.GeoKey == "" {
+			logger.Fatal("config.invalid_location_keys")
+		}
+
+		telemetryShutdown, err := infra.SetupTelemetry(context.Background(), cfg)
+		if err != nil {
+			logger.Fatal("telemetry.init_failed", zap.Error(err))
+		}
+		defer func() {
+			_ = telemetryShutdown(context.Background())
+		}()
 
 		redisClient := redis.NewClient(&redis.Options{
 			Addr:     cfg.RedisAddr,
@@ -70,6 +85,13 @@ var serveCmd = &cobra.Command{
 		}
 
 		grpcMetrics := grpcadapter.NewMetrics()
+		if cfg.Observability.MetricsEnabled {
+			promMetrics := grpcadapter.NewPromMetrics(cfg.ServiceName)
+			registry := prometheus.NewRegistry()
+			registry.MustRegister(promMetrics.Requests, promMetrics.Latency)
+			grpcMetrics.AttachProm(promMetrics)
+			go serveMetrics(cfg.Observability.MetricsAddr, registry, logger)
+		}
 		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, grpcMetrics, grpcadapter.AuthConfig{
 			Enabled: cfg.InternalAuthEnabled,
 			Token:   cfg.InternalAuthToken,
@@ -117,5 +139,18 @@ func waitForShutdown(srv *grpc.Server, timeoutSeconds int, logger *zap.Logger) {
 	case <-ctx.Done():
 		srv.Stop()
 		logger.Warn("grpc.shutdown_timeout")
+	}
+}
+
+func serveMetrics(addr string, registry *prometheus.Registry, logger *zap.Logger) {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	server := &http.Server{
+		Addr:              addr,
+		ReadHeaderTimeout: 3 * time.Second,
+		Handler:           mux,
+	}
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		logger.Warn("metrics.listen_failed", zap.Error(err))
 	}
 }

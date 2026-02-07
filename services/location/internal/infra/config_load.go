@@ -17,5 +17,10 @@ func LoadConfig() Config {
 	cfg.EventsEnabled = viper.GetBool("events.enabled")
 	cfg.InternalAuthEnabled = viper.GetBool("internal_auth.enabled")
 	cfg.InternalAuthToken = viper.GetString("internal_auth.token")
+	cfg.Observability.MetricsEnabled = viper.GetBool("observability.metrics_enabled")
+	cfg.Observability.MetricsAddr = viper.GetString("observability.metrics_addr")
+	cfg.Observability.TracingEnabled = viper.GetBool("observability.tracing_enabled")
+	cfg.Observability.TracingEndpoint = viper.GetString("observability.tracing_endpoint")
+	cfg.Observability.TracingInsecure = viper.GetBool("observability.tracing_insecure")
 	return cfg
 }

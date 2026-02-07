@@ -14,6 +14,7 @@ type Config struct {
 	EventsEnabled          bool
 	InternalAuthEnabled    bool
 	InternalAuthToken      string
+	Observability          ObservabilityConfig
 }
 
 func DefaultConfig() Config {
@@ -31,5 +32,20 @@ func DefaultConfig() Config {
 		EventsEnabled:          true,
 		InternalAuthEnabled:    false,
 		InternalAuthToken:      "",
+		Observability: ObservabilityConfig{
+			MetricsEnabled:  true,
+			MetricsAddr:     ":9095",
+			TracingEnabled:  false,
+			TracingEndpoint: "",
+			TracingInsecure: true,
+		},
 	}
+}
+
+type ObservabilityConfig struct {
+	MetricsEnabled  bool
+	MetricsAddr     string
+	TracingEnabled  bool
+	TracingEndpoint string
+	TracingInsecure bool
 }
