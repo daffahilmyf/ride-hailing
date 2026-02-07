@@ -86,9 +86,9 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		riderGroup.Use(middleware.RequireRole(middleware.RoleRider))
 		riderGroup.Use(middleware.RequireScope("rides:write"))
 		riderGroup.Use(middleware.AuditLogger(logger, "rides:write"))
-		riderGroup.POST("/rides", handlers.CreateRide(deps.RideClient))
-		riderGroup.POST("/rides/:ride_id/cancel", handlers.CancelRide(deps.RideClient))
-		riderGroup.POST("/rides/:ride_id/offers", handlers.CreateOffer(deps.RideClient))
+		riderGroup.POST("/rides", handlers.CreateRide(deps.RideClient, cfg.GRPC.InternalToken))
+		riderGroup.POST("/rides/:ride_id/cancel", handlers.CancelRide(deps.RideClient, cfg.GRPC.InternalToken))
+		riderGroup.POST("/rides/:ride_id/offers", handlers.CreateOffer(deps.RideClient, cfg.GRPC.InternalToken))
 
 		driverGroup := authGroup.Group("/")
 		driverGroup.Use(middleware.RequireRole(middleware.RoleDriver))
@@ -96,9 +96,9 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		driverGroup.Use(middleware.AuditLogger(logger, "drivers:write"))
 		driverGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatus(deps.MatchingClient))
 		driverGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocation(deps.LocationClient))
-		driverGroup.POST("/offers/:offer_id/accept", handlers.AcceptOffer(deps.RideClient))
-		driverGroup.POST("/offers/:offer_id/decline", handlers.DeclineOffer(deps.RideClient))
-		driverGroup.POST("/offers/:offer_id/expire", handlers.ExpireOffer(deps.RideClient))
+		driverGroup.POST("/offers/:offer_id/accept", handlers.AcceptOffer(deps.RideClient, cfg.GRPC.InternalToken))
+		driverGroup.POST("/offers/:offer_id/decline", handlers.DeclineOffer(deps.RideClient, cfg.GRPC.InternalToken))
+		driverGroup.POST("/offers/:offer_id/expire", handlers.ExpireOffer(deps.RideClient, cfg.GRPC.InternalToken))
 	}
 
 	return r

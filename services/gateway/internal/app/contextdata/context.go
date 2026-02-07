@@ -9,7 +9,6 @@ const (
 	ctxKeyRequestID ctxKey = "request_id"
 	ctxKeyUserID    ctxKey = "user_id"
 	ctxKeyRole      ctxKey = "role"
-	ctxKeyInternal  ctxKey = "internal_token"
 )
 
 func SetTraceID(c *gin.Context, traceID string) {
@@ -30,12 +29,6 @@ func SetUserContext(c *gin.Context, userID, role string) {
 	}
 	if role != "" {
 		c.Set(string(ctxKeyRole), role)
-	}
-}
-
-func SetInternalToken(c *gin.Context, token string) {
-	if token != "" {
-		c.Set(string(ctxKeyInternal), token)
 	}
 }
 
@@ -65,14 +58,6 @@ func GetUserID(c *gin.Context) string {
 
 func GetRole(c *gin.Context) string {
 	v, _ := c.Get(string(ctxKeyRole))
-	if s, ok := v.(string); ok {
-		return s
-	}
-	return ""
-}
-
-func GetInternalToken(c *gin.Context) string {
-	v, _ := c.Get(string(ctxKeyInternal))
 	if s, ok := v.(string); ok {
 		return s
 	}

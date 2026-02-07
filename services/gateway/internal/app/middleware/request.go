@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	HeaderTraceID     = "X-Trace-Id"
-	HeaderRequestID   = "X-Request-Id"
-	HeaderInternalKey = "X-Internal-Token"
+	HeaderTraceID   = "X-Trace-Id"
+	HeaderRequestID = "X-Request-Id"
 )
 
 func LoggerMiddleware(logger *zap.Logger, serviceName string) gin.HandlerFunc {
@@ -38,8 +37,6 @@ func LoggerMiddleware(logger *zap.Logger, serviceName string) gin.HandlerFunc {
 
 		contextdata.SetTraceID(c, traceID)
 		contextdata.SetRequestID(c, requestID)
-		internalToken := c.GetHeader(HeaderInternalKey)
-		contextdata.SetInternalToken(c, internalToken)
 
 		c.Next()
 

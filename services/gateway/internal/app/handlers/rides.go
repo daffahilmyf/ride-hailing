@@ -13,7 +13,7 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/ports/outbound"
 )
 
-func CreateRide(rideClient outbound.RideService) gin.HandlerFunc {
+func CreateRide(rideClient outbound.RideService, internalToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CreateRideRequest
 		if !validators.BindAndValidate(c, &req) {
@@ -32,7 +32,7 @@ func CreateRide(rideClient outbound.RideService) gin.HandlerFunc {
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
-		ctx = grpcadapter.WithInternalToken(ctx, contextdata.GetInternalToken(c))
+		ctx = grpcadapter.WithInternalToken(ctx, internalToken)
 		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 
@@ -60,7 +60,7 @@ func CreateRide(rideClient outbound.RideService) gin.HandlerFunc {
 	}
 }
 
-func CancelRide(rideClient outbound.RideService) gin.HandlerFunc {
+func CancelRide(rideClient outbound.RideService, internalToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CancelRideRequest
 		if !validators.BindAndValidate(c, &req) {
@@ -79,7 +79,7 @@ func CancelRide(rideClient outbound.RideService) gin.HandlerFunc {
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
-		ctx = grpcadapter.WithInternalToken(ctx, contextdata.GetInternalToken(c))
+		ctx = grpcadapter.WithInternalToken(ctx, internalToken)
 		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 
@@ -102,7 +102,7 @@ func CancelRide(rideClient outbound.RideService) gin.HandlerFunc {
 	}
 }
 
-func CreateOffer(rideClient outbound.RideService) gin.HandlerFunc {
+func CreateOffer(rideClient outbound.RideService, internalToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CreateOfferRequest
 		if !validators.BindAndValidate(c, &req) {
@@ -125,7 +125,7 @@ func CreateOffer(rideClient outbound.RideService) gin.HandlerFunc {
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
-		ctx = grpcadapter.WithInternalToken(ctx, contextdata.GetInternalToken(c))
+		ctx = grpcadapter.WithInternalToken(ctx, internalToken)
 		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 
@@ -154,19 +154,19 @@ func CreateOffer(rideClient outbound.RideService) gin.HandlerFunc {
 	}
 }
 
-func AcceptOffer(rideClient outbound.RideService) gin.HandlerFunc {
-	return offerAction(rideClient, "accept")
+func AcceptOffer(rideClient outbound.RideService, internalToken string) gin.HandlerFunc {
+	return offerAction(rideClient, internalToken, "accept")
 }
 
-func DeclineOffer(rideClient outbound.RideService) gin.HandlerFunc {
-	return offerAction(rideClient, "decline")
+func DeclineOffer(rideClient outbound.RideService, internalToken string) gin.HandlerFunc {
+	return offerAction(rideClient, internalToken, "decline")
 }
 
-func ExpireOffer(rideClient outbound.RideService) gin.HandlerFunc {
-	return offerAction(rideClient, "expire")
+func ExpireOffer(rideClient outbound.RideService, internalToken string) gin.HandlerFunc {
+	return offerAction(rideClient, internalToken, "expire")
 }
 
-func offerAction(rideClient outbound.RideService, action string) gin.HandlerFunc {
+func offerAction(rideClient outbound.RideService, internalToken string, action string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		offerID := c.Param("offer_id")
 		if _, err := uuid.Parse(offerID); err != nil {
@@ -179,7 +179,7 @@ func offerAction(rideClient outbound.RideService, action string) gin.HandlerFunc
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
-		ctx = grpcadapter.WithInternalToken(ctx, contextdata.GetInternalToken(c))
+		ctx = grpcadapter.WithInternalToken(ctx, internalToken)
 		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 

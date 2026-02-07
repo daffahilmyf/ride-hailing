@@ -42,12 +42,12 @@ func (f *fakeRideClient) ExpireOffer(ctx context.Context, in *ridev1.OfferAction
 func setupRideRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.POST("/rides", CreateRide(&fakeRideClient{}))
-	r.POST("/rides/:ride_id/cancel", CancelRide(&fakeRideClient{}))
-	r.POST("/rides/:ride_id/offers", CreateOffer(&fakeRideClient{}))
-	r.POST("/offers/:offer_id/accept", AcceptOffer(&fakeRideClient{}))
-	r.POST("/offers/:offer_id/decline", DeclineOffer(&fakeRideClient{}))
-	r.POST("/offers/:offer_id/expire", ExpireOffer(&fakeRideClient{}))
+	r.POST("/rides", CreateRide(&fakeRideClient{}, ""))
+	r.POST("/rides/:ride_id/cancel", CancelRide(&fakeRideClient{}, ""))
+	r.POST("/rides/:ride_id/offers", CreateOffer(&fakeRideClient{}, ""))
+	r.POST("/offers/:offer_id/accept", AcceptOffer(&fakeRideClient{}, ""))
+	r.POST("/offers/:offer_id/decline", DeclineOffer(&fakeRideClient{}, ""))
+	r.POST("/offers/:offer_id/expire", ExpireOffer(&fakeRideClient{}, ""))
 	return r
 }
 
