@@ -7,7 +7,6 @@ on:
       - proto/**
       - buf.yaml
       - buf.gen.yaml
-  workflow_dispatch:
 
 permissions:
   contents: read
