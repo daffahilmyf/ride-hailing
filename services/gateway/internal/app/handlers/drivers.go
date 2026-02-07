@@ -11,7 +11,7 @@ import (
 func UpdateDriverStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.UpdateDriverStatusRequest
-		if !validators.BindJSON(c, &req) {
+		if !validators.BindAndValidate(c, &req) {
 			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
 			return
 		}
@@ -22,7 +22,7 @@ func UpdateDriverStatus() gin.HandlerFunc {
 func UpdateDriverLocation() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.UpdateDriverLocationRequest
-		if !validators.BindJSON(c, &req) {
+		if !validators.BindAndValidate(c, &req) {
 			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
 			return
 		}

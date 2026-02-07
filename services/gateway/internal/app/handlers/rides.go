@@ -11,7 +11,7 @@ import (
 func CreateRide() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CreateRideRequest
-		if !validators.BindJSON(c, &req) {
+		if !validators.BindAndValidate(c, &req) {
 			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
 			return
 		}
@@ -22,7 +22,7 @@ func CreateRide() gin.HandlerFunc {
 func CancelRide() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CancelRideRequest
-		if !validators.BindJSON(c, &req) {
+		if !validators.BindAndValidate(c, &req) {
 			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
 			return
 		}
