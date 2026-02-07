@@ -12,6 +12,24 @@ type fakeRideRepo struct {
 	store map[string]outbound.Ride
 }
 
+type fakeOutboxRepo struct {
+	messages []outbound.OutboxMessage
+}
+
+func (f *fakeOutboxRepo) Enqueue(ctx context.Context, msg outbound.OutboxMessage) error {
+	f.messages = append(f.messages, msg)
+	return nil
+}
+
+type fakeOfferRepo struct {
+	store []outbound.RideOffer
+}
+
+func (f *fakeOfferRepo) Create(ctx context.Context, offer outbound.RideOffer) error {
+	f.store = append(f.store, offer)
+	return nil
+}
+
 func newFakeRideRepo() *fakeRideRepo {
 	return &fakeRideRepo{store: map[string]outbound.Ride{}}
 }
@@ -60,7 +78,8 @@ func (f *fakeRideRepo) AssignDriverIfCurrent(ctx context.Context, id string, dri
 
 func TestCreateAndCancelRide(t *testing.T) {
 	repo := newFakeRideRepo()
-	svc := &RideService{Repo: repo}
+	outbox := &fakeOutboxRepo{}
+	svc := &RideService{Repo: repo, Outbox: outbox}
 
 	ride, err := svc.CreateRide(context.Background(), CreateRideCmd{
 		RiderID:    "r1",
@@ -77,11 +96,15 @@ func TestCreateAndCancelRide(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cancel error: %v", err)
 	}
+	if len(outbox.messages) < 2 {
+		t.Fatalf("expected outbox messages, got %d", len(outbox.messages))
+	}
 }
 
 func TestAssignStartComplete(t *testing.T) {
 	repo := newFakeRideRepo()
-	svc := &RideService{Repo: repo}
+	outbox := &fakeOutboxRepo{}
+	svc := &RideService{Repo: repo, Outbox: outbox}
 
 	ride, err := svc.CreateRide(context.Background(), CreateRideCmd{
 		RiderID:    "r1",
@@ -112,5 +135,32 @@ func TestAssignStartComplete(t *testing.T) {
 	_, err = svc.CompleteRide(context.Background(), ride.ID, "")
 	if err != nil {
 		t.Fatalf("complete error: %v", err)
+	}
+	if len(outbox.messages) < 4 {
+		t.Fatalf("expected outbox messages, got %d", len(outbox.messages))
+	}
+}
+
+func TestCreateOffer(t *testing.T) {
+	offers := &fakeOfferRepo{}
+	outbox := &fakeOutboxRepo{}
+	svc := &RideService{Offers: offers, Outbox: outbox}
+
+	offer, err := svc.CreateOffer(context.Background(), StartMatchingCmd{
+		RideID:   "ride-1",
+		DriverID: "driver-1",
+		OfferTTL: 5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("create offer error: %v", err)
+	}
+	if offer.ID == "" {
+		t.Fatalf("expected offer id")
+	}
+	if len(offers.store) != 1 {
+		t.Fatalf("expected offer stored, got %d", len(offers.store))
+	}
+	if len(outbox.messages) != 1 {
+		t.Fatalf("expected outbox message, got %d", len(outbox.messages))
 	}
 }

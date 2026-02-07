@@ -12,6 +12,14 @@ type Postgres struct {
 	DB *gorm.DB
 }
 
+func (p *Postgres) OutboxRepo() *OutboxRepo {
+	return NewOutboxRepo(p.DB)
+}
+
+func (p *Postgres) RideOfferRepo() *RideOfferRepo {
+	return NewRideOfferRepo(p.DB)
+}
+
 func NewPostgres(ctx context.Context, dsn string) (*Postgres, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {

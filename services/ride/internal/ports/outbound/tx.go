@@ -5,6 +5,8 @@ type Tx interface {
 	Rollback() error
 	RideRepo() RideRepo
 	IdempotencyRepo() IdempotencyRepo
+	OutboxRepo() OutboxRepo
+	RideOfferRepo() RideOfferRepo
 }
 
 type TxManager interface {

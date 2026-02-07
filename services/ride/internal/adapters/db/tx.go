@@ -41,3 +41,11 @@ func (t *gormTx) RideRepo() outbound.RideRepo {
 func (t *gormTx) IdempotencyRepo() outbound.IdempotencyRepo {
 	return NewIdempotencyRepo(t.tx)
 }
+
+func (t *gormTx) OutboxRepo() outbound.OutboxRepo {
+	return NewOutboxRepo(t.tx)
+}
+
+func (t *gormTx) RideOfferRepo() outbound.RideOfferRepo {
+	return NewRideOfferRepo(t.tx)
+}

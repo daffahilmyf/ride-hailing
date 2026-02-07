@@ -33,8 +33,16 @@ var serveCmd = &cobra.Command{
 
 		repo := db.NewRideRepo(pg.DB)
 		idem := db.NewIdempotencyRepo(pg.DB)
+		outbox := db.NewOutboxRepo(pg.DB)
+		offers := db.NewRideOfferRepo(pg.DB)
 		txMgr := db.NewTxManager(pg.DB)
-		uc := &usecase.RideService{Repo: repo, Idempotency: idem, TxManager: txMgr}
+		uc := &usecase.RideService{
+			Repo:        repo,
+			Idempotency: idem,
+			TxManager:   txMgr,
+			Outbox:      outbox,
+			Offers:      offers,
+		}
 
 		metrics := grpcadapter.NewMetrics()
 		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, metrics)
