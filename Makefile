@@ -1,6 +1,6 @@
 PROTO_DIR=proto
 
-.PHONY: proto proto-clean tidy
+.PHONY: proto proto-clean tidy buf buf-lint
 
 proto:
 	protoc -I $(PROTO_DIR) \
@@ -15,6 +15,12 @@ proto-clean:
 	  $(PROTO_DIR)/ride/v1/*.pb.go \
 	  $(PROTO_DIR)/matching/v1/*.pb.go \
 	  $(PROTO_DIR)/location/v1/*.pb.go
+
+buf:
+	buf generate
+
+buf-lint:
+	buf lint
 
 tidy:
 	cd $(PROTO_DIR) && go mod tidy
