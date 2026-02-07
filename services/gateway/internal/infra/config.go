@@ -11,6 +11,7 @@ type Config struct {
 	Redis                  RedisConfig
 	Cache                  CacheConfig
 	Observability          ObservabilityConfig
+	HTTP                   HTTPConfig
 }
 
 type AuthConfig struct {
@@ -43,6 +44,10 @@ type RedisConfig struct {
 type CacheConfig struct {
 	Enabled           bool
 	DefaultTTLSeconds int
+}
+
+type HTTPConfig struct {
+	RequestTimeoutSeconds int
 }
 
 func DefaultConfig() Config {
@@ -83,6 +88,9 @@ func DefaultConfig() Config {
 			TracingEnabled:  false,
 			TracingEndpoint: "",
 			TracingInsecure: true,
+		},
+		HTTP: HTTPConfig{
+			RequestTimeoutSeconds: 5,
 		},
 	}
 }

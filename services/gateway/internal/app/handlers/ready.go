@@ -16,10 +16,16 @@ import (
 type Readiness struct {
 	Redis *redis.Client
 	GRPC  []*grpc.ClientConn
+	Cache ReadinessCache
 }
 
 func Ready(check Readiness) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if cached, ok, _ := check.Cache.Get(c.Request.Context()); ok && cached == "ok" {
+			responses.RespondOK(c, http.StatusOK, map[string]string{"status": "ready"})
+			return
+		}
+
 		if check.Redis != nil {
 			ctx, cancel := context.WithTimeout(c.Request.Context(), 500*time.Millisecond)
 			defer cancel()
@@ -40,6 +46,7 @@ func Ready(check Readiness) gin.HandlerFunc {
 			}
 		}
 
+		_ = check.Cache.Set(c.Request.Context(), "ok")
 		responses.RespondOK(c, http.StatusOK, map[string]string{"status": "ready"})
 	}
 }

@@ -54,16 +54,29 @@ func NewRedisLimiter(client *redis.Client, opts ...LimiterOption) *RedisLimiter 
 	return limiter
 }
 
-func (l *RedisLimiter) Allow(key string) (bool, error) {
+func (l *RedisLimiter) Allow(key string) (bool, int, time.Time, error) {
 	ctx := context.Background()
 	rkey := fmt.Sprintf("%s:%s", l.prefix, key)
 
 	pipe := l.client.TxPipeline()
 	cnt := pipe.Incr(ctx, rkey)
+	ttl := pipe.TTL(ctx, rkey)
 	pipe.Expire(ctx, rkey, l.window)
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return false, err
+		return false, 0, time.Time{}, err
 	}
-	return cnt.Val() <= int64(l.requests), nil
+
+	count := cnt.Val()
+	remaining := l.requests - int(count)
+	if remaining < 0 {
+		remaining = 0
+	}
+
+	reset := time.Now().Add(ttl.Val())
+	if ttl.Val() < 0 {
+		reset = time.Now().Add(l.window)
+	}
+
+	return count <= int64(l.requests), remaining, reset, nil
 }

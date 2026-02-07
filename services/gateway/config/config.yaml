@@ -4,6 +4,7 @@ service:
 http:
   addr: ":8080"
   max_body_bytes: 1048576
+  request_timeout_seconds: 5
 
 shutdown:
   timeout: 10

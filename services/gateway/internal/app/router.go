@@ -21,6 +21,10 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.LoggerMiddleware(logger, cfg.ServiceName))
+	r.Use(middleware.RequestTimeout(time.Duration(cfg.HTTP.RequestTimeoutSeconds) * time.Second))
+	if cfg.Observability.TracingEnabled {
+		r.Use(middleware.TraceMiddleware(cfg.ServiceName))
+	}
 	if cfg.Observability.MetricsEnabled {
 		metrics := middleware.NewMetrics(cfg.ServiceName)
 		registry := prometheus.NewRegistry()
@@ -36,12 +40,19 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.WindowSeconds)*time.Second),
 		cache.WithLimiterPrefix("rl"),
 	)
-	r.Use(middleware.RateLimitMiddleware(limiter))
+	r.Use(middleware.RateLimitMiddleware(limiter, cfg.RateLimit.Requests))
+
+	var readyCache = handlers.ReadinessCache{Key: "gateway:readyz"}
+	if cfg.Cache.Enabled {
+		readyCache.Cache = cache.NewRedisCache(redisClient)
+		readyCache.TTL = cache.DefaultTTL(cfg.Cache)
+	}
 
 	r.GET("/healthz", handlers.Health())
 	r.GET("/readyz", handlers.Ready(handlers.Readiness{
 		Redis: redisClient,
 		GRPC:  []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn},
+		Cache: readyCache,
 	}))
 
 	v1 := r.Group("/v1")
@@ -50,6 +61,7 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		v1.GET("/readyz", handlers.Ready(handlers.Readiness{
 			Redis: redisClient,
 			GRPC:  []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn},
+			Cache: readyCache,
 		}))
 
 		authGroup := v1.Group("/")
@@ -63,12 +75,14 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		riderGroup := authGroup.Group("/")
 		riderGroup.Use(middleware.RequireRole(middleware.RoleRider))
 		riderGroup.Use(middleware.RequireScope("rides:write"))
+		riderGroup.Use(middleware.AuditLogger(logger, "rides:write"))
 		riderGroup.POST("/rides", handlers.CreateRide(deps.RideClient))
 		riderGroup.POST("/rides/:ride_id/cancel", handlers.CancelRide(deps.RideClient))
 
 		driverGroup := authGroup.Group("/")
 		driverGroup.Use(middleware.RequireRole(middleware.RoleDriver))
 		driverGroup.Use(middleware.RequireScope("drivers:write"))
+		driverGroup.Use(middleware.AuditLogger(logger, "drivers:write"))
 		driverGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatus(deps.MatchingClient))
 		driverGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocation(deps.LocationClient))
 	}

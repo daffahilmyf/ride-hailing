@@ -32,6 +32,7 @@ func CreateRide(rideClient outbound.RideService) gin.HandlerFunc {
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
+		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 
 		idempotencyKey := c.GetHeader("Idempotency-Key")
@@ -77,6 +78,7 @@ func CancelRide(rideClient outbound.RideService) gin.HandlerFunc {
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
+		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 
 		resp, err := rideClient.CancelRide(ctx, &ridev1.CancelRideRequest{

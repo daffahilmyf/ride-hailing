@@ -33,6 +33,7 @@ func UpdateDriverStatus(matchingClient outbound.MatchingService) gin.HandlerFunc
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
+		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "matching-service")
 
 		resp, err := matchingClient.UpdateDriverStatus(ctx, &matchingv1.UpdateDriverStatusRequest{
@@ -72,6 +73,7 @@ func UpdateDriverLocation(locationClient outbound.LocationService) gin.HandlerFu
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
+		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "location-service")
 
 		resp, err := locationClient.UpdateDriverLocation(ctx, &locationv1.UpdateDriverLocationRequest{

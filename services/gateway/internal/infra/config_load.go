@@ -32,6 +32,7 @@ func LoadConfig() Config {
 	cfg.Observability.TracingEnabled = viper.GetBool("observability.tracing_enabled")
 	cfg.Observability.TracingEndpoint = viper.GetString("observability.tracing_endpoint")
 	cfg.Observability.TracingInsecure = viper.GetBool("observability.tracing_insecure")
+	cfg.HTTP.RequestTimeoutSeconds = viper.GetInt("http.request_timeout_seconds")
 
 	return cfg
 }
