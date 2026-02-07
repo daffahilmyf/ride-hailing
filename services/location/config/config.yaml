@@ -1,0 +1,28 @@
+service:
+  name: "location-service"
+
+grpc:
+  addr: ":50053"
+
+shutdown:
+  timeout: 10
+
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: 0
+
+location:
+  ttl_seconds: 60
+  key_prefix: "driver:location:"
+  geo_key: "drivers:geo"
+
+nats:
+  url: "nats://nats:4222"
+
+events:
+  enabled: true
+
+internal_auth:
+  enabled: false
+  token: ""

@@ -1,0 +1,82 @@
+package usecase
+
+import (
+	"context"
+	"encoding/json"
+	"time"
+
+	"github.com/daffahilmyf/ride-hailing/services/location/internal/domain"
+	"github.com/daffahilmyf/ride-hailing/services/location/internal/ports/outbound"
+)
+
+type LocationService struct {
+	Repo           outbound.LocationRepo
+	Publisher      outbound.EventPublisher
+	PublishEnabled bool
+	LocationTTL    time.Duration
+}
+
+func (s *LocationService) UpdateDriverLocation(ctx context.Context, driverID string, lat float64, lng float64, accuracy float64) (domain.DriverLocation, error) {
+	location, err := domain.NewDriverLocation(driverID, lat, lng, accuracy, time.Now().UTC())
+	if err != nil {
+		return domain.DriverLocation{}, err
+	}
+
+	err = s.Repo.Upsert(ctx, outbound.Location{
+		DriverID:   location.DriverID,
+		Lat:        location.Lat,
+		Lng:        location.Lng,
+		AccuracyM:  location.AccuracyM,
+		RecordedAt: location.RecordedAt,
+	}, s.LocationTTL)
+	if err != nil {
+		return domain.DriverLocation{}, err
+	}
+
+	if s.PublishEnabled && s.Publisher != nil {
+		traceID := getStringFromContext(ctx, "trace_id")
+		requestID := getStringFromContext(ctx, "request_id")
+		envelope := domain.NewEventEnvelope("driver.location.updated", "location-service", traceID, requestID, map[string]any{
+			"driver_id":        location.DriverID,
+			"lat":              location.Lat,
+			"lng":              location.Lng,
+			"accuracy_m":       location.AccuracyM,
+			"recorded_at_unix": location.RecordedAt.Unix(),
+		})
+		payload, err := json.Marshal(envelope)
+		if err != nil {
+			return domain.DriverLocation{}, err
+		}
+		if err := s.Publisher.Publish(ctx, "driver.location.updated", payload); err != nil {
+			return domain.DriverLocation{}, err
+		}
+	}
+
+	return location, nil
+}
+
+func (s *LocationService) GetDriverLocation(ctx context.Context, driverID string) (domain.DriverLocation, error) {
+	location, err := s.Repo.Get(ctx, driverID)
+	if err != nil {
+		return domain.DriverLocation{}, err
+	}
+	return domain.DriverLocation{
+		DriverID:   location.DriverID,
+		Lat:        location.Lat,
+		Lng:        location.Lng,
+		AccuracyM:  location.AccuracyM,
+		RecordedAt: location.RecordedAt,
+	}, nil
+}
+
+func getStringFromContext(ctx context.Context, key string) string {
+	if ctx == nil {
+		return ""
+	}
+	if val := ctx.Value(key); val != nil {
+		if s, ok := val.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
