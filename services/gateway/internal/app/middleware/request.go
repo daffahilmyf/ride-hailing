@@ -41,12 +41,16 @@ func LoggerMiddleware(logger *zap.Logger, serviceName string) gin.HandlerFunc {
 		c.Next()
 
 		latency := time.Since(start)
+		path := c.FullPath()
+		if path == "" {
+			path = c.Request.URL.Path
+		}
 		logger.Info("http.request",
 			zap.String("service", serviceName),
 			zap.String("trace_id", traceID),
 			zap.String("request_id", requestID),
 			zap.String("method", c.Request.Method),
-			zap.String("path", c.FullPath()),
+			zap.String("path", path),
 			zap.Int("status", c.Writer.Status()),
 			zap.Int64("latency_ms", latency.Milliseconds()),
 		)
