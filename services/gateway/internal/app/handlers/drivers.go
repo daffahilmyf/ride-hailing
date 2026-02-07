@@ -15,6 +15,12 @@ func UpdateDriverStatus() gin.HandlerFunc {
 			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
 			return
 		}
+		// gRPC call placeholder:
+		// if err := driverClient.UpdateStatus(...); err != nil {
+		//   code, details := responses.MapGRPCError(err)
+		//   responses.RespondErrorCode(c, code, details)
+		//   return
+		// }
 		responses.RespondNotImplemented(c)
 	}
 }
@@ -26,6 +32,12 @@ func UpdateDriverLocation() gin.HandlerFunc {
 			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
 			return
 		}
+		// gRPC call placeholder:
+		// if err := locationClient.UpdateDriverLocation(...); err != nil {
+		//   code, details := responses.MapGRPCError(err)
+		//   responses.RespondErrorCode(c, code, details)
+		//   return
+		// }
 		responses.RespondNotImplemented(c)
 	}
 }

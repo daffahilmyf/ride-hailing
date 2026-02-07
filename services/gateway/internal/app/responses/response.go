@@ -55,5 +55,12 @@ func buildMeta(c *gin.Context) map[string]string {
 	if requestID := contextdata.GetRequestID(c); requestID != "" {
 		meta["request_id"] = requestID
 	}
+	if extra, ok := c.Get("meta_extra"); ok {
+		if fields, ok := extra.(map[string]string); ok {
+			for k, v := range fields {
+				meta[k] = v
+			}
+		}
+	}
 	return meta
 }

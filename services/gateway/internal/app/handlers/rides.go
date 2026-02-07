@@ -15,6 +15,12 @@ func CreateRide() gin.HandlerFunc {
 			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
 			return
 		}
+		// gRPC call placeholder:
+		// if err := rideClient.StartMatching(...); err != nil {
+		//   code, details := responses.MapGRPCError(err)
+		//   responses.RespondErrorCode(c, code, details)
+		//   return
+		// }
 		responses.RespondNotImplemented(c)
 	}
 }
@@ -26,6 +32,12 @@ func CancelRide() gin.HandlerFunc {
 			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
 			return
 		}
+		// gRPC call placeholder:
+		// if err := rideClient.CancelRide(...); err != nil {
+		//   code, details := responses.MapGRPCError(err)
+		//   responses.RespondErrorCode(c, code, details)
+		//   return
+		// }
 		responses.RespondNotImplemented(c)
 	}
 }
