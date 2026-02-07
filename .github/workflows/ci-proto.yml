@@ -17,9 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24.0'
+          cache: true
+          cache-dependency-path: proto/go.sum
+      - name: Buf lint
+        run: buf lint
+      - name: Buf format check
+        run: buf format -d
       - name: Go test
         working-directory: proto
         run: go test ./...

@@ -8,7 +8,7 @@ resources:
 
 images:
   - name: ghcr.io/daffahilmyf/ride-hailing-matching
-    newTag: gitsha-REPLACE
+    digest: sha256:REPLACE
 
 patches:
   - target:
