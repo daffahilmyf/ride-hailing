@@ -88,6 +88,21 @@ func (s *RideService) CancelRide(ctx context.Context, id string, reason string) 
 	return updated, nil
 }
 
+func (s *RideService) StartMatching(ctx context.Context, rideID string) (domain.Ride, error) {
+	ride, err := s.loadRide(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	updated, err := ride.Transition(domain.StatusMatching)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		return domain.Ride{}, err
+	}
+	return updated, nil
+}
+
 func (s *RideService) AssignDriver(ctx context.Context, rideID, driverID string) (domain.Ride, error) {
 	ride, err := s.loadRide(ctx, rideID)
 	if err != nil {

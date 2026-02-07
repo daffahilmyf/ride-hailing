@@ -39,7 +39,14 @@ func (s *RideServer) CreateRide(ctx context.Context, req *ridev1.CreateRideReque
 }
 
 func (s *RideServer) StartMatching(ctx context.Context, req *ridev1.StartMatchingRequest) (*ridev1.StartMatchingResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	ride, err := s.usecase.StartMatching(ctx, req.GetRideId())
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidTransition) {
+			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
+		}
+		return nil, status.Error(codes.Internal, "failed to start matching")
+	}
+	return &ridev1.StartMatchingResponse{RideId: ride.ID, Status: string(ride.Status)}, nil
 }
 
 func (s *RideServer) AssignDriver(ctx context.Context, req *ridev1.AssignDriverRequest) (*ridev1.AssignDriverResponse, error) {
@@ -62,4 +69,26 @@ func (s *RideServer) CancelRide(ctx context.Context, req *ridev1.CancelRideReque
 		return nil, status.Error(codes.Internal, "failed to cancel ride")
 	}
 	return &ridev1.CancelRideResponse{RideId: ride.ID, Status: string(ride.Status)}, nil
+}
+
+func (s *RideServer) StartRide(ctx context.Context, req *ridev1.AssignDriverRequest) (*ridev1.AssignDriverResponse, error) {
+	ride, err := s.usecase.StartRide(ctx, req.GetRideId())
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidTransition) {
+			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
+		}
+		return nil, status.Error(codes.Internal, "failed to start ride")
+	}
+	return &ridev1.AssignDriverResponse{RideId: ride.ID, DriverId: req.GetDriverId(), Status: string(ride.Status)}, nil
+}
+
+func (s *RideServer) CompleteRide(ctx context.Context, req *ridev1.AssignDriverRequest) (*ridev1.AssignDriverResponse, error) {
+	ride, err := s.usecase.CompleteRide(ctx, req.GetRideId())
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidTransition) {
+			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
+		}
+		return nil, status.Error(codes.Internal, "failed to complete ride")
+	}
+	return &ridev1.AssignDriverResponse{RideId: ride.ID, DriverId: req.GetDriverId(), Status: string(ride.Status)}, nil
 }
