@@ -54,6 +54,7 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 	}
 
 	r.GET("/healthz", handlers.Health())
+	r.StaticFile("/favicon.ico", "config/favicon.ico")
 	var grpcConns []*grpc.ClientConn
 	if grpcClients != nil {
 		grpcConns = []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn}
