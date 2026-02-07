@@ -197,7 +197,7 @@ func offerAction(rideClient outbound.RideService, action string) gin.HandlerFunc
 		case "expire":
 			resp, err = rideClient.ExpireOffer(ctx, req)
 		default:
-			responses.RespondErrorCode(c, responses.CodeInternalError, map[string]string{"reason": "INVALID_ACTION"})
+			responses.RespondErrorCode(c, responses.CodeInternal, map[string]string{"reason": "INVALID_ACTION"})
 			return
 		}
 		if err != nil {
