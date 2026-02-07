@@ -26,6 +26,10 @@ func (f *fakeLocationClient) UpdateDriverLocation(ctx context.Context, in *locat
 	return &locationv1.UpdateDriverLocationResponse{Status: "OK"}, nil
 }
 
+func (f *fakeLocationClient) ListNearbyDrivers(ctx context.Context, in *locationv1.ListNearbyDriversRequest, opts ...grpc.CallOption) (*locationv1.ListNearbyDriversResponse, error) {
+	return &locationv1.ListNearbyDriversResponse{}, nil
+}
+
 func setupDriverRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()

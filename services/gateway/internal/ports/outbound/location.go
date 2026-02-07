@@ -9,4 +9,5 @@ import (
 
 type LocationService interface {
 	UpdateDriverLocation(ctx context.Context, in *locationv1.UpdateDriverLocationRequest, opts ...grpc.CallOption) (*locationv1.UpdateDriverLocationResponse, error)
+	ListNearbyDrivers(ctx context.Context, in *locationv1.ListNearbyDriversRequest, opts ...grpc.CallOption) (*locationv1.ListNearbyDriversResponse, error)
 }
