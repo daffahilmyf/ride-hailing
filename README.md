@@ -13,7 +13,7 @@ This repo is a monorepo with four services + shared protobufs:
 
 ## Quick start (local)
 1. Start infra:
-   - `docker compose up -d nats postgres redis`
+   - `docker compose up -d nats postgres redis migrate`
 2. Run a service (example: ride):
    - `docker compose up --build ride`
 
@@ -23,6 +23,18 @@ This repo is a monorepo with four services + shared protobufs:
 - Strict state machine transitions
 - Event‑driven orchestration with JetStream
 - Battery‑aware driver location strategy
+
+## Progress checklist
+- [x] Gateway API skeleton (Gin)
+- [x] Ride service state machine + outbox
+- [x] Matching service (sequential offers)
+- [x] Location service (geo index + updates)
+- [x] gRPC contracts in `proto/`
+- [x] Docker Compose for local dev
+- [x] CI test + build workflows
+- [ ] End‑to‑end integration tests
+- [ ] Load testing + failure injection
+- [ ] Kubernetes/Kustomize manifests
 
 ## Status
 This project is still under active development. It is a self‑learning journey built with help from LLMs to design the learning path and evolve the system.
