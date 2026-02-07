@@ -7,7 +7,7 @@ resources:
   - ../../base
 
 images:
-  - name: ride-hailing-gateway
+  - name: ghcr.io/daffahilmyf/ride-hailing-gateway
     newTag: v0.1.0
 
 patches:

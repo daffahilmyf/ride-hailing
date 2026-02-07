@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: ride-hailing-gateway:latest
+          image: ghcr.io/daffahilmyf/ride-hailing-gateway:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

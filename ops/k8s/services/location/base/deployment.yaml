@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: location
-          image: ride-hailing-location:latest
+          image: ghcr.io/daffahilmyf/ride-hailing-location:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50053

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: matching
-          image: ride-hailing-matching:latest
+          image: ghcr.io/daffahilmyf/ride-hailing-matching:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50052
