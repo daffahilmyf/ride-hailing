@@ -3,7 +3,7 @@ package responses
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/middleware"
+	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/contextdata"
 )
 
 type APIError struct {
@@ -49,10 +49,10 @@ func RespondNotImplemented(c *gin.Context) {
 
 func buildMeta(c *gin.Context) map[string]string {
 	meta := map[string]string{}
-	if traceID := middleware.GetTraceID(c); traceID != "" {
+	if traceID := contextdata.GetTraceID(c); traceID != "" {
 		meta["trace_id"] = traceID
 	}
-	if requestID := middleware.GetRequestID(c); requestID != "" {
+	if requestID := contextdata.GetRequestID(c); requestID != "" {
 		meta["request_id"] = requestID
 	}
 	return meta

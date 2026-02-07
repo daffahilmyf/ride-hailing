@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+
+	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/contextdata"
 )
 
 const (
@@ -29,10 +31,10 @@ func LoggerMiddleware(logger *zap.Logger, serviceName string) gin.HandlerFunc {
 			c.Header(HeaderRequestID, requestID)
 		}
 
-	c.Set(string(ctxKeyTraceID), traceID)
-	c.Set(string(ctxKeyRequestID), requestID)
+		contextdata.SetTraceID(c, traceID)
+		contextdata.SetRequestID(c, requestID)
 
-	c.Next()
+		c.Next()
 
 		latency := time.Since(start)
 		logger.Info("http.request",

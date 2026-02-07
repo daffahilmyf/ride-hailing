@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 
+	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/contextdata"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/responses"
 )
 
@@ -52,10 +53,13 @@ func AuthMiddleware(logger *zap.Logger, cfg AuthConfig) gin.HandlerFunc {
 			return
 		}
 
-		if cfg.Issuer != "" && claims.GetIssuer() != cfg.Issuer {
-			responses.RespondErrorCode(c, responses.CodeUnauthorized, map[string]string{"reason": "INVALID_ISSUER"})
-			c.Abort()
-			return
+		if cfg.Issuer != "" {
+			issuer, _ := claims.GetIssuer()
+			if issuer != cfg.Issuer {
+				responses.RespondErrorCode(c, responses.CodeUnauthorized, map[string]string{"reason": "INVALID_ISSUER"})
+				c.Abort()
+				return
+			}
 		}
 
 		if cfg.Audience != "" {
@@ -71,7 +75,7 @@ func AuthMiddleware(logger *zap.Logger, cfg AuthConfig) gin.HandlerFunc {
 			userID = sub
 		}
 		role, _ := claims["role"].(string)
-		SetUserContext(c, userID, role)
+		contextdata.SetUserContext(c, userID, role)
 
 		c.Next()
 	}

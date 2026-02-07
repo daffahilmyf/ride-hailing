@@ -6,16 +6,16 @@ type ErrorCode string
 
 const (
 	CodeValidationError ErrorCode = "VALIDATION_ERROR"
-	CodeConflict       ErrorCode = "CONFLICT"
-	CodeOfferExpired   ErrorCode = "OFFER_EXPIRED"
-	CodeRideNotActive  ErrorCode = "RIDE_NOT_ACTIVE"
-	CodeNoDriver       ErrorCode = "NO_DRIVER"
-	CodeRateLimited    ErrorCode = "RATE_LIMITED"
-	CodeUnauthorized   ErrorCode = "UNAUTHORIZED"
-	CodeForbidden      ErrorCode = "FORBIDDEN"
-	CodeNotFound       ErrorCode = "NOT_FOUND"
-	CodeInternal       ErrorCode = "INTERNAL_ERROR"
-	CodeNotImplemented ErrorCode = "NOT_IMPLEMENTED"
+	CodeConflict        ErrorCode = "CONFLICT"
+	CodeOfferExpired    ErrorCode = "OFFER_EXPIRED"
+	CodeRideNotActive   ErrorCode = "RIDE_NOT_ACTIVE"
+	CodeNoDriver        ErrorCode = "NO_DRIVER"
+	CodeRateLimited     ErrorCode = "RATE_LIMITED"
+	CodeUnauthorized    ErrorCode = "UNAUTHORIZED"
+	CodeForbidden       ErrorCode = "FORBIDDEN"
+	CodeNotFound        ErrorCode = "NOT_FOUND"
+	CodeInternal        ErrorCode = "INTERNAL_ERROR"
+	CodeNotImplemented  ErrorCode = "NOT_IMPLEMENTED"
 )
 
 type ErrorDef struct {
