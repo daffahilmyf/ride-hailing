@@ -54,9 +54,13 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 	}
 
 	r.GET("/healthz", handlers.Health())
+	var grpcConns []*grpc.ClientConn
+	if grpcClients != nil {
+		grpcConns = []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn}
+	}
 	r.GET("/readyz", handlers.Ready(handlers.Readiness{
 		Redis: redisClient,
-		GRPC:  []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn},
+		GRPC:  grpcConns,
 		Cache: readyCache,
 	}))
 
@@ -65,7 +69,7 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		v1.GET("/healthz", handlers.Health())
 		v1.GET("/readyz", handlers.Ready(handlers.Readiness{
 			Redis: redisClient,
-			GRPC:  []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn},
+			GRPC:  grpcConns,
 			Cache: readyCache,
 		}))
 

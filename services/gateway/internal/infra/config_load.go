@@ -21,6 +21,7 @@ func LoadConfig() Config {
 	cfg.GRPC.TimeoutSeconds = viper.GetInt("grpc.timeout_seconds")
 	cfg.GRPC.RetryMax = viper.GetInt("grpc.retry_max")
 	cfg.GRPC.RetryBackoffMs = viper.GetInt("grpc.retry_backoff_ms")
+	cfg.GRPC.ConnectRequired = viper.GetBool("grpc.connect_required")
 	cfg.RateLimit.Requests = viper.GetInt("rate_limit.requests")
 	cfg.RateLimit.WindowSeconds = viper.GetInt("rate_limit.window_seconds")
 	cfg.MaxBodyBytes = viper.GetInt64("http.max_body_bytes")

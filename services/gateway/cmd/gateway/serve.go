@@ -34,11 +34,23 @@ var serveCmd = &cobra.Command{
 		}
 		defer shutdownTelemetry(context.Background())
 
-		grpcClients, err := grpcadapter.NewClients(context.Background(), cfg.GRPC)
-		if err != nil {
-			logger.Fatal("grpc.clients.failed", zap.Error(err))
+		var grpcClients *grpcadapter.Clients
+		if cfg.GRPC.ConnectRequired {
+			clients, err := grpcadapter.NewClients(context.Background(), cfg.GRPC)
+			if err != nil {
+				logger.Fatal("grpc.clients.failed", zap.Error(err))
+			}
+			grpcClients = clients
+		} else {
+			clients, err := grpcadapter.NewClients(context.Background(), cfg.GRPC)
+			if err != nil {
+				logger.Warn("grpc.clients.failed", zap.Error(err))
+			}
+			grpcClients = clients
 		}
-		defer grpcClients.Close()
+		if grpcClients != nil {
+			defer grpcClients.Close()
+		}
 
 		redisClient := cache.NewRedisClient(cache.RedisConfig{
 			Addr:     cfg.Redis.Addr,

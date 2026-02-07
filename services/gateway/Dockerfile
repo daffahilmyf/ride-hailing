@@ -11,4 +11,4 @@ FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /out/gateway /gateway
 COPY --from=builder /src/config /config
 USER nonroot:nonroot
-ENTRYPOINT ["/gateway", "serve"]
+ENTRYPOINT ["/gateway", "serve", "--config", "/config/config.yaml"]

@@ -18,19 +18,20 @@ auth:
   audience: "ride-hailing-clients"
 
 grpc:
-  ride_addr: "localhost:50051"
-  matching_addr: "localhost:50052"
-  location_addr: "localhost:50053"
+  ride_addr: "ride:50051"
+  matching_addr: "matching:50052"
+  location_addr: "location:50053"
   timeout_seconds: 2
   retry_max: 2
   retry_backoff_ms: 100
+  connect_required: false
 
 rate_limit:
   requests: 100
   window_seconds: 60
 
 redis:
-  addr: "localhost:6379"
+  addr: "redis:6379"
   password: ""
   db: 0
 

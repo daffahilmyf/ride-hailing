@@ -23,12 +23,13 @@ type AuthConfig struct {
 }
 
 type GRPCConfig struct {
-	RideAddr       string
-	MatchingAddr   string
-	LocationAddr   string
-	TimeoutSeconds int
-	RetryMax       int
-	RetryBackoffMs int
+	RideAddr        string
+	MatchingAddr    string
+	LocationAddr    string
+	TimeoutSeconds  int
+	RetryMax        int
+	RetryBackoffMs  int
+	ConnectRequired bool
 }
 
 type RateLimitConfig struct {
@@ -65,12 +66,13 @@ func DefaultConfig() Config {
 			Audience:   "",
 		},
 		GRPC: GRPCConfig{
-			RideAddr:       "localhost:50051",
-			MatchingAddr:   "localhost:50052",
-			LocationAddr:   "localhost:50053",
-			TimeoutSeconds: 2,
-			RetryMax:       2,
-			RetryBackoffMs: 100,
+			RideAddr:        "localhost:50051",
+			MatchingAddr:    "localhost:50052",
+			LocationAddr:    "localhost:50053",
+			TimeoutSeconds:  2,
+			RetryMax:        2,
+			RetryBackoffMs:  100,
+			ConnectRequired: true,
 		},
 		RateLimit: RateLimitConfig{
 			Requests:      100,
