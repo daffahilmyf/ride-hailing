@@ -54,7 +54,7 @@ func UpdateDriverStatus(matchingClient outbound.MatchingService) gin.HandlerFunc
 	}
 }
 
-func UpdateDriverLocation(locationClient outbound.LocationService) gin.HandlerFunc {
+func UpdateDriverLocation(locationClient outbound.LocationService, internalToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.UpdateDriverLocationRequest
 		if !validators.BindAndValidate(c, &req) {
@@ -73,6 +73,7 @@ func UpdateDriverLocation(locationClient outbound.LocationService) gin.HandlerFu
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
+		ctx = grpcadapter.WithInternalToken(ctx, internalToken)
 		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "location-service")
 

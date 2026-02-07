@@ -30,7 +30,7 @@ func setupDriverRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	r.POST("/drivers/:driver_id/status", UpdateDriverStatus(&fakeMatchingClient{}))
-	r.POST("/drivers/:driver_id/location", UpdateDriverLocation(&fakeLocationClient{}))
+	r.POST("/drivers/:driver_id/location", UpdateDriverLocation(&fakeLocationClient{}, ""))
 	return r
 }
 
