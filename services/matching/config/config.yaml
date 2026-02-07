@@ -1,0 +1,45 @@
+service:
+  name: "matching-service"
+
+grpc:
+  addr: ":50052"
+
+shutdown:
+  timeout: 10
+
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: 0
+
+matching:
+  geo_key: "drivers:geo"
+  status_key: "drivers:status"
+  available_key: "drivers:available"
+  offer_key_prefix: "driver:offer:"
+  offer_ttl_seconds: 10
+  radius_meters: 3000
+  limit: 5
+
+nats:
+  url: "nats://nats:4222"
+
+events:
+  enabled: true
+  ride_requested_subject: "ride.requested"
+  driver_location_subject: "driver.location.updated"
+
+internal_auth:
+  enabled: false
+  token: ""
+
+ride:
+  addr: "ride:50051"
+  internal_token: ""
+
+observability:
+  metrics_enabled: true
+  metrics_addr: ":9096"
+  tracing_enabled: false
+  tracing_endpoint: ""
+  tracing_insecure: true
