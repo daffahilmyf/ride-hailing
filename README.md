@@ -37,7 +37,7 @@ This repo is a monorepo with four services + shared protobufs:
 - [ ] Kubernetes/Kustomize manifests
 
 ## Status
-This project is still under active development. It is a self‑learning journey built with help from LLMs to design the learning path and evolve the system.
+This project is still under active development. I use LLMs to design the learning path, suggest good practices, and evolve the system — but I write and integrate the code myself.
 
 ## End goal (learning outcomes)
 - Understand how ride‑hailing systems work end‑to‑end, even in a simplified model.
