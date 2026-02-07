@@ -34,6 +34,24 @@ services:
       - postgres
       - nats
 
+  location:
+    container_name: service-location
+    build:
+      context: .
+      dockerfile: services/location/Dockerfile
+    ports:
+      - "50053:50053"
+    environment:
+      - LOCATION_GRPC_ADDR=:50053
+      - LOCATION_REDIS_ADDR=redis:6379
+      - LOCATION_NATS_URL=nats://nats:4222
+      - LOCATION_EVENTS_ENABLED=true
+    mem_limit: 256m
+    cpus: "0.50"
+    depends_on:
+      - redis
+      - nats
+
   nats:
     container_name: nats
     image: nats:2.10
