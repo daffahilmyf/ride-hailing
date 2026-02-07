@@ -96,3 +96,47 @@ func UpdateDriverLocation(locationClient outbound.LocationService, internalToken
 		})
 	}
 }
+
+func ListNearbyDrivers(locationClient outbound.LocationService, internalToken string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req requests.NearbyDriversRequest
+		if !validators.BindAndValidate(c, &req) {
+			responses.RespondErrorCode(c, responses.CodeValidationError, nil)
+			return
+		}
+
+		ctx := grpcadapter.WithRequestMetadata(
+			c.Request.Context(),
+			contextdata.GetTraceID(c),
+			contextdata.GetRequestID(c),
+		)
+		ctx = grpcadapter.WithInternalToken(ctx, internalToken)
+		ctx = grpcadapter.WithTraceContext(ctx)
+		WithGRPCMeta(c, "location-service")
+
+		resp, err := locationClient.ListNearbyDrivers(ctx, &locationv1.ListNearbyDriversRequest{
+			Lat:       req.Lat,
+			Lng:       req.Lng,
+			RadiusM:   req.RadiusM,
+			Limit:     req.Limit,
+			TraceId:   contextdata.GetTraceID(c),
+			RequestId: contextdata.GetRequestID(c),
+		})
+		if err != nil {
+			code, details := responses.MapGRPCError(err)
+			responses.RespondErrorCode(c, code, details)
+			return
+		}
+
+		out := make([]map[string]any, 0, len(resp.GetDrivers()))
+		for _, driver := range resp.GetDrivers() {
+			out = append(out, map[string]any{
+				"driver_id":  driver.GetDriverId(),
+				"lat":        driver.GetLat(),
+				"lng":        driver.GetLng(),
+				"distance_m": driver.GetDistanceM(),
+			})
+		}
+		responses.RespondOK(c, 200, map[string]any{"drivers": out})
+	}
+}

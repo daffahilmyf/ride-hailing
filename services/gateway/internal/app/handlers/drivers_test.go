@@ -35,6 +35,7 @@ func setupDriverRouter() *gin.Engine {
 	r := gin.New()
 	r.POST("/drivers/:driver_id/status", UpdateDriverStatus(&fakeMatchingClient{}))
 	r.POST("/drivers/:driver_id/location", UpdateDriverLocation(&fakeLocationClient{}, ""))
+	r.POST("/drivers/nearby", ListNearbyDrivers(&fakeLocationClient{}, ""))
 	return r
 }
 
@@ -81,6 +82,30 @@ func TestUpdateDriverLocationValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("POST", tt.path, bytes.NewBufferString(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			r.ServeHTTP(w, req)
+			if w.Code != tt.status {
+				t.Fatalf("expected %d, got %d", tt.status, w.Code)
+			}
+		})
+	}
+}
+
+func TestListNearbyDriversValidation(t *testing.T) {
+	tests := []struct {
+		name   string
+		body   string
+		status int
+	}{
+		{"missing_fields", `{"lat":1}`, http.StatusBadRequest},
+		{"ok", `{"lat":1,"lng":2,"radius_m":1000}`, http.StatusOK},
+	}
+
+	r := setupDriverRouter()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/drivers/nearby", bytes.NewBufferString(tt.body))
 			req.Header.Set("Content-Type", "application/json")
 			r.ServeHTTP(w, req)
 			if w.Code != tt.status {
