@@ -11,6 +11,7 @@ func LoadConfig() Config {
 
 	cfg.Auth.Enabled = viper.GetBool("auth.enabled")
 	cfg.Auth.JWTSecret = viper.GetString("auth.jwt_secret")
+	cfg.Auth.JWTSecrets = viper.GetStringSlice("auth.jwt_secrets")
 	cfg.Auth.Issuer = viper.GetString("auth.issuer")
 	cfg.Auth.Audience = viper.GetString("auth.audience")
 
@@ -33,6 +34,7 @@ func LoadConfig() Config {
 	cfg.Observability.TracingEndpoint = viper.GetString("observability.tracing_endpoint")
 	cfg.Observability.TracingInsecure = viper.GetBool("observability.tracing_insecure")
 	cfg.HTTP.RequestTimeoutSeconds = viper.GetInt("http.request_timeout_seconds")
+	cfg.HTTP.GzipEnabled = viper.GetBool("http.gzip_enabled")
 
 	return cfg
 }

@@ -15,10 +15,11 @@ type Config struct {
 }
 
 type AuthConfig struct {
-	Enabled   bool
-	JWTSecret string
-	Issuer    string
-	Audience  string
+	Enabled    bool
+	JWTSecret  string
+	JWTSecrets []string
+	Issuer     string
+	Audience   string
 }
 
 type GRPCConfig struct {
@@ -48,6 +49,7 @@ type CacheConfig struct {
 
 type HTTPConfig struct {
 	RequestTimeoutSeconds int
+	GzipEnabled           bool
 }
 
 func DefaultConfig() Config {
@@ -56,10 +58,11 @@ func DefaultConfig() Config {
 		HTTPAddr:               ":8080",
 		ShutdownTimeoutSeconds: 10,
 		Auth: AuthConfig{
-			Enabled:   false,
-			JWTSecret: "",
-			Issuer:    "",
-			Audience:  "",
+			Enabled:    false,
+			JWTSecret:  "",
+			JWTSecrets: []string{},
+			Issuer:     "",
+			Audience:   "",
 		},
 		GRPC: GRPCConfig{
 			RideAddr:       "localhost:50051",
@@ -91,6 +94,7 @@ func DefaultConfig() Config {
 		},
 		HTTP: HTTPConfig{
 			RequestTimeoutSeconds: 5,
+			GzipEnabled:           true,
 		},
 	}
 }

@@ -5,6 +5,7 @@ http:
   addr: ":8080"
   max_body_bytes: 1048576
   request_timeout_seconds: 5
+  gzip_enabled: true
 
 shutdown:
   timeout: 10
@@ -12,6 +13,7 @@ shutdown:
 auth:
   enabled: false
   jwt_secret: ""
+  jwt_secrets: []
   issuer: "ride-hailing"
   audience: "ride-hailing-clients"
 

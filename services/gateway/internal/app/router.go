@@ -3,6 +3,7 @@ package app
 import (
 	"time"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -25,6 +26,9 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 	if cfg.Observability.TracingEnabled {
 		r.Use(middleware.TraceMiddleware(cfg.ServiceName))
 	}
+	if cfg.HTTP.GzipEnabled {
+		r.Use(gzip.Gzip(gzip.DefaultCompression))
+	}
 	if cfg.Observability.MetricsEnabled {
 		metrics := middleware.NewMetrics(cfg.ServiceName)
 		registry := prometheus.NewRegistry()
@@ -33,6 +37,7 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		r.GET("/metrics", gin.WrapH(promhttp.HandlerFor(registry, promhttp.HandlerOpts{})))
 	}
 	r.Use(middleware.MaxBodyBytes(cfg.MaxBodyBytes))
+	r.Use(middleware.SecurityHeaders())
 
 	limiter := cache.NewRedisLimiter(
 		redisClient,

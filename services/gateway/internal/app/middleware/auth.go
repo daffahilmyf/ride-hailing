@@ -12,10 +12,11 @@ import (
 )
 
 type AuthConfig struct {
-	Enabled   bool
-	JWTSecret string
-	Issuer    string
-	Audience  string
+	Enabled    bool
+	JWTSecret  string
+	JWTSecrets []string
+	Issuer     string
+	Audience   string
 }
 
 func AuthMiddleware(logger *zap.Logger, cfg AuthConfig) gin.HandlerFunc {
@@ -37,13 +38,33 @@ func AuthMiddleware(logger *zap.Logger, cfg AuthConfig) gin.HandlerFunc {
 			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
 				return nil, jwt.ErrSignatureInvalid
 			}
-			return []byte(cfg.JWTSecret), nil
+			secrets := effectiveSecrets(cfg)
+			if len(secrets) == 0 {
+				return nil, jwt.ErrSignatureInvalid
+			}
+			return []byte(secrets[0]), nil
 		})
 		if err != nil || !token.Valid {
-			LogGeneralError(c, logger, "auth.invalid_token", err)
-			responses.RespondErrorCode(c, responses.CodeUnauthorized, map[string]string{"reason": "INVALID_TOKEN"})
-			c.Abort()
-			return
+			valid := false
+			for _, secret := range effectiveSecrets(cfg) {
+				t, e := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+					if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+						return nil, jwt.ErrSignatureInvalid
+					}
+					return []byte(secret), nil
+				})
+				if e == nil && t != nil && t.Valid {
+					token = t
+					valid = true
+					break
+				}
+			}
+			if !valid {
+				LogGeneralError(c, logger, "auth.invalid_token", err)
+				responses.RespondErrorCode(c, responses.CodeUnauthorized, map[string]string{"reason": "INVALID_TOKEN"})
+				c.Abort()
+				return
+			}
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
@@ -82,4 +103,14 @@ func AuthMiddleware(logger *zap.Logger, cfg AuthConfig) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func effectiveSecrets(cfg AuthConfig) []string {
+	if len(cfg.JWTSecrets) > 0 {
+		return cfg.JWTSecrets
+	}
+	if cfg.JWTSecret != "" {
+		return []string{cfg.JWTSecret}
+	}
+	return nil
 }
