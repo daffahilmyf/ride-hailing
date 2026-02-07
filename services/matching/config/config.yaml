@@ -21,6 +21,8 @@ matching:
   radius_meters: 3000
   limit: 5
   offer_retry_max: 3
+  offer_retry_backoff_ms: 200
+  offer_retry_max_backoff_ms: 1500
 
 nats:
   url: "nats://nats:4222"

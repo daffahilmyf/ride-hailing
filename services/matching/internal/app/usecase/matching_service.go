@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math"
+	"math/rand"
 	"time"
 
 	ridev1 "github.com/daffahilmyf/ride-hailing/proto/ride/v1"
+	"github.com/daffahilmyf/ride-hailing/services/matching/internal/app/metrics"
 	"github.com/daffahilmyf/ride-hailing/services/matching/internal/domain"
 	"github.com/daffahilmyf/ride-hailing/services/matching/internal/ports/outbound"
 	"google.golang.org/grpc/metadata"
@@ -20,6 +23,9 @@ type MatchingService struct {
 	MatchLimit      int
 	InternalToken   string
 	OfferRetryMax   int
+	OfferBackoffMs  int
+	OfferMaxBackoff int
+	Metrics         *metrics.MatchingMetrics
 }
 
 func (s *MatchingService) UpdateDriverStatus(ctx context.Context, driverID string, status string) error {
@@ -80,6 +86,12 @@ func (s *MatchingService) HandleRideRequested(ctx context.Context, payload []byt
 	if err != nil {
 		return err
 	}
+	if len(candidates) == 0 {
+		if s.Metrics != nil {
+			s.Metrics.IncNoCandidates()
+		}
+		return nil
+	}
 	retries := s.OfferRetryMax
 	if retries <= 0 {
 		retries = 1
@@ -94,6 +106,9 @@ func (s *MatchingService) HandleRideRequested(ctx context.Context, payload []byt
 			return err
 		}
 		if exists {
+			if s.Metrics != nil {
+				s.Metrics.IncSkipped()
+			}
 			continue
 		}
 		offerTTL := s.OfferTTLSeconds
@@ -109,10 +124,20 @@ func (s *MatchingService) HandleRideRequested(ctx context.Context, payload []byt
 		ctx = withInternalToken(ctx, s.InternalToken)
 		resp, err := s.RideClient.CreateOffer(ctx, req)
 		if err != nil {
+			if s.Metrics != nil {
+				s.Metrics.IncFailed()
+			}
 			attempts++
+			backoff := computeBackoff(attempts, s.OfferBackoffMs, s.OfferMaxBackoff)
+			if backoff > 0 {
+				time.Sleep(backoff)
+			}
 			continue
 		}
 		_ = s.NotifyOfferSent(ctx, candidate.DriverID, resp.GetOfferId())
+		if s.Metrics != nil {
+			s.Metrics.IncSent()
+		}
 		attempts++
 		break
 	}
@@ -153,6 +178,26 @@ func withInternalToken(ctx context.Context, token string) context.Context {
 		return ctx
 	}
 	return metadata.AppendToOutgoingContext(ctx, "x-internal-token", token)
+}
+
+func computeBackoff(attempt int, baseMs int, maxMs int) time.Duration {
+	if attempt <= 0 {
+		return 0
+	}
+	base := time.Duration(baseMs) * time.Millisecond
+	if base <= 0 {
+		base = 200 * time.Millisecond
+	}
+	max := time.Duration(maxMs) * time.Millisecond
+	if max <= 0 {
+		max = 1500 * time.Millisecond
+	}
+	backoff := float64(base) * math.Pow(2, float64(attempt-1))
+	if backoff > float64(max) {
+		backoff = float64(max)
+	}
+	jitter := time.Duration(rand.Intn(100)) * time.Millisecond
+	return time.Duration(backoff) + jitter
 }
 
 func getFloat(values map[string]any, key string) (float64, bool) {

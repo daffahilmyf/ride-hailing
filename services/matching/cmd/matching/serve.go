@@ -13,6 +13,7 @@ import (
 	grpcadapter "github.com/daffahilmyf/ride-hailing/services/matching/internal/adapters/grpc"
 	redisadapter "github.com/daffahilmyf/ride-hailing/services/matching/internal/adapters/redis"
 	"github.com/daffahilmyf/ride-hailing/services/matching/internal/app/handlers"
+	"github.com/daffahilmyf/ride-hailing/services/matching/internal/app/metrics"
 	"github.com/daffahilmyf/ride-hailing/services/matching/internal/app/usecase"
 	"github.com/daffahilmyf/ride-hailing/services/matching/internal/app/workers"
 	"github.com/daffahilmyf/ride-hailing/services/matching/internal/infra"
@@ -70,13 +71,26 @@ var serveCmd = &cobra.Command{
 			MatchLimit:      cfg.MatchLimit,
 			InternalToken:   cfg.RideServiceToken,
 			OfferRetryMax:   cfg.OfferRetryMax,
+			OfferBackoffMs:  cfg.OfferRetryBackoffMs,
+			OfferMaxBackoff: cfg.OfferRetryMaxBackoffMs,
 		}
 
 		grpcMetrics := grpcadapter.NewMetrics()
 		if cfg.Observability.MetricsEnabled {
 			promMetrics := grpcadapter.NewPromMetrics(cfg.ServiceName)
+			matchMetrics := &metrics.MatchingMetrics{}
+			matchProm := metrics.NewPromMetrics(cfg.ServiceName)
+			matchMetrics.AttachProm(matchProm)
+			uc.Metrics = matchMetrics
 			registry := prometheus.NewRegistry()
-			registry.MustRegister(promMetrics.Requests, promMetrics.Latency)
+			registry.MustRegister(
+				promMetrics.Requests,
+				promMetrics.Latency,
+				matchProm.OffersSent,
+				matchProm.OffersFailed,
+				matchProm.OffersSkipped,
+				matchProm.NoCandidates,
+			)
 			grpcMetrics.AttachProm(promMetrics)
 			go serveMetrics(cfg.Observability.MetricsAddr, registry, logger)
 		}

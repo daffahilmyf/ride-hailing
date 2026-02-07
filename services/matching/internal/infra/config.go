@@ -15,6 +15,8 @@ type Config struct {
 	MatchRadiusMeters      float64
 	MatchLimit             int
 	OfferRetryMax          int
+	OfferRetryBackoffMs    int
+	OfferRetryMaxBackoffMs int
 	NATSURL                string
 	EventsEnabled          bool
 	RideRequestedSubject   string
@@ -50,6 +52,8 @@ func DefaultConfig() Config {
 		MatchRadiusMeters:      3000,
 		MatchLimit:             5,
 		OfferRetryMax:          3,
+		OfferRetryBackoffMs:    200,
+		OfferRetryMaxBackoffMs: 1500,
 		NATSURL:                "nats://nats:4222",
 		EventsEnabled:          true,
 		RideRequestedSubject:   "ride.requested",
