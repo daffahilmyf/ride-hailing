@@ -27,3 +27,7 @@ offer_expiry:
   enabled: true
   interval_millis: 5000
   batch_size: 50
+
+internal_auth:
+  enabled: false
+  token: ""

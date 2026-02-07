@@ -10,9 +10,9 @@ type Server struct {
 	grpc *grpc.Server
 }
 
-func NewServer(logger *zap.Logger, deps handlers.Dependencies, metrics *Metrics) *Server {
+func NewServer(logger *zap.Logger, deps handlers.Dependencies, metrics *Metrics, auth AuthConfig) *Server {
 	srv := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(UnaryInterceptors(logger, metrics)...),
+		grpc.ChainUnaryInterceptor(UnaryInterceptors(logger, metrics, auth)...),
 	)
 	handlers.RegisterRideServer(srv, logger, deps)
 	return &Server{grpc: srv}

@@ -30,6 +30,7 @@ type GRPCConfig struct {
 	RetryMax        int
 	RetryBackoffMs  int
 	ConnectRequired bool
+	InternalToken   string
 }
 
 type RateLimitConfig struct {
@@ -73,6 +74,7 @@ func DefaultConfig() Config {
 			RetryMax:        2,
 			RetryBackoffMs:  100,
 			ConnectRequired: true,
+			InternalToken:   "",
 		},
 		RateLimit: RateLimitConfig{
 			Requests:      100,

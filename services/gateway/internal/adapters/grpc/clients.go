@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -126,4 +127,12 @@ func isRetryable(err error) bool {
 	default:
 		return false
 	}
+}
+
+func WithInternalToken(ctx context.Context, token string) context.Context {
+	if token == "" {
+		return ctx
+	}
+	md := metadata.Pairs("x-internal-token", token)
+	return metadata.NewOutgoingContext(ctx, md)
 }

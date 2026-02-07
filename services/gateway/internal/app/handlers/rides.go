@@ -32,6 +32,7 @@ func CreateRide(rideClient outbound.RideService) gin.HandlerFunc {
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
+		ctx = grpcadapter.WithInternalToken(ctx, contextdata.GetInternalToken(c))
 		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 
@@ -78,6 +79,7 @@ func CancelRide(rideClient outbound.RideService) gin.HandlerFunc {
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
+		ctx = grpcadapter.WithInternalToken(ctx, contextdata.GetInternalToken(c))
 		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 
@@ -123,6 +125,7 @@ func CreateOffer(rideClient outbound.RideService) gin.HandlerFunc {
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
+		ctx = grpcadapter.WithInternalToken(ctx, contextdata.GetInternalToken(c))
 		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 
@@ -176,6 +179,7 @@ func offerAction(rideClient outbound.RideService, action string) gin.HandlerFunc
 			contextdata.GetTraceID(c),
 			contextdata.GetRequestID(c),
 		)
+		ctx = grpcadapter.WithInternalToken(ctx, contextdata.GetInternalToken(c))
 		ctx = grpcadapter.WithTraceContext(ctx)
 		WithGRPCMeta(c, "ride-service")
 

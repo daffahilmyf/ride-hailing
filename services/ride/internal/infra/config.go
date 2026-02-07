@@ -15,6 +15,8 @@ type Config struct {
 	OfferExpiryEnabled     bool
 	OfferExpiryIntervalMs  int
 	OfferExpiryBatchSize   int
+	InternalAuthEnabled    bool
+	InternalAuthToken      string
 }
 
 func DefaultConfig() Config {
@@ -33,5 +35,7 @@ func DefaultConfig() Config {
 		OfferExpiryEnabled:     true,
 		OfferExpiryIntervalMs:  5000,
 		OfferExpiryBatchSize:   50,
+		InternalAuthEnabled:    false,
+		InternalAuthToken:      "",
 	}
 }

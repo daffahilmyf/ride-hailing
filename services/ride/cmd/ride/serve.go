@@ -54,7 +54,10 @@ var serveCmd = &cobra.Command{
 		}
 
 		grpcMetrics := grpcadapter.NewMetrics()
-		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, grpcMetrics)
+		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, grpcMetrics, grpcadapter.AuthConfig{
+			Enabled: cfg.InternalAuthEnabled,
+			Token:   cfg.InternalAuthToken,
+		})
 		healthSrv := health.NewServer()
 		healthpb.RegisterHealthServer(srv.GRPC(), healthSrv)
 		reflection.Register(srv.GRPC())

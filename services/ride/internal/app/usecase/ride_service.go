@@ -364,7 +364,10 @@ func enqueueEvent(ctx context.Context, outbox outbound.OutboxRepo, topic string,
 	if outbox == nil {
 		return nil
 	}
-	event, err := domain.NewOutboxEvent(topic, payload)
+	traceID := getStringFromContext(ctx, "trace_id")
+	requestID := getStringFromContext(ctx, "request_id")
+	envelope := domain.NewEventEnvelope(topic, "ride-service", traceID, requestID, payload)
+	event, err := domain.NewOutboxEvent(topic, envelope)
 	if err != nil {
 		return err
 	}
@@ -373,6 +376,18 @@ func enqueueEvent(ctx context.Context, outbox outbound.OutboxRepo, topic string,
 		Topic:   event.Topic,
 		Payload: string(event.Payload),
 	})
+}
+
+func getStringFromContext(ctx context.Context, key string) string {
+	if ctx == nil {
+		return ""
+	}
+	if val := ctx.Value(key); val != nil {
+		if s, ok := val.(string); ok {
+			return s
+		}
+	}
+	return ""
 }
 
 func (s *RideService) updateOffer(ctx context.Context, cmd OfferActionCmd, next domain.RideOfferStatus, topic string) (domain.RideOffer, error) {

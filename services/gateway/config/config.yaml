@@ -25,6 +25,7 @@ grpc:
   retry_max: 2
   retry_backoff_ms: 100
   connect_required: false
+  internal_token: ""
 
 rate_limit:
   requests: 100

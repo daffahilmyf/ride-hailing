@@ -24,10 +24,16 @@ type Validator interface {
 	Validate() error
 }
 
-func UnaryInterceptors(logger *zap.Logger, metrics *Metrics) []grpc.UnaryServerInterceptor {
+type AuthConfig struct {
+	Enabled bool
+	Token   string
+}
+
+func UnaryInterceptors(logger *zap.Logger, metrics *Metrics, auth AuthConfig) []grpc.UnaryServerInterceptor {
 	return []grpc.UnaryServerInterceptor{
 		recoveryInterceptor(logger),
 		requestIDInterceptor(),
+		authInterceptor(auth),
 		validationInterceptor(),
 		metricsInterceptor(metrics),
 		loggingInterceptor(logger),
@@ -68,6 +74,20 @@ func requestIDInterceptor() grpc.UnaryServerInterceptor {
 			"x-request-id", requestID,
 		))
 
+		return handler(ctx, req)
+	}
+}
+
+func authInterceptor(cfg AuthConfig) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		if !cfg.Enabled {
+			return handler(ctx, req)
+		}
+		md, _ := metadata.FromIncomingContext(ctx)
+		token := firstHeader(md, "x-internal-token")
+		if token == "" || token != cfg.Token {
+			return nil, status.Error(codes.Unauthenticated, "invalid internal token")
+		}
 		return handler(ctx, req)
 	}
 }
