@@ -15,7 +15,8 @@ import (
 
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/broker"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/db"
-	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/metrics"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/workers"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/ports/outbound"
 	"go.uber.org/zap"
 )
@@ -46,11 +47,11 @@ func TestOutboxWorkerPublishes(t *testing.T) {
 	require.NoError(t, err)
 
 	logger, _ := zap.NewDevelopment()
-	worker := &app.OutboxWorker{
+	worker := &workers.OutboxWorker{
 		Repo:        outbox,
 		Publisher:   broker.NewPublisher(js),
 		Logger:      logger,
-		Metrics:     &app.OutboxMetrics{},
+		Metrics:     &metrics.OutboxMetrics{},
 		BatchSize:   10,
 		MaxAttempts: 3,
 		Interval:    100 * time.Millisecond,

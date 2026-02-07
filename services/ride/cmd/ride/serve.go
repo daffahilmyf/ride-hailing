@@ -11,9 +11,10 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/broker"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/db"
 	grpcadapter "github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/grpc"
-	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/handlers"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/metrics"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/usecase"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/workers"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/infra"
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
@@ -52,8 +53,8 @@ var serveCmd = &cobra.Command{
 			OfferMetrics: &usecase.OfferMetrics{},
 		}
 
-		metrics := grpcadapter.NewMetrics()
-		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, metrics)
+		grpcMetrics := grpcadapter.NewMetrics()
+		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, grpcMetrics)
 		healthSrv := health.NewServer()
 		healthpb.RegisterHealthServer(srv.GRPC(), healthSrv)
 		reflection.Register(srv.GRPC())
@@ -71,11 +72,11 @@ var serveCmd = &cobra.Command{
 				logger.Fatal("nats.jetstream_failed", zap.Error(err))
 			}
 			publisher := broker.NewPublisher(js)
-			worker := &app.OutboxWorker{
+			worker := &workers.OutboxWorker{
 				Repo:        outbox,
 				Publisher:   publisher,
 				Logger:      logger,
-				Metrics:     &app.OutboxMetrics{},
+				Metrics:     &metrics.OutboxMetrics{},
 				BatchSize:   cfg.OutboxBatchSize,
 				MaxAttempts: cfg.OutboxMaxAttempts,
 				Interval:    time.Duration(cfg.OutboxIntervalMillis) * time.Millisecond,
@@ -83,7 +84,7 @@ var serveCmd = &cobra.Command{
 			go worker.Run(ctx)
 
 			retention := time.Duration(cfg.OutboxRetentionHours) * time.Hour
-			cleanup := &app.OutboxCleanupWorker{
+			cleanup := &workers.OutboxCleanupWorker{
 				Repo:      outbox,
 				Logger:    logger,
 				Retention: retention,
@@ -93,7 +94,7 @@ var serveCmd = &cobra.Command{
 		}
 
 		if cfg.OfferExpiryEnabled {
-			expiry := &app.OfferExpiryWorker{
+			expiry := &workers.OfferExpiryWorker{
 				Repo:     offers,
 				Usecase:  uc,
 				Logger:   logger,

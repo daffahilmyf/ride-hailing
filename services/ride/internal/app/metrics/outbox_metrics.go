@@ -1,4 +1,4 @@
-package app
+package metrics
 
 import "sync/atomic"
 

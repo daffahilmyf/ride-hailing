@@ -1,9 +1,10 @@
-package app
+package workers
 
 import (
 	"context"
 	"time"
 
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/metrics"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/ports/outbound"
 	"go.uber.org/zap"
 )
@@ -12,7 +13,7 @@ type OutboxWorker struct {
 	Repo        outbound.OutboxRepo
 	Publisher   outbound.OutboxPublisher
 	Logger      *zap.Logger
-	Metrics     *OutboxMetrics
+	Metrics     *metrics.OutboxMetrics
 	BatchSize   int
 	MaxAttempts int
 	Interval    time.Duration

@@ -13,8 +13,8 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/db"
-	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/usecase"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/workers"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/domain"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/ports/outbound"
 	"go.uber.org/zap"
@@ -35,7 +35,7 @@ func TestOfferExpiryWorker(t *testing.T) {
 
 	logger, _ := zap.NewDevelopment()
 	uc := &usecase.RideService{Offers: repo, OfferMetrics: &usecase.OfferMetrics{}}
-	worker := &app.OfferExpiryWorker{
+	worker := &workers.OfferExpiryWorker{
 		Repo:     repo,
 		Usecase:  uc,
 		Logger:   logger,
