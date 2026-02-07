@@ -55,5 +55,4 @@ Run tests per service:
 ## Repo layout
 - `services/` — service code
 - `proto/` — gRPC contracts
-- `docs/` — architecture, domain, ops, and dev docs
 - `docker-compose*.yml` — local orchestration
