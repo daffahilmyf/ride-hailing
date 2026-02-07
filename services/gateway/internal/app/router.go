@@ -22,9 +22,9 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps) *gin.Engine {
 			Password: cfg.Redis.Password,
 			DB:       cfg.Redis.DB,
 		}),
-		cfg.RateLimit.Requests,
-		time.Duration(cfg.RateLimit.WindowSeconds)*time.Second,
-		"rl",
+		cache.WithLimiterRequests(cfg.RateLimit.Requests),
+		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.WindowSeconds)*time.Second),
+		cache.WithLimiterPrefix("rl"),
 	)
 	r.Use(middleware.RateLimitMiddleware(limiter))
 

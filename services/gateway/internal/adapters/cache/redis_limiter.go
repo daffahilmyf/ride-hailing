@@ -15,13 +15,43 @@ type RedisLimiter struct {
 	prefix   string
 }
 
-func NewRedisLimiter(client *redis.Client, requests int, window time.Duration, prefix string) *RedisLimiter {
-	return &RedisLimiter{
-		client:   client,
-		requests: requests,
-		window:   window,
-		prefix:   prefix,
+type LimiterOption func(*RedisLimiter)
+
+func WithLimiterPrefix(prefix string) LimiterOption {
+	return func(l *RedisLimiter) {
+		if prefix != "" {
+			l.prefix = prefix
+		}
 	}
+}
+
+func WithLimiterWindow(window time.Duration) LimiterOption {
+	return func(l *RedisLimiter) {
+		if window > 0 {
+			l.window = window
+		}
+	}
+}
+
+func WithLimiterRequests(requests int) LimiterOption {
+	return func(l *RedisLimiter) {
+		if requests > 0 {
+			l.requests = requests
+		}
+	}
+}
+
+func NewRedisLimiter(client *redis.Client, opts ...LimiterOption) *RedisLimiter {
+	limiter := &RedisLimiter{
+		client:   client,
+		requests: 100,
+		window:   60 * time.Second,
+		prefix:   "rl",
+	}
+	for _, opt := range opts {
+		opt(limiter)
+	}
+	return limiter
 }
 
 func (l *RedisLimiter) Allow(key string) (bool, error) {
