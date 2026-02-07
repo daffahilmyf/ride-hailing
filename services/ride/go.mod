@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	github.com/daffahilmyf/ride-hailing/proto v0.0.0
+	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	go.uber.org/zap v1.26.0

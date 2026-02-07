@@ -2,8 +2,11 @@ package app
 
 import (
 	"context"
+	"errors"
 
 	ridev1 "github.com/daffahilmyf/ride-hailing/proto/ride/v1"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/usecase"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/domain"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -12,15 +15,26 @@ import (
 
 type RideServer struct {
 	ridev1.UnimplementedRideServiceServer
-	logger *zap.Logger
+	logger  *zap.Logger
+	usecase *usecase.RideService
 }
 
-func RegisterGRPC(srv *grpc.Server, logger *zap.Logger) {
-	ridev1.RegisterRideServiceServer(srv, &RideServer{logger: logger})
+func RegisterGRPC(srv *grpc.Server, logger *zap.Logger, uc *usecase.RideService) {
+	ridev1.RegisterRideServiceServer(srv, &RideServer{logger: logger, usecase: uc})
 }
 
 func (s *RideServer) CreateRide(ctx context.Context, req *ridev1.CreateRideRequest) (*ridev1.CreateRideResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	ride, err := s.usecase.CreateRide(ctx, usecase.CreateRideCmd{
+		RiderID:    req.GetRiderId(),
+		PickupLat:  req.GetPickupLat(),
+		PickupLng:  req.GetPickupLng(),
+		DropoffLat: req.GetDropoffLat(),
+		DropoffLng: req.GetDropoffLng(),
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to create ride")
+	}
+	return &ridev1.CreateRideResponse{RideId: ride.ID, Status: string(ride.Status)}, nil
 }
 
 func (s *RideServer) StartMatching(ctx context.Context, req *ridev1.StartMatchingRequest) (*ridev1.StartMatchingResponse, error) {
@@ -32,5 +46,12 @@ func (s *RideServer) AssignDriver(ctx context.Context, req *ridev1.AssignDriverR
 }
 
 func (s *RideServer) CancelRide(ctx context.Context, req *ridev1.CancelRideRequest) (*ridev1.CancelRideResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	ride, err := s.usecase.CancelRide(ctx, req.GetRideId(), req.GetReason())
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidTransition) {
+			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
+		}
+		return nil, status.Error(codes.Internal, "failed to cancel ride")
+	}
+	return &ridev1.CancelRideResponse{RideId: ride.ID, Status: string(ride.Status)}, nil
 }

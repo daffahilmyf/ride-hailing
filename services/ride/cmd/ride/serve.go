@@ -8,7 +8,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/adapters/db"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app"
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/usecase"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/infra"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -23,8 +25,16 @@ var serveCmd = &cobra.Command{
 		logger := infra.NewLogger()
 		defer logger.Sync()
 
+		pg, err := db.NewPostgres(context.Background(), cfg.PostgresDSN)
+		if err != nil {
+			logger.Fatal("db.connect_failed", zap.Error(err))
+		}
+
+		repo := db.NewRideRepo(pg.DB)
+		uc := &usecase.RideService{Repo: repo}
+
 		srv := grpc.NewServer()
-		app.RegisterGRPC(srv, logger)
+		app.RegisterGRPC(srv, logger, uc)
 
 		lis, err := net.Listen("tcp", cfg.GRPCAddr)
 		if err != nil {
