@@ -1,13 +1,9 @@
 package app
 
-import (
-	locationv1 "github.com/daffahilmyf/ride-hailing/proto/location/v1"
-	matchingv1 "github.com/daffahilmyf/ride-hailing/proto/matching/v1"
-	ridev1 "github.com/daffahilmyf/ride-hailing/proto/ride/v1"
-)
+import "github.com/daffahilmyf/ride-hailing/services/gateway/internal/ports/outbound"
 
 type Deps struct {
-	RideClient     ridev1.RideServiceClient
-	MatchingClient matchingv1.MatchingServiceClient
-	LocationClient locationv1.LocationServiceClient
+	RideClient     outbound.RideService
+	MatchingClient outbound.MatchingService
+	LocationClient outbound.LocationService
 }

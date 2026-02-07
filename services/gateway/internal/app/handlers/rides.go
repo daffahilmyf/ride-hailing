@@ -10,9 +10,10 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/handlers/requests"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/handlers/validators"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/responses"
+	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/ports/outbound"
 )
 
-func CreateRide(rideClient ridev1.RideServiceClient) gin.HandlerFunc {
+func CreateRide(rideClient outbound.RideService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CreateRideRequest
 		if !validators.BindAndValidate(c, &req) {
@@ -57,7 +58,7 @@ func CreateRide(rideClient ridev1.RideServiceClient) gin.HandlerFunc {
 	}
 }
 
-func CancelRide(rideClient ridev1.RideServiceClient) gin.HandlerFunc {
+func CancelRide(rideClient outbound.RideService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CancelRideRequest
 		if !validators.BindAndValidate(c, &req) {

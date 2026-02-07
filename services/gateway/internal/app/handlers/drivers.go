@@ -11,9 +11,10 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/handlers/requests"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/handlers/validators"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/responses"
+	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/ports/outbound"
 )
 
-func UpdateDriverStatus(matchingClient matchingv1.MatchingServiceClient) gin.HandlerFunc {
+func UpdateDriverStatus(matchingClient outbound.MatchingService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.UpdateDriverStatusRequest
 		if !validators.BindAndValidate(c, &req) {
@@ -52,7 +53,7 @@ func UpdateDriverStatus(matchingClient matchingv1.MatchingServiceClient) gin.Han
 	}
 }
 
-func UpdateDriverLocation(locationClient locationv1.LocationServiceClient) gin.HandlerFunc {
+func UpdateDriverLocation(locationClient outbound.LocationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.UpdateDriverLocationRequest
 		if !validators.BindAndValidate(c, &req) {
