@@ -17,6 +17,7 @@
 # Env/config
 **/.env
 **/.env.*
+!**/*.example
 
 # Docs (not committed per request)
 docs/
