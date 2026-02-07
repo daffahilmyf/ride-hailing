@@ -33,6 +33,7 @@ var serveCmd = &cobra.Command{
 
 		repo := db.NewRideRepo(pg.DB)
 		idem := db.NewIdempotencyRepo(pg.DB)
+		idemCleanup := db.NewIdempotencyCleanup(pg.DB)
 		outbox := db.NewOutboxRepo(pg.DB)
 		offers := db.NewRideOfferRepo(pg.DB)
 		txMgr := db.NewTxManager(pg.DB)
@@ -58,9 +59,30 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
+		startIdempotencyCleanup(logger, idemCleanup, time.Duration(cfg.IdempotencyTTLSeconds)*time.Second)
 		waitForShutdown(srv.GRPC(), cfg.ShutdownTimeoutSeconds, logger)
 		return nil
 	},
+}
+
+func startIdempotencyCleanup(logger *zap.Logger, cleaner *db.IdempotencyCleanup, ttl time.Duration) {
+	if cleaner == nil || ttl <= 0 {
+		return
+	}
+	ticker := time.NewTicker(time.Hour)
+	go func() {
+		for range ticker.C {
+			cutoff := time.Now().UTC().Add(-ttl)
+			deleted, err := cleaner.DeleteBefore(context.Background(), cutoff)
+			if err != nil {
+				logger.Warn("idempotency.cleanup_failed", zap.Error(err))
+				continue
+			}
+			if deleted > 0 {
+				logger.Info("idempotency.cleanup", zap.Int64("deleted", deleted))
+			}
+		}
+	}()
 }
 
 func waitForShutdown(srv *grpc.Server, timeoutSeconds int, logger *zap.Logger) {

@@ -30,11 +30,13 @@ func init() {
 	rootCmd.PersistentFlags().String("grpc.addr", ":50051", "gRPC listen address")
 	rootCmd.PersistentFlags().String("postgres.dsn", "", "PostgreSQL DSN")
 	rootCmd.PersistentFlags().Int("shutdown.timeout", 10, "shutdown timeout in seconds")
+	rootCmd.PersistentFlags().Int("idempotency.ttl", 86400, "idempotency key TTL in seconds")
 
 	_ = viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
 	_ = viper.BindPFlag("grpc.addr", rootCmd.PersistentFlags().Lookup("grpc.addr"))
 	_ = viper.BindPFlag("postgres.dsn", rootCmd.PersistentFlags().Lookup("postgres.dsn"))
 	_ = viper.BindPFlag("shutdown.timeout", rootCmd.PersistentFlags().Lookup("shutdown.timeout"))
+	_ = viper.BindPFlag("idempotency.ttl_seconds", rootCmd.PersistentFlags().Lookup("idempotency.ttl"))
 }
 
 func initConfig() {

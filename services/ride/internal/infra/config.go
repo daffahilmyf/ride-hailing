@@ -5,6 +5,7 @@ type Config struct {
 	GRPCAddr               string
 	ShutdownTimeoutSeconds int
 	PostgresDSN            string
+	IdempotencyTTLSeconds  int
 }
 
 func DefaultConfig() Config {
@@ -13,5 +14,6 @@ func DefaultConfig() Config {
 		GRPCAddr:               ":50051",
 		ShutdownTimeoutSeconds: 10,
 		PostgresDSN:            "postgres://ride:ride@postgres:5432/rides?sslmode=disable",
+		IdempotencyTTLSeconds:  86400,
 	}
 }
