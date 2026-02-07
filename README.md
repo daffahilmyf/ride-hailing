@@ -16,6 +16,18 @@ This repo is a monorepo with four services + shared protobufs:
 - `services/location` — driver location ingestion and geo index (Redis)
 - `proto` — shared gRPC contracts
 
+## Tech stack
+- Language: Go
+- HTTP: Gin
+- Internal RPC: gRPC
+- Events: NATS JetStream
+- Database: PostgreSQL
+- Cache/Geo: Redis
+- Validation: go-playground/validator
+- Nullable types: guregu/null
+- Migrations: goose
+- Local orchestration: Docker Compose
+
 ## Quick start (local)
 1. Start infra:
    - `docker compose up -d nats postgres redis migrate`
@@ -27,7 +39,7 @@ This repo is a monorepo with four services + shared protobufs:
 - Idempotent handlers with at‑least‑once delivery
 - Strict state machine transitions
 - Event‑driven orchestration with JetStream
-- Battery‑aware driver location strategy
+- Battery‑aware driver location strategy (WIP, still under discussion)
 
 ## Progress checklist
 - [x] Gateway API skeleton (Gin)
