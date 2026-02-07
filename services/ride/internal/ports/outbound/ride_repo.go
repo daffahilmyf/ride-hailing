@@ -22,4 +22,5 @@ type RideRepo interface {
 	Create(ctx context.Context, ride Ride) error
 	Get(ctx context.Context, id string) (Ride, error)
 	UpdateStatus(ctx context.Context, id string, status string, updatedAt time.Time) error
+	AssignDriver(ctx context.Context, id string, driverID string, status string, updatedAt time.Time) error
 }

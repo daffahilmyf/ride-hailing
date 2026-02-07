@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,18 +12,29 @@ import (
 )
 
 type RideService struct {
-	Repo outbound.RideRepo
+	Repo        outbound.RideRepo
+	Idempotency outbound.IdempotencyRepo
 }
 
 type CreateRideCmd struct {
-	RiderID    string
-	PickupLat  float64
-	PickupLng  float64
-	DropoffLat float64
-	DropoffLng float64
+	RiderID        string
+	PickupLat      float64
+	PickupLng      float64
+	DropoffLat     float64
+	DropoffLng     float64
+	IdempotencyKey string
 }
 
 func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain.Ride, error) {
+	if cmd.IdempotencyKey != "" && s.Idempotency != nil {
+		if val, ok, err := s.Idempotency.Get(ctx, cmd.IdempotencyKey); err == nil && ok {
+			var ride domain.Ride
+			if err := json.Unmarshal([]byte(val), &ride); err == nil {
+				return ride, nil
+			}
+		}
+	}
+
 	now := time.Now().UTC()
 	ride := domain.Ride{
 		ID:         uuid.NewString(),
@@ -49,24 +61,20 @@ func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain
 	if err != nil {
 		return domain.Ride{}, err
 	}
+
+	if cmd.IdempotencyKey != "" && s.Idempotency != nil {
+		if b, err := json.Marshal(ride); err == nil {
+			_ = s.Idempotency.Save(ctx, cmd.IdempotencyKey, string(b))
+		}
+	}
+
 	return ride, nil
 }
 
 func (s *RideService) CancelRide(ctx context.Context, id string, reason string) (domain.Ride, error) {
-	rideRow, err := s.Repo.Get(ctx, id)
+	ride, err := s.loadRide(ctx, id)
 	if err != nil {
 		return domain.Ride{}, err
-	}
-
-	ride := domain.Ride{
-		ID:         rideRow.ID,
-		RiderID:    rideRow.RiderID,
-		DriverID:   rideRow.DriverID,
-		Status:     domain.RideStatus(rideRow.Status),
-		PickupLat:  rideRow.PickupLat,
-		PickupLng:  rideRow.PickupLng,
-		DropoffLat: rideRow.DropoffLat,
-		DropoffLng: rideRow.DropoffLng,
 	}
 
 	updated, err := ride.Transition(domain.StatusCancelled)
@@ -78,4 +86,70 @@ func (s *RideService) CancelRide(ctx context.Context, id string, reason string) 
 	}
 	_ = reason
 	return updated, nil
+}
+
+func (s *RideService) AssignDriver(ctx context.Context, rideID, driverID string) (domain.Ride, error) {
+	ride, err := s.loadRide(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+
+	next, err := ride.Transition(domain.StatusDriverAssigned)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	next.DriverID = &driverID
+
+	if err := s.Repo.AssignDriver(ctx, next.ID, driverID, string(next.Status), time.Now().UTC()); err != nil {
+		return domain.Ride{}, err
+	}
+	return next, nil
+}
+
+func (s *RideService) StartRide(ctx context.Context, rideID string) (domain.Ride, error) {
+	ride, err := s.loadRide(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	updated, err := ride.Transition(domain.StatusInProgress)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		return domain.Ride{}, err
+	}
+	return updated, nil
+}
+
+func (s *RideService) CompleteRide(ctx context.Context, rideID string) (domain.Ride, error) {
+	ride, err := s.loadRide(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	updated, err := ride.Transition(domain.StatusCompleted)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	if err := s.Repo.UpdateStatus(ctx, updated.ID, string(updated.Status), time.Now().UTC()); err != nil {
+		return domain.Ride{}, err
+	}
+	return updated, nil
+}
+
+func (s *RideService) loadRide(ctx context.Context, id string) (domain.Ride, error) {
+	rideRow, err := s.Repo.Get(ctx, id)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+
+	return domain.Ride{
+		ID:         rideRow.ID,
+		RiderID:    rideRow.RiderID,
+		DriverID:   rideRow.DriverID,
+		Status:     domain.RideStatus(rideRow.Status),
+		PickupLat:  rideRow.PickupLat,
+		PickupLng:  rideRow.PickupLng,
+		DropoffLat: rideRow.DropoffLat,
+		DropoffLng: rideRow.DropoffLng,
+	}, nil
 }

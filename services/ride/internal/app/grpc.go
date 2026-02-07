@@ -25,11 +25,12 @@ func RegisterGRPC(srv *grpc.Server, logger *zap.Logger, uc *usecase.RideService)
 
 func (s *RideServer) CreateRide(ctx context.Context, req *ridev1.CreateRideRequest) (*ridev1.CreateRideResponse, error) {
 	ride, err := s.usecase.CreateRide(ctx, usecase.CreateRideCmd{
-		RiderID:    req.GetRiderId(),
-		PickupLat:  req.GetPickupLat(),
-		PickupLng:  req.GetPickupLng(),
-		DropoffLat: req.GetDropoffLat(),
-		DropoffLng: req.GetDropoffLng(),
+		RiderID:        req.GetRiderId(),
+		PickupLat:      req.GetPickupLat(),
+		PickupLng:      req.GetPickupLng(),
+		DropoffLat:     req.GetDropoffLat(),
+		DropoffLng:     req.GetDropoffLng(),
+		IdempotencyKey: req.GetIdempotencyKey(),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to create ride")
@@ -42,7 +43,14 @@ func (s *RideServer) StartMatching(ctx context.Context, req *ridev1.StartMatchin
 }
 
 func (s *RideServer) AssignDriver(ctx context.Context, req *ridev1.AssignDriverRequest) (*ridev1.AssignDriverResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	ride, err := s.usecase.AssignDriver(ctx, req.GetRideId(), req.GetDriverId())
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidTransition) {
+			return nil, status.Error(codes.FailedPrecondition, "invalid transition")
+		}
+		return nil, status.Error(codes.Internal, "failed to assign driver")
+	}
+	return &ridev1.AssignDriverResponse{RideId: ride.ID, DriverId: req.GetDriverId(), Status: string(ride.Status)}, nil
 }
 
 func (s *RideServer) CancelRide(ctx context.Context, req *ridev1.CancelRideRequest) (*ridev1.CancelRideResponse, error) {

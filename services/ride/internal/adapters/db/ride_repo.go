@@ -73,3 +73,9 @@ func (r *RideRepo) UpdateStatus(ctx context.Context, id string, status string, u
 		Where("id = ?", id).
 		Updates(map[string]interface{}{"status": status, "updated_at": updatedAt}).Error
 }
+
+func (r *RideRepo) AssignDriver(ctx context.Context, id string, driverID string, status string, updatedAt time.Time) error {
+	return r.DB.WithContext(ctx).Model(&rideModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{"driver_id": driverID, "status": status, "updated_at": updatedAt}).Error
+}
