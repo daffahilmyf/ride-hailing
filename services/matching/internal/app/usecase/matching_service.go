@@ -19,6 +19,7 @@ type MatchingService struct {
 	MatchRadius     float64
 	MatchLimit      int
 	InternalToken   string
+	OfferRetryMax   int
 }
 
 func (s *MatchingService) UpdateDriverStatus(ctx context.Context, driverID string, status string) error {
@@ -79,7 +80,22 @@ func (s *MatchingService) HandleRideRequested(ctx context.Context, payload []byt
 	if err != nil {
 		return err
 	}
+	retries := s.OfferRetryMax
+	if retries <= 0 {
+		retries = 1
+	}
+	attempts := 0
 	for _, candidate := range candidates {
+		if attempts >= retries {
+			break
+		}
+		exists, err := s.Repo.HasOffer(ctx, candidate.DriverID)
+		if err != nil {
+			return err
+		}
+		if exists {
+			continue
+		}
 		offerTTL := s.OfferTTLSeconds
 		if offerTTL <= 0 {
 			offerTTL = 10
@@ -93,9 +109,11 @@ func (s *MatchingService) HandleRideRequested(ctx context.Context, payload []byt
 		ctx = withInternalToken(ctx, s.InternalToken)
 		resp, err := s.RideClient.CreateOffer(ctx, req)
 		if err != nil {
+			attempts++
 			continue
 		}
 		_ = s.NotifyOfferSent(ctx, candidate.DriverID, resp.GetOfferId())
+		attempts++
 		break
 	}
 	return nil

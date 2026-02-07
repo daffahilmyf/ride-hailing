@@ -14,6 +14,7 @@ type Config struct {
 	OfferTTLSeconds        int
 	MatchRadiusMeters      float64
 	MatchLimit             int
+	OfferRetryMax          int
 	NATSURL                string
 	EventsEnabled          bool
 	RideRequestedSubject   string
@@ -48,6 +49,7 @@ func DefaultConfig() Config {
 		OfferTTLSeconds:        10,
 		MatchRadiusMeters:      3000,
 		MatchLimit:             5,
+		OfferRetryMax:          3,
 		NATSURL:                "nats://nats:4222",
 		EventsEnabled:          true,
 		RideRequestedSubject:   "ride.requested",

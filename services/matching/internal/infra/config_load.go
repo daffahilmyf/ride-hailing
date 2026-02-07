@@ -17,6 +17,7 @@ func LoadConfig() Config {
 	cfg.OfferTTLSeconds = viper.GetInt("matching.offer_ttl_seconds")
 	cfg.MatchRadiusMeters = viper.GetFloat64("matching.radius_meters")
 	cfg.MatchLimit = viper.GetInt("matching.limit")
+	cfg.OfferRetryMax = viper.GetInt("matching.offer_retry_max")
 	cfg.NATSURL = viper.GetString("nats.url")
 	cfg.EventsEnabled = viper.GetBool("events.enabled")
 	cfg.RideRequestedSubject = viper.GetString("events.ride_requested_subject")

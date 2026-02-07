@@ -69,6 +69,7 @@ var serveCmd = &cobra.Command{
 			MatchRadius:     cfg.MatchRadiusMeters,
 			MatchLimit:      cfg.MatchLimit,
 			InternalToken:   cfg.RideServiceToken,
+			OfferRetryMax:   cfg.OfferRetryMax,
 		}
 
 		grpcMetrics := grpcadapter.NewMetrics()

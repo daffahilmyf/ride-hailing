@@ -68,6 +68,18 @@ func (r *DriverRepo) MarkOfferSent(ctx context.Context, driverID string, offerID
 	return err
 }
 
+func (r *DriverRepo) HasOffer(ctx context.Context, driverID string) (bool, error) {
+	if r == nil || r.client == nil {
+		return false, nil
+	}
+	key := r.offerPrefix + driverID
+	ok, err := r.client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
+	}
+	return ok == 1, nil
+}
+
 func (r *DriverRepo) Nearby(ctx context.Context, lat float64, lng float64, radiusMeters float64, limit int) ([]outbound.Candidate, error) {
 	if r == nil || r.client == nil {
 		return nil, nil
