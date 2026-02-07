@@ -15,6 +15,7 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/infra"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 var serveCmd = &cobra.Command{
