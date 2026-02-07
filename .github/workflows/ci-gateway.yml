@@ -1,4 +1,4 @@
-name: CI Gateway
+name: CI Gateway (Test + Build)
 
 on:
   push:

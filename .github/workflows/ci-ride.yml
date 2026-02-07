@@ -1,4 +1,4 @@
-name: CI Ride
+name: CI Ride (Test + Build)
 
 on:
   push:

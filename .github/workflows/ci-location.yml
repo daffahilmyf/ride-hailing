@@ -1,4 +1,4 @@
-name: CI Location
+name: CI Location (Test + Build)
 
 on:
   push:

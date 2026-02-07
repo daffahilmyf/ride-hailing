@@ -1,4 +1,4 @@
-name: CI Matching
+name: CI Matching (Test + Build)
 
 on:
   push:
