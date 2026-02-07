@@ -30,6 +30,8 @@ grpc:
 rate_limit:
   requests: 100
   window_seconds: 60
+  nearby_requests: 20
+  nearby_window_seconds: 30
 
 redis:
   addr: "redis:6379"

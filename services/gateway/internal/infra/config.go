@@ -34,8 +34,10 @@ type GRPCConfig struct {
 }
 
 type RateLimitConfig struct {
-	Requests      int
-	WindowSeconds int
+	Requests            int
+	WindowSeconds       int
+	NearbyRequests      int
+	NearbyWindowSeconds int
 }
 
 type RedisConfig struct {
@@ -77,8 +79,10 @@ func DefaultConfig() Config {
 			InternalToken:   "",
 		},
 		RateLimit: RateLimitConfig{
-			Requests:      100,
-			WindowSeconds: 60,
+			Requests:            100,
+			WindowSeconds:       60,
+			NearbyRequests:      20,
+			NearbyWindowSeconds: 30,
 		},
 		MaxBodyBytes: 1_048_576,
 		Redis: RedisConfig{

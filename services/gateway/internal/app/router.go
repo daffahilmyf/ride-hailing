@@ -47,6 +47,13 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 	)
 	r.Use(middleware.RateLimitMiddleware(limiter, cfg.RateLimit.Requests))
 
+	nearbyLimiter := cache.NewRedisLimiter(
+		redisClient,
+		cache.WithLimiterRequests(cfg.RateLimit.NearbyRequests),
+		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.NearbyWindowSeconds)*time.Second),
+		cache.WithLimiterPrefix("rl:nearby"),
+	)
+
 	var readyCache = handlers.ReadinessCache{Key: "gateway:readyz"}
 	if cfg.Cache.Enabled {
 		readyCache.Cache = cache.NewRedisCache(redisClient)
@@ -96,7 +103,10 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		driverGroup.Use(middleware.AuditLogger(logger, "drivers:write"))
 		driverGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatus(deps.MatchingClient))
 		driverGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocation(deps.LocationClient, cfg.GRPC.InternalToken))
-		driverGroup.POST("/drivers/nearby", handlers.ListNearbyDrivers(deps.LocationClient, cfg.GRPC.InternalToken))
+		driverGroup.POST("/drivers/nearby",
+			middleware.RateLimitMiddleware(nearbyLimiter, cfg.RateLimit.NearbyRequests),
+			handlers.ListNearbyDrivers(deps.LocationClient, cfg.GRPC.InternalToken),
+		)
 		driverGroup.POST("/offers/:offer_id/accept", handlers.AcceptOffer(deps.RideClient, cfg.GRPC.InternalToken))
 		driverGroup.POST("/offers/:offer_id/decline", handlers.DeclineOffer(deps.RideClient, cfg.GRPC.InternalToken))
 		driverGroup.POST("/offers/:offer_id/expire", handlers.ExpireOffer(deps.RideClient, cfg.GRPC.InternalToken))
