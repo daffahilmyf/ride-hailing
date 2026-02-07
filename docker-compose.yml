@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  gateway:
+    build:
+      context: ./services/gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - GATEWAY_HTTP_ADDR=:8080
+      - GATEWAY_AUTH_ENABLED=false
+    depends_on:
+      - nats
+      - postgres
+      - redis
+
+  nats:
+    image: nats:2.10
+    command: ["-js"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=ride
+      - POSTGRES_PASSWORD=ride
+      - POSTGRES_DB=rides
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
