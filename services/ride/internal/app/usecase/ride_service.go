@@ -69,9 +69,11 @@ func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := enqueueEvent(ctx, outbox, "ride.requested", map[string]string{
-			"ride_id":  ride.ID,
-			"rider_id": ride.RiderID,
+		if err := enqueueEvent(ctx, outbox, "ride.requested", map[string]any{
+			"ride_id":    ride.ID,
+			"rider_id":   ride.RiderID,
+			"pickup_lat": ride.PickupLat,
+			"pickup_lng": ride.PickupLng,
 		}); err != nil {
 			return domain.Ride{}, err
 		}
