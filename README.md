@@ -1,4 +1,9 @@
 # Ride-Hailing Backend (Study Case)
+[![CI Gateway (Test + Build)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-gateway.yml/badge.svg)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-gateway.yml)
+[![CI Ride (Test + Build)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-ride.yml/badge.svg)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-ride.yml)
+[![CI Matching (Test + Build)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-matching.yml/badge.svg)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-matching.yml)
+[![CI Location (Test + Build)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-location.yml/badge.svg)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-location.yml)
+[![CI Proto](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-proto.yml/badge.svg)](https://github.com/daffahilmyf/ride-hailing/actions/workflows/ci-proto.yml)
 A simplified ride‑hailing backend built for learning distributed systems, state machines, and event‑driven design.
 
 ## Study case
@@ -37,7 +42,7 @@ This repo is a monorepo with four services + shared protobufs:
 - [ ] Kubernetes/Kustomize manifests
 
 ## Status
-This project is still under active development. I use LLMs to design the learning path, suggest good practices, and evolve the system — but I write and integrate the code myself.
+This project is still under active development. I use LLMs to shape the learning path, get advice on good practices, and evolve the system, while I write and integrate the code myself.
 
 ## End goal (learning outcomes)
 - Understand how ride‑hailing systems work end‑to‑end, even in a simplified model.
