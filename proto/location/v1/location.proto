@@ -10,6 +10,8 @@ service LocationService {
   rpc GetDriverLocation(GetDriverLocationRequest) returns (GetDriverLocationResponse);
   // UpdateDriverLocation updates driver location.
   rpc UpdateDriverLocation(UpdateDriverLocationRequest) returns (UpdateDriverLocationResponse);
+  // ListNearbyDrivers returns drivers near a coordinate.
+  rpc ListNearbyDrivers(ListNearbyDriversRequest) returns (ListNearbyDriversResponse);
 }
 
 message GetDriverLocationRequest {
@@ -50,4 +52,35 @@ message UpdateDriverLocationRequest {
 message UpdateDriverLocationResponse {
   // Result status.
   string status = 1;
+}
+
+message ListNearbyDriversRequest {
+  // Center latitude.
+  double lat = 1;
+  // Center longitude.
+  double lng = 2;
+  // Radius in meters.
+  double radius_m = 3;
+  // Maximum number of drivers to return.
+  int32 limit = 4;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 5;
+  // Request identifier for idempotency/tracing.
+  string request_id = 6;
+}
+
+message ListNearbyDriversResponse {
+  // Drivers near the requested point.
+  repeated NearbyDriver drivers = 1;
+}
+
+message NearbyDriver {
+  // Driver identifier.
+  string driver_id = 1;
+  // Latitude.
+  double lat = 2;
+  // Longitude.
+  double lng = 3;
+  // Distance from center in meters.
+  double distance_m = 4;
 }

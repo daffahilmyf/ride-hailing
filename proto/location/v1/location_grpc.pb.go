@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	LocationService_GetDriverLocation_FullMethodName    = "/location.v1.LocationService/GetDriverLocation"
 	LocationService_UpdateDriverLocation_FullMethodName = "/location.v1.LocationService/UpdateDriverLocation"
+	LocationService_ListNearbyDrivers_FullMethodName    = "/location.v1.LocationService/ListNearbyDrivers"
 )
 
 // LocationServiceClient is the client API for LocationService service.
@@ -33,6 +34,8 @@ type LocationServiceClient interface {
 	GetDriverLocation(ctx context.Context, in *GetDriverLocationRequest, opts ...grpc.CallOption) (*GetDriverLocationResponse, error)
 	// UpdateDriverLocation updates driver location.
 	UpdateDriverLocation(ctx context.Context, in *UpdateDriverLocationRequest, opts ...grpc.CallOption) (*UpdateDriverLocationResponse, error)
+	// ListNearbyDrivers returns drivers near a coordinate.
+	ListNearbyDrivers(ctx context.Context, in *ListNearbyDriversRequest, opts ...grpc.CallOption) (*ListNearbyDriversResponse, error)
 }
 
 type locationServiceClient struct {
@@ -63,6 +66,16 @@ func (c *locationServiceClient) UpdateDriverLocation(ctx context.Context, in *Up
 	return out, nil
 }
 
+func (c *locationServiceClient) ListNearbyDrivers(ctx context.Context, in *ListNearbyDriversRequest, opts ...grpc.CallOption) (*ListNearbyDriversResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListNearbyDriversResponse)
+	err := c.cc.Invoke(ctx, LocationService_ListNearbyDrivers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LocationServiceServer is the server API for LocationService service.
 // All implementations must embed UnimplementedLocationServiceServer
 // for forward compatibility.
@@ -73,6 +86,8 @@ type LocationServiceServer interface {
 	GetDriverLocation(context.Context, *GetDriverLocationRequest) (*GetDriverLocationResponse, error)
 	// UpdateDriverLocation updates driver location.
 	UpdateDriverLocation(context.Context, *UpdateDriverLocationRequest) (*UpdateDriverLocationResponse, error)
+	// ListNearbyDrivers returns drivers near a coordinate.
+	ListNearbyDrivers(context.Context, *ListNearbyDriversRequest) (*ListNearbyDriversResponse, error)
 	mustEmbedUnimplementedLocationServiceServer()
 }
 
@@ -88,6 +103,9 @@ func (UnimplementedLocationServiceServer) GetDriverLocation(context.Context, *Ge
 }
 func (UnimplementedLocationServiceServer) UpdateDriverLocation(context.Context, *UpdateDriverLocationRequest) (*UpdateDriverLocationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDriverLocation not implemented")
+}
+func (UnimplementedLocationServiceServer) ListNearbyDrivers(context.Context, *ListNearbyDriversRequest) (*ListNearbyDriversResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListNearbyDrivers not implemented")
 }
 func (UnimplementedLocationServiceServer) mustEmbedUnimplementedLocationServiceServer() {}
 func (UnimplementedLocationServiceServer) testEmbeddedByValue()                         {}
@@ -146,6 +164,24 @@ func _LocationService_UpdateDriverLocation_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LocationService_ListNearbyDrivers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListNearbyDriversRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LocationServiceServer).ListNearbyDrivers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LocationService_ListNearbyDrivers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LocationServiceServer).ListNearbyDrivers(ctx, req.(*ListNearbyDriversRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LocationService_ServiceDesc is the grpc.ServiceDesc for LocationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -160,6 +196,10 @@ var LocationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateDriverLocation",
 			Handler:    _LocationService_UpdateDriverLocation_Handler,
+		},
+		{
+			MethodName: "ListNearbyDrivers",
+			Handler:    _LocationService_ListNearbyDrivers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
