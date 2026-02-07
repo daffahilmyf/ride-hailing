@@ -21,6 +21,21 @@ spec:
           env:
             - name: GATEWAY_HTTP_ADDR
               value: ":8080"
+            - name: GATEWAY_AUTH_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: gateway-secrets
+                  key: jwt_secret
+            - name: GATEWAY_GRPC_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gateway-secrets
+                  key: grpc_internal_token
+            - name: GATEWAY_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gateway-secrets
+                  key: redis_password
           volumeMounts:
             - name: config
               mountPath: /config

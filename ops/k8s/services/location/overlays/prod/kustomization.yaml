@@ -5,6 +5,7 @@ nameSuffix: -prod
 
 resources:
   - ../../base
+  - location-secrets.yaml
 
 images:
   - name: ghcr.io/daffahilmyf/ride-hailing-location

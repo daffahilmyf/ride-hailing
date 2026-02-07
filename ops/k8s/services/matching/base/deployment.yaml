@@ -18,6 +18,27 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50052
+          env:
+            - name: MATCHING_INTERNAL_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: matching-secrets
+                  key: internal_auth_token
+            - name: MATCHING_RIDE_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: matching-secrets
+                  key: ride_internal_token
+            - name: MATCHING_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: matching-secrets
+                  key: redis_password
+            - name: MATCHING_NATS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: matching-secrets
+                  key: nats_url
           volumeMounts:
             - name: config
               mountPath: /config

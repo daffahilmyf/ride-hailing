@@ -5,6 +5,7 @@ nameSuffix: -dev
 
 resources:
   - ../../base
+  - matching-secrets.yaml
 
 images:
   - name: ghcr.io/daffahilmyf/ride-hailing-matching

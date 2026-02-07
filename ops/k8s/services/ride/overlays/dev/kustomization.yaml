@@ -6,6 +6,7 @@ nameSuffix: -dev
 resources:
   - ../../base
   - ride-db-secret.yaml
+  - ride-secrets.yaml
 
 images:
   - name: ghcr.io/daffahilmyf/ride-hailing-ride

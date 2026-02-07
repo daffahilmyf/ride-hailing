@@ -5,6 +5,7 @@ nameSuffix: -prod
 
 resources:
   - ../../base
+  - gateway-secrets.yaml
 
 images:
   - name: ghcr.io/daffahilmyf/ride-hailing-gateway
