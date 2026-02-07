@@ -18,7 +18,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.40.0
 	go.opentelemetry.io/otel/trace v1.40.0
 	go.uber.org/zap v1.26.0
-	google.golang.org/grpc v1.74.2
+	google.golang.org/grpc v1.78.0
 )
 
 replace github.com/daffahilmyf/ride-hailing/proto => ../../proto
