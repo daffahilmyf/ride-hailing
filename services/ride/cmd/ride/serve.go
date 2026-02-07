@@ -44,11 +44,12 @@ var serveCmd = &cobra.Command{
 		offers := db.NewRideOfferRepo(pg.DB)
 		txMgr := db.NewTxManager(pg.DB)
 		uc := &usecase.RideService{
-			Repo:        repo,
-			Idempotency: idem,
-			TxManager:   txMgr,
-			Outbox:      outbox,
-			Offers:      offers,
+			Repo:         repo,
+			Idempotency:  idem,
+			TxManager:    txMgr,
+			Outbox:       outbox,
+			Offers:       offers,
+			OfferMetrics: &usecase.OfferMetrics{},
 		}
 
 		metrics := grpcadapter.NewMetrics()
@@ -74,6 +75,7 @@ var serveCmd = &cobra.Command{
 				Repo:        outbox,
 				Publisher:   publisher,
 				Logger:      logger,
+				Metrics:     &app.OutboxMetrics{},
 				BatchSize:   cfg.OutboxBatchSize,
 				MaxAttempts: cfg.OutboxMaxAttempts,
 				Interval:    time.Duration(cfg.OutboxIntervalMillis) * time.Millisecond,

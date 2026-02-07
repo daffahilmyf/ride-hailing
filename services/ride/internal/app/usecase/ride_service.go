@@ -12,11 +12,12 @@ import (
 )
 
 type RideService struct {
-	Repo        outbound.RideRepo
-	Idempotency outbound.IdempotencyRepo
-	TxManager   outbound.TxManager
-	Outbox      outbound.OutboxRepo
-	Offers      outbound.RideOfferRepo
+	Repo         outbound.RideRepo
+	Idempotency  outbound.IdempotencyRepo
+	TxManager    outbound.TxManager
+	Outbox       outbound.OutboxRepo
+	Offers       outbound.RideOfferRepo
+	OfferMetrics *OfferMetrics
 }
 
 type CreateRideCmd struct {
@@ -218,6 +219,7 @@ func (s *RideService) CreateOffer(ctx context.Context, cmd StartMatchingCmd) (do
 		}); err != nil {
 			return domain.RideOffer{}, err
 		}
+		s.OfferMetrics.IncCreated()
 		if err := enqueueEvent(ctx, outbox, "ride.offer.sent", map[string]string{
 			"ride_id":   offer.RideID,
 			"driver_id": offer.DriverID,
@@ -394,6 +396,14 @@ func (s *RideService) updateOffer(ctx context.Context, cmd OfferActionCmd, next 
 		}
 		if err := offers.UpdateStatusIfCurrent(ctx, updated.ID, string(offer.Status), string(updated.Status)); err != nil {
 			return domain.RideOffer{}, err
+		}
+		switch next {
+		case domain.OfferAccepted:
+			s.OfferMetrics.IncAccepted()
+		case domain.OfferDeclined:
+			s.OfferMetrics.IncDeclined()
+		case domain.OfferExpired:
+			s.OfferMetrics.IncExpired()
 		}
 		if err := enqueueEvent(ctx, outbox, topic, map[string]string{
 			"offer_id":  updated.ID,

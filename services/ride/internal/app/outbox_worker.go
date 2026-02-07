@@ -12,6 +12,7 @@ type OutboxWorker struct {
 	Repo        outbound.OutboxRepo
 	Publisher   outbound.OutboxPublisher
 	Logger      *zap.Logger
+	Metrics     *OutboxMetrics
 	BatchSize   int
 	MaxAttempts int
 	Interval    time.Duration
@@ -53,11 +54,13 @@ func (w *OutboxWorker) flush(ctx context.Context, batch int, maxAttempts int) {
 		w.Logger.Warn("outbox.claim_failed", zap.Error(err))
 		return
 	}
+	w.Metrics.IncClaimed(len(messages))
 	for _, msg := range messages {
 		if err := w.Publisher.Publish(ctx, msg.Topic, []byte(msg.Payload)); err != nil {
 			nextAttempt := time.Now().UTC().Add(backoffDuration(msg.Attempt))
 			if msg.Attempt >= maxAttempts {
 				_ = w.Repo.MarkFailed(ctx, msg.ID, err.Error(), time.Time{})
+				w.Metrics.IncDLQ()
 				w.Logger.Warn("outbox.dlq",
 					zap.String("id", msg.ID),
 					zap.String("topic", msg.Topic),
@@ -67,6 +70,7 @@ func (w *OutboxWorker) flush(ctx context.Context, batch int, maxAttempts int) {
 				continue
 			}
 			_ = w.Repo.MarkFailed(ctx, msg.ID, err.Error(), nextAttempt)
+			w.Metrics.IncFailed()
 			w.Logger.Warn("outbox.publish_failed",
 				zap.String("id", msg.ID),
 				zap.String("topic", msg.Topic),
@@ -78,6 +82,7 @@ func (w *OutboxWorker) flush(ctx context.Context, batch int, maxAttempts int) {
 		if err := w.Repo.MarkSent(ctx, msg.ID); err != nil {
 			w.Logger.Warn("outbox.mark_sent_failed", zap.String("id", msg.ID), zap.Error(err))
 		}
+		w.Metrics.IncPublished()
 	}
 }
 

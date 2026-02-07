@@ -129,7 +129,7 @@ func (f *fakeRideRepo) AssignDriverIfCurrent(ctx context.Context, id string, dri
 func TestCreateAndCancelRide(t *testing.T) {
 	repo := newFakeRideRepo()
 	outbox := &fakeOutboxRepo{}
-	svc := &RideService{Repo: repo, Outbox: outbox}
+	svc := &RideService{Repo: repo, Outbox: outbox, OfferMetrics: &OfferMetrics{}}
 
 	ride, err := svc.CreateRide(context.Background(), CreateRideCmd{
 		RiderID:    "r1",
@@ -154,7 +154,7 @@ func TestCreateAndCancelRide(t *testing.T) {
 func TestAssignStartComplete(t *testing.T) {
 	repo := newFakeRideRepo()
 	outbox := &fakeOutboxRepo{}
-	svc := &RideService{Repo: repo, Outbox: outbox}
+	svc := &RideService{Repo: repo, Outbox: outbox, OfferMetrics: &OfferMetrics{}}
 
 	ride, err := svc.CreateRide(context.Background(), CreateRideCmd{
 		RiderID:    "r1",
@@ -194,7 +194,7 @@ func TestAssignStartComplete(t *testing.T) {
 func TestCreateOffer(t *testing.T) {
 	offers := &fakeOfferRepo{}
 	outbox := &fakeOutboxRepo{}
-	svc := &RideService{Offers: offers, Outbox: outbox}
+	svc := &RideService{Offers: offers, Outbox: outbox, OfferMetrics: &OfferMetrics{}}
 
 	offer, err := svc.CreateOffer(context.Background(), StartMatchingCmd{
 		RideID:   "ride-1",
