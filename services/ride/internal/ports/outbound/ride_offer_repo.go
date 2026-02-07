@@ -14,5 +14,6 @@ type RideOffer struct {
 type RideOfferRepo interface {
 	Create(ctx context.Context, offer RideOffer) error
 	Get(ctx context.Context, id string) (RideOffer, error)
-	UpdateStatus(ctx context.Context, id string, status string) error
+	UpdateStatusIfCurrent(ctx context.Context, id string, currentStatus string, nextStatus string) error
+	ListExpired(ctx context.Context, cutoff int64, limit int) ([]RideOffer, error)
 }

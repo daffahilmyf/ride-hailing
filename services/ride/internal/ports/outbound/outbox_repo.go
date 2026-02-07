@@ -17,6 +17,7 @@ type OutboxRepo interface {
 	Claim(ctx context.Context, limit int, maxAttempts int) ([]OutboxMessage, error)
 	MarkSent(ctx context.Context, id string) error
 	MarkFailed(ctx context.Context, id string, reason string, nextAttemptAt time.Time) error
+	DeleteSentBefore(ctx context.Context, cutoff time.Time) (int64, error)
 }
 
 type OutboxPublisher interface {

@@ -73,6 +73,26 @@ var serveCmd = &cobra.Command{
 				Interval:    time.Duration(cfg.OutboxIntervalMillis) * time.Millisecond,
 			}
 			go worker.Run(ctx)
+
+			retention := time.Duration(cfg.OutboxRetentionHours) * time.Hour
+			cleanup := &app.OutboxCleanupWorker{
+				Repo:      outbox,
+				Logger:    logger,
+				Retention: retention,
+				Interval:  24 * time.Hour,
+			}
+			go cleanup.Run(ctx)
+		}
+
+		if cfg.OfferExpiryEnabled {
+			expiry := &app.OfferExpiryWorker{
+				Repo:     offers,
+				Usecase:  uc,
+				Logger:   logger,
+				Interval: time.Duration(cfg.OfferExpiryIntervalMs) * time.Millisecond,
+				Batch:    cfg.OfferExpiryBatchSize,
+			}
+			go expiry.Run(ctx)
 		}
 
 		lis, err := net.Listen("tcp", cfg.GRPCAddr)

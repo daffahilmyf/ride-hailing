@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
+	"github.com/daffahilmyf/ride-hailing/services/ride/internal/domain"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/ports/outbound"
 )
 
@@ -62,15 +63,48 @@ func (r *RideOfferRepo) Get(ctx context.Context, id string) (outbound.RideOffer,
 	}, nil
 }
 
-func (r *RideOfferRepo) UpdateStatus(ctx context.Context, id string, status string) error {
+func (r *RideOfferRepo) UpdateStatusIfCurrent(ctx context.Context, id string, currentStatus string, nextStatus string) error {
 	result := r.DB.WithContext(ctx).Model(&rideOfferModel{}).
-		Where("id = ?", id).
-		Update("status", status)
+		Where("id = ? AND status = ?", id, currentStatus).
+		Update("status", nextStatus)
 	if result.Error != nil {
 		return result.Error
 	}
-	if result.RowsAffected == 0 {
+	if result.RowsAffected > 0 {
+		return nil
+	}
+	var count int64
+	if err := r.DB.WithContext(ctx).Model(&rideOfferModel{}).Where("id = ?", id).Count(&count).Error; err != nil {
+		return err
+	}
+	if count == 0 {
 		return outbound.ErrNotFound
 	}
-	return nil
+	return outbound.ErrConflict
+}
+
+func (r *RideOfferRepo) ListExpired(ctx context.Context, cutoff int64, limit int) ([]outbound.RideOffer, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	var rows []rideOfferModel
+	if err := r.DB.WithContext(ctx).
+		Where("status = ? AND expires_at <= ?", string(domain.OfferPending), time.Unix(cutoff, 0).UTC()).
+		Order("expires_at").
+		Limit(limit).
+		Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	out := make([]outbound.RideOffer, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, outbound.RideOffer{
+			ID:        row.ID,
+			RideID:    row.RideID,
+			DriverID:  row.DriverID,
+			Status:    row.Status,
+			ExpiresAt: row.ExpiresAt.Unix(),
+			CreatedAt: row.CreatedAt.Unix(),
+		})
+	}
+	return out, nil
 }

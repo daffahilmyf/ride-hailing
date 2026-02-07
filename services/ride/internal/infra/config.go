@@ -11,6 +11,10 @@ type Config struct {
 	OutboxIntervalMillis   int
 	OutboxBatchSize        int
 	OutboxMaxAttempts      int
+	OutboxRetentionHours   int
+	OfferExpiryEnabled     bool
+	OfferExpiryIntervalMs  int
+	OfferExpiryBatchSize   int
 }
 
 func DefaultConfig() Config {
@@ -25,5 +29,9 @@ func DefaultConfig() Config {
 		OutboxIntervalMillis:   2000,
 		OutboxBatchSize:        25,
 		OutboxMaxAttempts:      10,
+		OutboxRetentionHours:   168,
+		OfferExpiryEnabled:     true,
+		OfferExpiryIntervalMs:  5000,
+		OfferExpiryBatchSize:   50,
 	}
 }

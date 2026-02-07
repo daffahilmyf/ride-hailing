@@ -126,3 +126,13 @@ func (r *OutboxRepo) MarkFailed(ctx context.Context, id string, reason string, n
 			"available_at": nextAttemptAt,
 		}).Error
 }
+
+func (r *OutboxRepo) DeleteSentBefore(ctx context.Context, cutoff time.Time) (int64, error) {
+	result := r.DB.WithContext(ctx).
+		Where("status = ? AND created_at < ?", "SENT", cutoff).
+		Delete(&outboxModel{})
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return result.RowsAffected, nil
+}

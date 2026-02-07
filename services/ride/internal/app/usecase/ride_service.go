@@ -392,7 +392,7 @@ func (s *RideService) updateOffer(ctx context.Context, cmd OfferActionCmd, next 
 		if err != nil {
 			return domain.RideOffer{}, err
 		}
-		if err := offers.UpdateStatus(ctx, updated.ID, string(updated.Status)); err != nil {
+		if err := offers.UpdateStatusIfCurrent(ctx, updated.ID, string(offer.Status), string(updated.Status)); err != nil {
 			return domain.RideOffer{}, err
 		}
 		if err := enqueueEvent(ctx, outbox, topic, map[string]string{

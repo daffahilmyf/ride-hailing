@@ -33,6 +33,10 @@ func (f *fakeOutboxRepo) MarkFailed(ctx context.Context, id string, reason strin
 	return nil
 }
 
+func (f *fakeOutboxRepo) DeleteSentBefore(ctx context.Context, cutoff time.Time) (int64, error) {
+	return 0, nil
+}
+
 type fakeOfferRepo struct {
 	store map[string]outbound.RideOffer
 }
@@ -56,7 +60,7 @@ func (f *fakeOfferRepo) Get(ctx context.Context, id string) (outbound.RideOffer,
 	return offer, nil
 }
 
-func (f *fakeOfferRepo) UpdateStatus(ctx context.Context, id string, status string) error {
+func (f *fakeOfferRepo) UpdateStatusIfCurrent(ctx context.Context, id string, currentStatus string, nextStatus string) error {
 	if f.store == nil {
 		return outbound.ErrNotFound
 	}
@@ -64,9 +68,16 @@ func (f *fakeOfferRepo) UpdateStatus(ctx context.Context, id string, status stri
 	if !ok {
 		return outbound.ErrNotFound
 	}
-	offer.Status = status
+	if offer.Status != currentStatus {
+		return outbound.ErrConflict
+	}
+	offer.Status = nextStatus
 	f.store[id] = offer
 	return nil
+}
+
+func (f *fakeOfferRepo) ListExpired(ctx context.Context, cutoff int64, limit int) ([]outbound.RideOffer, error) {
+	return nil, nil
 }
 
 func newFakeRideRepo() *fakeRideRepo {

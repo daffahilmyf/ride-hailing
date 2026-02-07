@@ -36,6 +36,10 @@ func init() {
 	rootCmd.PersistentFlags().Int("outbox.interval_millis", 2000, "outbox polling interval in milliseconds")
 	rootCmd.PersistentFlags().Int("outbox.batch_size", 25, "outbox publish batch size")
 	rootCmd.PersistentFlags().Int("outbox.max_attempts", 10, "outbox max attempts per message")
+	rootCmd.PersistentFlags().Int("outbox.retention_hours", 168, "outbox retention in hours")
+	rootCmd.PersistentFlags().Bool("offer_expiry.enabled", true, "enable offer expiry worker")
+	rootCmd.PersistentFlags().Int("offer_expiry.interval_millis", 5000, "offer expiry interval in milliseconds")
+	rootCmd.PersistentFlags().Int("offer_expiry.batch_size", 50, "offer expiry batch size")
 
 	_ = viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
 	_ = viper.BindPFlag("grpc.addr", rootCmd.PersistentFlags().Lookup("grpc.addr"))
@@ -47,6 +51,10 @@ func init() {
 	_ = viper.BindPFlag("outbox.interval_millis", rootCmd.PersistentFlags().Lookup("outbox.interval_millis"))
 	_ = viper.BindPFlag("outbox.batch_size", rootCmd.PersistentFlags().Lookup("outbox.batch_size"))
 	_ = viper.BindPFlag("outbox.max_attempts", rootCmd.PersistentFlags().Lookup("outbox.max_attempts"))
+	_ = viper.BindPFlag("outbox.retention_hours", rootCmd.PersistentFlags().Lookup("outbox.retention_hours"))
+	_ = viper.BindPFlag("offer_expiry.enabled", rootCmd.PersistentFlags().Lookup("offer_expiry.enabled"))
+	_ = viper.BindPFlag("offer_expiry.interval_millis", rootCmd.PersistentFlags().Lookup("offer_expiry.interval_millis"))
+	_ = viper.BindPFlag("offer_expiry.batch_size", rootCmd.PersistentFlags().Lookup("offer_expiry.batch_size"))
 }
 
 func initConfig() {
