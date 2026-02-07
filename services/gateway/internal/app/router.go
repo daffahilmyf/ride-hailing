@@ -28,10 +28,15 @@ func NewRouter(cfg infra.Config, logger *zap.Logger) *gin.Engine {
 			Audience:  cfg.Auth.Audience,
 		}))
 
-		authGroup.POST("/rides", handlers.CreateRide())
-		authGroup.POST("/rides/:ride_id/cancel", handlers.CancelRide())
-		authGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatus())
-		authGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocation())
+		riderGroup := authGroup.Group("/")
+		riderGroup.Use(middleware.RequireRole(middleware.RoleRider))
+		riderGroup.POST("/rides", handlers.CreateRide())
+		riderGroup.POST("/rides/:ride_id/cancel", handlers.CancelRide())
+
+		driverGroup := authGroup.Group("/")
+		driverGroup.Use(middleware.RequireRole(middleware.RoleDriver))
+		driverGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatus())
+		driverGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocation())
 	}
 
 	return r
