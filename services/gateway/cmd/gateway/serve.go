@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	grpcadapter "github.com/daffahilmyf/ride-hailing/services/gateway/internal/adapters/grpc"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/infra"
 	"github.com/spf13/cobra"
@@ -22,7 +23,19 @@ var serveCmd = &cobra.Command{
 		logger := infra.NewLogger()
 		defer logger.Sync()
 
-		router := app.NewRouter(cfg, logger)
+		grpcClients, err := grpcadapter.NewClients(context.Background(), cfg.GRPC)
+		if err != nil {
+			logger.Fatal("grpc.clients.failed", zap.Error(err))
+		}
+		defer grpcClients.Close()
+
+		deps := app.Deps{
+			RideClient:     grpcClients.RideClient,
+			MatchingClient: grpcClients.MatchingClient,
+			LocationClient: grpcClients.LocationClient,
+		}
+
+		router := app.NewRouter(cfg, logger, deps)
 		server := &http.Server{
 			Addr:    cfg.HTTPAddr,
 			Handler: router,

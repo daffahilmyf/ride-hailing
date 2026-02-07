@@ -8,6 +8,7 @@ import (
 var validate = validator.New()
 
 func BindAndValidate(c *gin.Context, dst interface{}) bool {
+	validate.SetTagName("binding")
 	if err := c.ShouldBindJSON(dst); err != nil {
 		return false
 	}

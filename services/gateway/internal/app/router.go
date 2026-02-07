@@ -9,7 +9,7 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/infra"
 )
 
-func NewRouter(cfg infra.Config, logger *zap.Logger) *gin.Engine {
+func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.LoggerMiddleware(logger, cfg.ServiceName))
@@ -30,13 +30,13 @@ func NewRouter(cfg infra.Config, logger *zap.Logger) *gin.Engine {
 
 		riderGroup := authGroup.Group("/")
 		riderGroup.Use(middleware.RequireRole(middleware.RoleRider))
-		riderGroup.POST("/rides", handlers.CreateRide())
-		riderGroup.POST("/rides/:ride_id/cancel", handlers.CancelRide())
+		riderGroup.POST("/rides", handlers.CreateRide(deps.RideClient))
+		riderGroup.POST("/rides/:ride_id/cancel", handlers.CancelRide(deps.RideClient))
 
 		driverGroup := authGroup.Group("/")
 		driverGroup.Use(middleware.RequireRole(middleware.RoleDriver))
-		driverGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatus())
-		driverGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocation())
+		driverGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatus(deps.MatchingClient))
+		driverGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocation(deps.LocationClient))
 	}
 
 	return r

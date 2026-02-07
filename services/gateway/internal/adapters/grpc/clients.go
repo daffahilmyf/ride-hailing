@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	locationv1 "github.com/daffahilmyf/ride-hailing/proto/location/v1"
+	matchingv1 "github.com/daffahilmyf/ride-hailing/proto/matching/v1"
+	ridev1 "github.com/daffahilmyf/ride-hailing/proto/ride/v1"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/infra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -13,6 +16,10 @@ type Clients struct {
 	RideConn     *grpc.ClientConn
 	MatchingConn *grpc.ClientConn
 	LocationConn *grpc.ClientConn
+
+	RideClient     ridev1.RideServiceClient
+	MatchingClient matchingv1.MatchingServiceClient
+	LocationClient locationv1.LocationServiceClient
 }
 
 func NewClients(ctx context.Context, cfg infra.GRPCConfig) (*Clients, error) {
@@ -35,9 +42,12 @@ func NewClients(ctx context.Context, cfg infra.GRPCConfig) (*Clients, error) {
 	}
 
 	return &Clients{
-		RideConn:     rideConn,
-		MatchingConn: matchingConn,
-		LocationConn: locationConn,
+		RideConn:       rideConn,
+		MatchingConn:   matchingConn,
+		LocationConn:   locationConn,
+		RideClient:     ridev1.NewRideServiceClient(rideConn),
+		MatchingClient: matchingv1.NewMatchingServiceClient(matchingConn),
+		LocationClient: locationv1.NewLocationServiceClient(locationConn),
 	}, nil
 }
 
