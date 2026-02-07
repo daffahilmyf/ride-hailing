@@ -6,8 +6,18 @@ namespace: ride-hailing
 resources:
   - deployment.yaml
   - service.yaml
+  - migrate-job.yaml
 
 configMapGenerator:
   - name: ride-config
     files:
       - config.yaml=../../../../services/ride/config/config.yaml
+  - name: ride-migrations
+    files:
+      - ../../../../services/ride/migrations/20260207120000_enable_pgcrypto.sql
+      - ../../../../services/ride/migrations/20260207120100_create_rides.sql
+      - ../../../../services/ride/migrations/20260207120200_create_ride_offers.sql
+      - ../../../../services/ride/migrations/20260207120300_create_idempotency_keys.sql
+      - ../../../../services/ride/migrations/20260207120400_add_constraints.sql
+      - ../../../../services/ride/migrations/20260207120500_create_outbox.sql
+      - ../../../../services/ride/migrations/20260207120600_add_offer_expiry_index.sql
