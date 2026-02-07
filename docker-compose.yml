@@ -16,6 +16,21 @@ services:
       - postgres
       - redis
 
+  ride:
+    container_name: service-ride
+    build:
+      context: .
+      dockerfile: services/ride/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      - RIDE_GRPC_ADDR=:50051
+      - RIDE_POSTGRES_DSN=postgres://ride:ride@postgres:5432/rides?sslmode=disable
+    mem_limit: 256m
+    cpus: "0.50"
+    depends_on:
+      - postgres
+
   nats:
     container_name: nats
     image: nats:2.10
