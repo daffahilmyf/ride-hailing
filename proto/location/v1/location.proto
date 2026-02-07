@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package location.v1;
+
+option go_package = "github.com/daffahilmyf/ride-hailing/proto/location/v1;locationv1";
+
+// LocationService provides driver location read/write operations.
+service LocationService {
+  // GetDriverLocation returns last known driver location.
+  rpc GetDriverLocation(GetDriverLocationRequest) returns (GetDriverLocationResponse);
+  // UpdateDriverLocation updates driver location.
+  rpc UpdateDriverLocation(UpdateDriverLocationRequest) returns (UpdateDriverLocationResponse);
+}
+
+message GetDriverLocationRequest {
+  // Driver identifier.
+  string driver_id = 1;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 2;
+  // Request identifier for idempotency/tracing.
+  string request_id = 3;
+}
+
+message GetDriverLocationResponse {
+  // Driver identifier.
+  string driver_id = 1;
+  // Latitude.
+  double lat = 2;
+  // Longitude.
+  double lng = 3;
+  // Time recorded (unix seconds).
+  int64 recorded_at_unix = 4;
+}
+
+message UpdateDriverLocationRequest {
+  // Driver identifier.
+  string driver_id = 1;
+  // Latitude.
+  double lat = 2;
+  // Longitude.
+  double lng = 3;
+  // Accuracy in meters.
+  double accuracy_m = 4;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 5;
+  // Request identifier for idempotency/tracing.
+  string request_id = 6;
+}
+
+message UpdateDriverLocationResponse {
+  // Result status.
+  string status = 1;
+}

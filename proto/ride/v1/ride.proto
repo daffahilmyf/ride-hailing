@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package ride.v1;
+
+option go_package = "github.com/daffahilmyf/ride-hailing/proto/ride/v1;ridev1";
+
+// RideService defines ride lifecycle operations for internal use.
+service RideService {
+  // StartMatching transitions a ride into matching state.
+  rpc StartMatching(StartMatchingRequest) returns (StartMatchingResponse);
+  // AssignDriver assigns a driver to a ride.
+  rpc AssignDriver(AssignDriverRequest) returns (AssignDriverResponse);
+  // CancelRide cancels a ride with a reason.
+  rpc CancelRide(CancelRideRequest) returns (CancelRideResponse);
+}
+
+message StartMatchingRequest {
+  // Unique ride identifier.
+  string ride_id = 1;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 2;
+  // Request identifier for idempotency/tracing.
+  string request_id = 3;
+}
+
+message StartMatchingResponse {
+  // Ride identifier.
+  string ride_id = 1;
+  // Current ride status.
+  string status = 2;
+}
+
+message AssignDriverRequest {
+  // Ride identifier.
+  string ride_id = 1;
+  // Driver identifier.
+  string driver_id = 2;
+  // Offer identifier.
+  string offer_id = 3;
+  // Idempotency key for retry-safe calls.
+  string idempotency_key = 4;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 5;
+  // Request identifier for idempotency/tracing.
+  string request_id = 6;
+}
+
+message AssignDriverResponse {
+  // Ride identifier.
+  string ride_id = 1;
+  // Driver identifier.
+  string driver_id = 2;
+  // Current ride status.
+  string status = 3;
+}
+
+message CancelRideRequest {
+  // Ride identifier.
+  string ride_id = 1;
+  // Cancellation reason.
+  string reason = 2;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 3;
+  // Request identifier for idempotency/tracing.
+  string request_id = 4;
+}
+
+message CancelRideResponse {
+  // Ride identifier.
+  string ride_id = 1;
+  // Current ride status.
+  string status = 2;
+}

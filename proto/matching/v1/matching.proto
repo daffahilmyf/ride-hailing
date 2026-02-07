@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package matching.v1;
+
+option go_package = "github.com/daffahilmyf/ride-hailing/proto/matching/v1;matchingv1";
+
+// MatchingService provides driver candidate selection and offer notifications.
+service MatchingService {
+  // FindCandidates returns nearby available drivers.
+  rpc FindCandidates(FindCandidatesRequest) returns (FindCandidatesResponse);
+  // NotifyOfferSent informs matching that an offer was sent.
+  rpc NotifyOfferSent(NotifyOfferSentRequest) returns (NotifyOfferSentResponse);
+}
+
+message FindCandidatesRequest {
+  // Ride identifier.
+  string ride_id = 1;
+  // Pickup latitude.
+  double pickup_lat = 2;
+  // Pickup longitude.
+  double pickup_lng = 3;
+  // Max number of candidates.
+  int32 limit = 4;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 5;
+  // Request identifier for idempotency/tracing.
+  string request_id = 6;
+}
+
+message FindCandidatesResponse {
+  // Ordered list of candidates.
+  repeated Candidate candidates = 1;
+}
+
+message Candidate {
+  // Driver identifier.
+  string driver_id = 1;
+  // Distance in meters.
+  double distance_m = 2;
+}
+
+message NotifyOfferSentRequest {
+  // Ride identifier.
+  string ride_id = 1;
+  // Driver identifier.
+  string driver_id = 2;
+  // Offer identifier.
+  string offer_id = 3;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 4;
+  // Request identifier for idempotency/tracing.
+  string request_id = 5;
+}
+
+message NotifyOfferSentResponse {
+  // Result status.
+  string status = 1;
+}
