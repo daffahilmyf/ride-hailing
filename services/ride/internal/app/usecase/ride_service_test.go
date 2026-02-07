@@ -37,6 +37,10 @@ func (f *fakeOutboxRepo) DeleteSentBefore(ctx context.Context, cutoff time.Time)
 	return 0, nil
 }
 
+func (f *fakeOutboxRepo) ResetFailed(ctx context.Context, limit int) (int64, error) {
+	return 0, nil
+}
+
 type fakeOfferRepo struct {
 	store map[string]outbound.RideOffer
 }
