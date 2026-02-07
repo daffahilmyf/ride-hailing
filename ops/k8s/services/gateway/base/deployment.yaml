@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: ride-hailing-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: GATEWAY_HTTP_ADDR
+              value: ":8080"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          args: ["serve", "--config", "/config/config.yaml"]
+      volumes:
+        - name: config
+          configMap:
+            name: gateway-config

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: location
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: location
+  template:
+    metadata:
+      labels:
+        app: location
+    spec:
+      containers:
+        - name: location
+          image: ride-hailing-location:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 50053
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          args: ["serve", "--config", "/config/config.yaml"]
+      volumes:
+        - name: config
+          configMap:
+            name: location-config
