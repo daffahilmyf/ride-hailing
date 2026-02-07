@@ -7,12 +7,19 @@ on:
       - proto/**
       - buf.yaml
       - buf.gen.yaml
+  pull_request:
+    paths:
+      - proto/**
+      - buf.yaml
+      - buf.gen.yaml
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  test_proto:
+    name: Test Proto
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
