@@ -1,0 +1,76 @@
+services:
+  gateway:
+    env_file:
+      - .env.prod
+    environment:
+      - GATEWAY_AUTH_ENABLED=true
+      - GATEWAY_AUTH_JWT_SECRET=${GATEWAY_JWT_SECRET}
+      - GATEWAY_AUTH_ISSUER=ride-hailing
+      - GATEWAY_AUTH_AUDIENCE=ride-hailing-clients
+      - GATEWAY_GRPC_INTERNAL_TOKEN=${GATEWAY_GRPC_INTERNAL_TOKEN}
+      - GATEWAY_OBSERVABILITY_TRACING_ENABLED=true
+      - GATEWAY_OBSERVABILITY_TRACING_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "1.0"
+
+  ride:
+    env_file:
+      - .env.prod
+    environment:
+      - RIDE_INTERNAL_AUTH_ENABLED=true
+      - RIDE_INTERNAL_AUTH_TOKEN=${RIDE_INTERNAL_AUTH_TOKEN}
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "1.0"
+
+  location:
+    env_file:
+      - .env.prod
+    environment:
+      - LOCATION_INTERNAL_AUTH_ENABLED=true
+      - LOCATION_INTERNAL_AUTH_TOKEN=${LOCATION_INTERNAL_AUTH_TOKEN}
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "1.0"
+
+  matching:
+    env_file:
+      - .env.prod
+    environment:
+      - MATCHING_INTERNAL_AUTH_ENABLED=true
+      - MATCHING_INTERNAL_AUTH_TOKEN=${MATCHING_INTERNAL_AUTH_TOKEN}
+      - MATCHING_RIDE_INTERNAL_TOKEN=${RIDE_INTERNAL_AUTH_TOKEN}
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "1.0"
+
+  nats:
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.50"
+    volumes:
+      - nats_data:/data
+
+  postgres:
+    restart: unless-stopped
+    mem_limit: 1024m
+    cpus: "2.0"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.50"
+    volumes:
+      - redis_data:/data
+
+  migrate:
+    env_file:
+      - .env.prod
+
+volumes:
+  postgres_data:
+  redis_data:
+  nats_data:
