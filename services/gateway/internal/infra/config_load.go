@@ -28,6 +28,10 @@ func LoadConfig() Config {
 	cfg.Redis.DB = viper.GetInt("redis.db")
 	cfg.Cache.Enabled = viper.GetBool("cache.enabled")
 	cfg.Cache.DefaultTTLSeconds = viper.GetInt("cache.default_ttl_seconds")
+	cfg.Observability.MetricsEnabled = viper.GetBool("observability.metrics_enabled")
+	cfg.Observability.TracingEnabled = viper.GetBool("observability.tracing_enabled")
+	cfg.Observability.TracingEndpoint = viper.GetString("observability.tracing_endpoint")
+	cfg.Observability.TracingInsecure = viper.GetBool("observability.tracing_insecure")
 
 	return cfg
 }

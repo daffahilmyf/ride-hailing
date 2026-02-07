@@ -10,6 +10,7 @@ type Config struct {
 	MaxBodyBytes           int64
 	Redis                  RedisConfig
 	Cache                  CacheConfig
+	Observability          ObservabilityConfig
 }
 
 type AuthConfig struct {
@@ -76,6 +77,12 @@ func DefaultConfig() Config {
 		Cache: CacheConfig{
 			Enabled:           true,
 			DefaultTTLSeconds: 60,
+		},
+		Observability: ObservabilityConfig{
+			MetricsEnabled:  true,
+			TracingEnabled:  false,
+			TracingEndpoint: "",
+			TracingInsecure: true,
 		},
 	}
 }

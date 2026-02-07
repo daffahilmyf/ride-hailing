@@ -1,27 +1,37 @@
 package app
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/adapters/cache"
+	grpcadapter "github.com/daffahilmyf/ride-hailing/services/gateway/internal/adapters/grpc"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/handlers"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/middleware"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/infra"
-	"time"
 )
 
-func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps) *gin.Engine {
+func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *redis.Client, grpcClients *grpcadapter.Clients) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.LoggerMiddleware(logger, cfg.ServiceName))
+	if cfg.Observability.MetricsEnabled {
+		metrics := middleware.NewMetrics(cfg.ServiceName)
+		registry := prometheus.NewRegistry()
+		registry.MustRegister(metrics.Requests, metrics.Latency)
+		r.Use(middleware.MetricsMiddleware(metrics))
+		r.GET("/metrics", gin.WrapH(promhttp.HandlerFor(registry, promhttp.HandlerOpts{})))
+	}
 	r.Use(middleware.MaxBodyBytes(cfg.MaxBodyBytes))
+
 	limiter := cache.NewRedisLimiter(
-		cache.NewRedisClient(cache.RedisConfig{
-			Addr:     cfg.Redis.Addr,
-			Password: cfg.Redis.Password,
-			DB:       cfg.Redis.DB,
-		}),
+		redisClient,
 		cache.WithLimiterRequests(cfg.RateLimit.Requests),
 		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.WindowSeconds)*time.Second),
 		cache.WithLimiterPrefix("rl"),
@@ -29,10 +39,18 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps) *gin.Engine {
 	r.Use(middleware.RateLimitMiddleware(limiter))
 
 	r.GET("/healthz", handlers.Health())
+	r.GET("/readyz", handlers.Ready(handlers.Readiness{
+		Redis: redisClient,
+		GRPC:  []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn},
+	}))
 
 	v1 := r.Group("/v1")
 	{
 		v1.GET("/healthz", handlers.Health())
+		v1.GET("/readyz", handlers.Ready(handlers.Readiness{
+			Redis: redisClient,
+			GRPC:  []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn},
+		}))
 
 		authGroup := v1.Group("/")
 		authGroup.Use(middleware.AuthMiddleware(logger, middleware.AuthConfig{

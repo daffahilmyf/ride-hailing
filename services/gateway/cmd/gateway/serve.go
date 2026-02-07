@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/adapters/cache"
 	grpcadapter "github.com/daffahilmyf/ride-hailing/services/gateway/internal/adapters/grpc"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/infra"
@@ -23,11 +24,28 @@ var serveCmd = &cobra.Command{
 		logger := infra.NewLogger()
 		defer logger.Sync()
 
+		if err := infra.ValidateConfig(cfg); err != nil {
+			logger.Fatal("config.invalid", zap.Error(err))
+		}
+
+		shutdownTelemetry, err := infra.SetupTelemetry(context.Background(), cfg)
+		if err != nil {
+			logger.Fatal("telemetry.init_failed", zap.Error(err))
+		}
+		defer shutdownTelemetry(context.Background())
+
 		grpcClients, err := grpcadapter.NewClients(context.Background(), cfg.GRPC)
 		if err != nil {
 			logger.Fatal("grpc.clients.failed", zap.Error(err))
 		}
 		defer grpcClients.Close()
+
+		redisClient := cache.NewRedisClient(cache.RedisConfig{
+			Addr:     cfg.Redis.Addr,
+			Password: cfg.Redis.Password,
+			DB:       cfg.Redis.DB,
+		})
+		defer redisClient.Close()
 
 		deps := app.Deps{
 			RideClient:     grpcClients.RideClient,
@@ -35,7 +53,7 @@ var serveCmd = &cobra.Command{
 			LocationClient: grpcClients.LocationClient,
 		}
 
-		router := app.NewRouter(cfg, logger, deps)
+		router := app.NewRouter(cfg, logger, deps, redisClient, grpcClients)
 		server := &http.Server{
 			Addr:    cfg.HTTPAddr,
 			Handler: router,

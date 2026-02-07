@@ -34,3 +34,9 @@ redis:
 cache:
   enabled: true
   default_ttl_seconds: 60
+
+observability:
+  metrics_enabled: true
+  tracing_enabled: false
+  tracing_endpoint: ""
+  tracing_insecure: true
