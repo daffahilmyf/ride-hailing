@@ -72,6 +72,9 @@ func (s *MatchingService) HandleRideRequested(ctx context.Context, payload []byt
 
 	data, ok := envelope.Payload.(map[string]any)
 	if !ok {
+		data, ok = envelope.Data.(map[string]any)
+	}
+	if !ok {
 		return errors.New("invalid payload")
 	}
 

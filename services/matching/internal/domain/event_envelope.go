@@ -15,6 +15,7 @@ type EventEnvelope struct {
 	TraceID   string `json:"trace_id"`
 	RequestID string `json:"request_id"`
 	Payload   any    `json:"payload"`
+	Data      any    `json:"data"`
 }
 
 func NewEventEnvelope(eventType string, source string, traceID string, requestID string, payload any) EventEnvelope {
