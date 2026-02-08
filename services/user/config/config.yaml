@@ -1,0 +1,31 @@
+service:
+  name: "user-service"
+
+http:
+  addr: ":8081"
+  read_timeout_seconds: 5
+  write_timeout_seconds: 5
+
+grpc:
+  addr: ":50054"
+
+shutdown:
+  timeout: 10
+
+postgres:
+  dsn: "postgres://ride:ride@postgres:5432/users?sslmode=disable"
+
+auth:
+  jwt_secret: ""
+  issuer: "ride-hailing"
+  audience: "ride-hailing-clients"
+  access_ttl_seconds: 1800
+  refresh_ttl_seconds: 2592000
+
+internal_auth:
+  enabled: false
+  token: ""
+
+observability:
+  metrics_enabled: true
+  metrics_addr: ":9096"
