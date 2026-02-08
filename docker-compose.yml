@@ -100,10 +100,12 @@ services:
   nats:
     container_name: nats
     image: nats:2.10
-    command: ["-js"]
+    command: ["-js", "-sd", "/data"]
     ports:
       - "4222:4222"
       - "8222:8222"
+    volumes:
+      - nats_data:/data
     mem_limit: 128m
     cpus: "0.25"
 
@@ -127,8 +129,11 @@ services:
   redis:
     container_name: redis
     image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -151,3 +156,7 @@ services:
       GOOSE_DBSTRING: postgresql://ride:ride@postgres:5432/rides?sslmode=disable
     volumes:
       - ./services/ride/migrations:/migrations
+
+volumes:
+  nats_data:
+  redis_data:
