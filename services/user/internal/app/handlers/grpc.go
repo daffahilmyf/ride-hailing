@@ -6,6 +6,7 @@ import (
 
 	userv1 "github.com/daffahilmyf/ride-hailing/proto/user/v1"
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/adapters/db"
+	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/metrics"
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/usecase"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -21,10 +22,18 @@ type UserServer struct {
 
 type Dependencies struct {
 	Usecase *usecase.Service
+	Limiter *RateLimiter
+	Metrics *metrics.AuthMetrics
 }
 
 func RegisterUserServer(srv *grpc.Server, logger *zap.Logger, deps Dependencies) {
 	userv1.RegisterUserServiceServer(srv, &UserServer{logger: logger, usecase: deps.Usecase})
+	userv1.RegisterAuthServiceServer(srv, &AuthServer{
+		logger:  logger,
+		usecase: deps.Usecase,
+		limiter: deps.Limiter,
+		metrics: deps.Metrics,
+	})
 }
 
 func (s *UserServer) GetUserProfile(ctx context.Context, req *userv1.GetUserProfileRequest) (*userv1.GetUserProfileResponse, error) {

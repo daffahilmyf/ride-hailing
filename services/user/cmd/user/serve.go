@@ -58,17 +58,6 @@ var serveCmd = &cobra.Command{
 		}
 		rLimiter := redisadapter.NewRateLimiter(redisClient)
 
-		grpcSrv := grpcadapter.NewServer(logger, grpcadapter.Dependencies{Usecase: uc}, grpcadapter.AuthConfig{
-			Enabled: cfg.InternalAuth.Enabled,
-			Token:   cfg.InternalAuth.Token,
-		})
-
-		go func() {
-			if err := grpcSrv.Serve(cfg.GRPCAddr); err != nil {
-				logger.Fatal("grpc.serve_failed", zap.Error(err))
-			}
-		}()
-
 		var authMetrics *metrics.AuthMetrics
 		var registry *prometheus.Registry
 		if cfg.Observability.MetricsEnabled {
@@ -79,19 +68,35 @@ var serveCmd = &cobra.Command{
 			authMetrics.AttachProm(promMetrics)
 		}
 
+		limiter := &handlers.RateLimiter{
+			Redis:  rLimiter,
+			Limit:  cfg.RateLimit.AuthRequests,
+			Window: time.Duration(cfg.RateLimit.WindowSeconds) * time.Second,
+			Prefix: cfg.RateLimit.KeyPrefix,
+		}
+		if authMetrics != nil {
+			limiter.OnLimit = func(endpoint string) {
+				authMetrics.Record(endpoint, "rate_limited", 0)
+			}
+		}
+
+		grpcSrv := grpcadapter.NewServer(logger, grpcadapter.Dependencies{
+			Usecase: uc,
+			Limiter: limiter,
+			Metrics: authMetrics,
+		}, grpcadapter.AuthConfig{
+			Enabled: cfg.InternalAuth.Enabled,
+			Token:   cfg.InternalAuth.Token,
+		})
+
+		go func() {
+			if err := grpcSrv.Serve(cfg.GRPCAddr); err != nil {
+				logger.Fatal("grpc.serve_failed", zap.Error(err))
+			}
+		}()
+
 		router := gin.New()
 		router.Use(gin.Recovery())
-	limiter := &handlers.RateLimiter{
-		Redis:  rLimiter,
-		Limit:  cfg.RateLimit.AuthRequests,
-		Window: time.Duration(cfg.RateLimit.WindowSeconds) * time.Second,
-		Prefix: cfg.RateLimit.KeyPrefix,
-	}
-	if authMetrics != nil {
-		limiter.OnLimit = func(endpoint string) {
-			authMetrics.Record(endpoint, "rate_limited", 0)
-		}
-	}
 		handlers.RegisterRoutes(router, uc, logger, authMetrics, limiter, cfg.InternalAuth.Enabled, cfg.InternalAuth.Token)
 
 		httpSrv := &http.Server{

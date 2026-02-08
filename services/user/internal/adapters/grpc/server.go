@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/handlers"
+	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/metrics"
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/usecase"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -18,13 +19,19 @@ type Server struct {
 
 type Dependencies struct {
 	Usecase *usecase.Service
+	Limiter *handlers.RateLimiter
+	Metrics *metrics.AuthMetrics
 }
 
 func NewServer(logger *zap.Logger, deps Dependencies, auth AuthConfig) *Server {
 	srv := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(UnaryInterceptors(logger, auth)...),
 	)
-	handlers.RegisterUserServer(srv, logger, handlers.Dependencies{Usecase: deps.Usecase})
+	handlers.RegisterUserServer(srv, logger, handlers.Dependencies{
+		Usecase: deps.Usecase,
+		Limiter: deps.Limiter,
+		Metrics: deps.Metrics,
+	})
 	healthSrv := health.NewServer()
 	healthpb.RegisterHealthServer(srv, healthSrv)
 	reflection.Register(srv)

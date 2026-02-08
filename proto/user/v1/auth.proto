@@ -1,0 +1,170 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "github.com/daffahilmyf/ride-hailing/proto/user/v1;userv1";
+
+service AuthService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Refresh(RefreshRequest) returns (RefreshResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc Verify(VerifyRequest) returns (VerifyResponse);
+  rpc LogoutAll(LogoutAllRequest) returns (LogoutAllResponse);
+  rpc LogoutDevice(LogoutDeviceRequest) returns (LogoutDeviceResponse);
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+  rpc GetMe(GetMeRequest) returns (GetMeResponse);
+}
+
+message RegisterRequest {
+  string email = 1;
+  string phone = 2;
+  string password = 3;
+  string role = 4;
+  string name = 5;
+  string device_id = 6;
+  string user_agent = 7;
+  string ip = 8;
+  string trace_id = 9;
+  string request_id = 10;
+}
+
+message RegisterResponse {
+  User user = 1;
+  Token tokens = 2;
+  string verification_code = 3;
+}
+
+message LoginRequest {
+  string email = 1;
+  string phone = 2;
+  string password = 3;
+  string device_id = 4;
+  string user_agent = 5;
+  string ip = 6;
+  string trace_id = 7;
+  string request_id = 8;
+}
+
+message LoginResponse {
+  User user = 1;
+  Token tokens = 2;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+  string device_id = 2;
+  string user_agent = 3;
+  string ip = 4;
+  string trace_id = 5;
+  string request_id = 6;
+}
+
+message RefreshResponse {
+  User user = 1;
+  Token tokens = 2;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+  string device_id = 2;
+  string trace_id = 3;
+  string request_id = 4;
+}
+
+message LogoutResponse {
+  string status = 1;
+}
+
+message VerifyRequest {
+  string channel = 1;
+  string target = 2;
+  string code = 3;
+  string trace_id = 4;
+  string request_id = 5;
+}
+
+message VerifyResponse {
+  string status = 1;
+}
+
+message LogoutAllRequest {
+  string user_id = 1;
+  string trace_id = 2;
+  string request_id = 3;
+}
+
+message LogoutAllResponse {
+  string status = 1;
+}
+
+message LogoutDeviceRequest {
+  string user_id = 1;
+  string device_id = 2;
+  string trace_id = 3;
+  string request_id = 4;
+}
+
+message LogoutDeviceResponse {
+  string status = 1;
+}
+
+message ListSessionsRequest {
+  string user_id = 1;
+  string trace_id = 2;
+  string request_id = 3;
+}
+
+message ListSessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message GetMeRequest {
+  string user_id = 1;
+  string trace_id = 2;
+  string request_id = 3;
+}
+
+message GetMeResponse {
+  User user = 1;
+}
+
+message Token {
+  string access_token = 1;
+  string refresh_token = 2;
+  string token_type = 3;
+  int64 expires_in = 4;
+}
+
+message User {
+  string id = 1;
+  string role = 2;
+  string name = 3;
+  string email = 4;
+  string phone = 5;
+  string email_verified_at = 6;
+  string phone_verified_at = 7;
+  RiderProfile rider_profile = 8;
+  DriverProfile driver_profile = 9;
+}
+
+message RiderProfile {
+  double rating = 1;
+  string preferred_language = 2;
+}
+
+message DriverProfile {
+  string vehicle_make = 1;
+  string vehicle_plate = 2;
+  string license_number = 3;
+  bool verified = 4;
+  double rating = 5;
+}
+
+message Session {
+  string device_id = 1;
+  string user_agent = 2;
+  string ip = 3;
+  string created_at = 4;
+  string expires_at = 5;
+}
