@@ -149,7 +149,11 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (db.User, Tokens, er
 		return db.User{}, Tokens{}, ErrInvalidCredentials
 	}
 	_ = s.Repo.ResetFailedLogin(ctx, user.ID)
-	_ = s.Repo.RevokeDeviceSessions(ctx, user.ID, in.DeviceID)
+	if user.Role == "driver" {
+		_ = s.Repo.RevokeAllRefreshTokens(ctx, user.ID)
+	} else {
+		_ = s.Repo.RevokeDeviceSessions(ctx, user.ID, in.DeviceID)
+	}
 	tokens, err := s.issueTokens(ctx, user, in.DeviceID, in.UserAgent, in.IP)
 	if err != nil {
 		return db.User{}, Tokens{}, err
