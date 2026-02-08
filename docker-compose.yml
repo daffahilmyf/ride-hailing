@@ -28,6 +28,7 @@ services:
       - RIDE_GRPC_ADDR=:50051
       - RIDE_POSTGRES_DSN=postgres://ride:ride@postgres:5432/rides?sslmode=disable
       - RIDE_NATS_URL=nats://nats:4222
+      - RIDE_NATS_SELF_HEAL=true
       - RIDE_OUTBOX_ENABLED=true
     mem_limit: 256m
     cpus: "0.50"
@@ -46,6 +47,7 @@ services:
       - LOCATION_GRPC_ADDR=:50053
       - LOCATION_REDIS_ADDR=redis:6379
       - LOCATION_NATS_URL=nats://nats:4222
+      - LOCATION_NATS_SELF_HEAL=true
       - LOCATION_EVENTS_ENABLED=true
     mem_limit: 256m
     cpus: "0.50"
@@ -64,6 +66,7 @@ services:
       - MATCHING_GRPC_ADDR=:50052
       - MATCHING_REDIS_ADDR=redis:6379
       - MATCHING_NATS_URL=nats://nats:4222
+      - MATCHING_NATS_SELF_HEAL=true
       - MATCHING_EVENTS_ENABLED=true
       - MATCHING_RIDE_ADDR=ride:50051
     mem_limit: 256m

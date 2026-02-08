@@ -25,6 +25,7 @@ services:
     environment:
       - RIDE_INTERNAL_AUTH_ENABLED=true
       - RIDE_INTERNAL_AUTH_TOKEN=${RIDE_INTERNAL_AUTH_TOKEN}
+      - RIDE_NATS_SELF_HEAL=true
     restart: unless-stopped
     mem_limit: 512m
     cpus: "1.0"
@@ -38,6 +39,7 @@ services:
     environment:
       - LOCATION_INTERNAL_AUTH_ENABLED=true
       - LOCATION_INTERNAL_AUTH_TOKEN=${LOCATION_INTERNAL_AUTH_TOKEN}
+      - LOCATION_NATS_SELF_HEAL=true
     restart: unless-stopped
     mem_limit: 512m
     cpus: "1.0"
@@ -52,6 +54,7 @@ services:
       - MATCHING_INTERNAL_AUTH_ENABLED=true
       - MATCHING_INTERNAL_AUTH_TOKEN=${MATCHING_INTERNAL_AUTH_TOKEN}
       - MATCHING_RIDE_INTERNAL_TOKEN=${RIDE_INTERNAL_AUTH_TOKEN}
+      - MATCHING_NATS_SELF_HEAL=true
     restart: unless-stopped
     mem_limit: 512m
     cpus: "1.0"
