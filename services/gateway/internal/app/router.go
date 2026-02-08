@@ -45,8 +45,8 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 	r.Use(middleware.RequestTimeout(time.Duration(cfg.HTTP.RequestTimeoutSeconds) * time.Second))
 
 	r.StaticFile("/favicon.ico", "config/favicon.ico")
-	r.StaticFile("/swagger/openapi.yaml", "config/openapi.yaml")
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/openapi.yaml")))
+	r.StaticFile("/docs/openapi.yaml", "config/openapi.yaml")
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/docs/openapi.yaml")))
 	var grpcConns []*grpc.ClientConn
 	if grpcClients != nil {
 		grpcConns = []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn}
