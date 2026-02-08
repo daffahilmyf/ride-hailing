@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [ "$#" -lt 2 ]; then
-  echo "usage: $0 <subject> <role> [scopes_csv]"
+  echo "usage: $0 <subject|uuid> <role> [scopes_csv]"
   echo "env: JWT_SECRET (required), JWT_ISSUER (optional), JWT_AUDIENCE (optional), JWT_TTL_SECONDS (optional)"
   exit 1
 fi
@@ -20,6 +20,15 @@ fi
 JWT_ISSUER="${JWT_ISSUER:-ride-hailing}"
 JWT_AUDIENCE="${JWT_AUDIENCE:-ride-hailing-clients}"
 JWT_TTL_SECONDS="${JWT_TTL_SECONDS:-3600}"
+
+if [ "$SUBJECT" = "uuid" ] || [ "$SUBJECT" = "auto" ]; then
+  SUBJECT="$(python3 - <<'PY'
+import uuid
+print(uuid.uuid4())
+PY
+)"
+  echo "generated subject: $SUBJECT" >&2
+fi
 
 python3 - <<'PY' "$SUBJECT" "$ROLE" "$SCOPES_CSV" "$JWT_SECRET" "$JWT_ISSUER" "$JWT_AUDIENCE" "$JWT_TTL_SECONDS"
 import base64
