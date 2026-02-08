@@ -16,8 +16,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      nats-init:
-        condition: service_completed_successfully
 
   ride:
     container_name: service-ride
@@ -36,8 +34,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      nats-init:
-        condition: service_completed_successfully
 
   location:
     container_name: service-location
@@ -56,8 +52,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      nats-init:
-        condition: service_completed_successfully
 
   matching:
     container_name: service-matching
@@ -77,8 +71,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      nats-init:
-        condition: service_completed_successfully
       ride:
         condition: service_started
 
@@ -91,18 +83,6 @@ services:
       - "8222:8222"
     mem_limit: 128m
     cpus: "0.25"
-
-  nats-init:
-    image: natsio/nats-box:latest
-    container_name: nats-init
-    depends_on:
-      - nats
-    entrypoint: ["sh", "-c"]
-    command: >
-      until nats --server nats:4222 stream ls >/dev/null 2>&1; do echo 'waiting for nats'; sleep 1; done;
-      nats --server nats:4222 --yes stream add RIDES --subjects 'ride.*' --storage file --retention limits || true;
-      nats --server nats:4222 --yes stream add DRIVERS --subjects 'driver.*' --storage file --retention limits || true
-    restart: "no"
 
   postgres:
     container_name: postgres
