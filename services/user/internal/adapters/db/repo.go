@@ -130,3 +130,14 @@ func (r *Repo) HasActiveDeviceSession(ctx context.Context, userID string, device
 	}
 	return count > 0, nil
 }
+
+func (r *Repo) RevokeDeviceSessions(ctx context.Context, userID string, deviceID string) error {
+	if userID == "" || deviceID == "" {
+		return nil
+	}
+	now := time.Now().UTC()
+	return r.DB.WithContext(ctx).
+		Model(&RefreshToken{}).
+		Where("user_id = ? AND device_id = ? AND revoked_at IS NULL", userID, deviceID).
+		Update("revoked_at", now).Error
+}

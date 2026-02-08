@@ -149,9 +149,7 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (db.User, Tokens, er
 		return db.User{}, Tokens{}, ErrInvalidCredentials
 	}
 	_ = s.Repo.ResetFailedLogin(ctx, user.ID)
-	if active, err := s.Repo.HasActiveDeviceSession(ctx, user.ID, in.DeviceID); err == nil && active {
-		return db.User{}, Tokens{}, ErrDeviceActive
-	}
+	_ = s.Repo.RevokeDeviceSessions(ctx, user.ID, in.DeviceID)
 	tokens, err := s.issueTokens(ctx, user, in.DeviceID, in.UserAgent, in.IP)
 	if err != nil {
 		return db.User{}, Tokens{}, err
