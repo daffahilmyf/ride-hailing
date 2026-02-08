@@ -10,6 +10,7 @@ func LoadConfig() Config {
 	cfg.PostgresDSN = viper.GetString("postgres.dsn")
 	cfg.IdempotencyTTLSeconds = viper.GetInt("idempotency.ttl_seconds")
 	cfg.NATSURL = viper.GetString("nats.url")
+	cfg.NATSSelfHeal = viper.GetBool("nats.self_heal")
 	cfg.OutboxEnabled = viper.GetBool("outbox.enabled")
 	cfg.OutboxIntervalMillis = viper.GetInt("outbox.interval_millis")
 	cfg.OutboxBatchSize = viper.GetInt("outbox.batch_size")

@@ -21,6 +21,7 @@ func LoadConfig() Config {
 	cfg.OfferRetryBackoffMs = viper.GetInt("matching.offer_retry_backoff_ms")
 	cfg.OfferRetryMaxBackoffMs = viper.GetInt("matching.offer_retry_max_backoff_ms")
 	cfg.NATSURL = viper.GetString("nats.url")
+	cfg.NATSSelfHeal = viper.GetBool("nats.self_heal")
 	cfg.EventsEnabled = viper.GetBool("events.enabled")
 	cfg.RideRequestedSubject = viper.GetString("events.ride_requested_subject")
 	cfg.DriverLocationSubject = viper.GetString("events.driver_location_subject")

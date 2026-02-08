@@ -80,7 +80,7 @@ var serveCmd = &cobra.Command{
 				logger.Fatal("nats.jetstream_failed", zap.Error(err))
 			}
 			logger.Info("nats.jetstream_ready")
-			ensureStream(logger, js, "RIDES", []string{"ride.*"})
+			ensureStream(logger, js, "RIDES", []string{"ride.*"}, cfg.NATSSelfHeal)
 			publisher := broker.NewPublisher(js)
 			outboxMetrics := &metrics.OutboxMetrics{}
 			worker := &workers.OutboxWorker{
@@ -145,12 +145,16 @@ var serveCmd = &cobra.Command{
 	},
 }
 
-func ensureStream(logger *zap.Logger, js nats.JetStreamContext, name string, subjects []string) {
+func ensureStream(logger *zap.Logger, js nats.JetStreamContext, name string, subjects []string, selfHeal bool) {
 	if js == nil {
 		return
 	}
 	info, err := js.StreamInfo(name)
 	if err == nil {
+		if !selfHeal {
+			logger.Warn("nats.self_heal_disabled", zap.String("stream", name))
+			return
+		}
 		existing := map[string]struct{}{}
 		for _, s := range info.Config.Subjects {
 			existing[s] = struct{}{}
@@ -173,6 +177,10 @@ func ensureStream(logger *zap.Logger, js nats.JetStreamContext, name string, sub
 		return
 	}
 
+	if !selfHeal {
+		logger.Warn("nats.stream_missing", zap.String("stream", name))
+		return
+	}
 	_, err = js.AddStream(&nats.StreamConfig{
 		Name:      name,
 		Subjects:  subjects,

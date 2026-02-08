@@ -14,6 +14,7 @@ type Config struct {
 	RateLimitMinGapMs      int
 	RateLimitKeyPrefix     string
 	NATSURL                string
+	NATSSelfHeal           bool
 	EventsEnabled          bool
 	InternalAuthEnabled    bool
 	InternalAuthToken      string
@@ -35,6 +36,7 @@ func DefaultConfig() Config {
 		RateLimitMinGapMs:      300,
 		RateLimitKeyPrefix:     "driver:location:rate:",
 		NATSURL:                "nats://nats:4222",
+		NATSSelfHeal:           true,
 		EventsEnabled:          true,
 		InternalAuthEnabled:    false,
 		InternalAuthToken:      "",

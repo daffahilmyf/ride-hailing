@@ -17,6 +17,7 @@ func LoadConfig() Config {
 	cfg.RateLimitMinGapMs = viper.GetInt("rate_limit.min_gap_ms")
 	cfg.RateLimitKeyPrefix = viper.GetString("rate_limit.key_prefix")
 	cfg.NATSURL = viper.GetString("nats.url")
+	cfg.NATSSelfHeal = viper.GetBool("nats.self_heal")
 	cfg.EventsEnabled = viper.GetBool("events.enabled")
 	cfg.InternalAuthEnabled = viper.GetBool("internal_auth.enabled")
 	cfg.InternalAuthToken = viper.GetString("internal_auth.token")

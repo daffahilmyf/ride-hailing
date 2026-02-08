@@ -15,6 +15,7 @@ idempotency:
 
 nats:
   url: "nats://nats:4222"
+  self_heal: true
 
 outbox:
   enabled: true

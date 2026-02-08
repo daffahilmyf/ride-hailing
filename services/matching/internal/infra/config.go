@@ -18,6 +18,7 @@ type Config struct {
 	OfferRetryBackoffMs    int
 	OfferRetryMaxBackoffMs int
 	NATSURL                string
+	NATSSelfHeal           bool
 	EventsEnabled          bool
 	RideRequestedSubject   string
 	DriverLocationSubject  string
@@ -55,6 +56,7 @@ func DefaultConfig() Config {
 		OfferRetryBackoffMs:    200,
 		OfferRetryMaxBackoffMs: 1500,
 		NATSURL:                "nats://nats:4222",
+		NATSSelfHeal:           true,
 		EventsEnabled:          true,
 		RideRequestedSubject:   "ride.requested",
 		DriverLocationSubject:  "driver.location.updated",

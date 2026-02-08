@@ -7,6 +7,7 @@ type Config struct {
 	PostgresDSN            string
 	IdempotencyTTLSeconds  int
 	NATSURL                string
+	NATSSelfHeal           bool
 	OutboxEnabled          bool
 	OutboxIntervalMillis   int
 	OutboxBatchSize        int
@@ -27,6 +28,7 @@ func DefaultConfig() Config {
 		PostgresDSN:            "postgres://ride:ride@postgres:5432/rides?sslmode=disable",
 		IdempotencyTTLSeconds:  86400,
 		NATSURL:                "nats://nats:4222",
+		NATSSelfHeal:           true,
 		OutboxEnabled:          true,
 		OutboxIntervalMillis:   2000,
 		OutboxBatchSize:        25,
