@@ -78,6 +78,17 @@ func (r *Repo) GetRefreshToken(ctx context.Context, tokenHash string) (RefreshTo
 	return token, err
 }
 
+func (r *Repo) GetRefreshTokenAny(ctx context.Context, tokenHash string) (RefreshToken, error) {
+	var token RefreshToken
+	err := r.DB.WithContext(ctx).
+		Where("token_hash = ?", tokenHash).
+		First(&token).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return RefreshToken{}, ErrNotFound
+	}
+	return token, err
+}
+
 func (r *Repo) RevokeRefreshToken(ctx context.Context, id string) error {
 	now := time.Now().UTC()
 	return r.DB.WithContext(ctx).

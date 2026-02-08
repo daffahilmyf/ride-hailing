@@ -1,60 +1,35 @@
 package handlers
 
 import (
+	"context"
 	"net"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
+type RedisLimiter interface {
+	Allow(ctx context.Context, key string, limit int, window time.Duration) (bool, error)
+}
+
 type RateLimiter struct {
-	mu     sync.Mutex
-	limits map[string]*rateEntry
-	limit  int
-	window time.Duration
-}
-
-type rateEntry struct {
-	count     int
-	resetTime time.Time
-}
-
-func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
-	return &RateLimiter{
-		limits: map[string]*rateEntry{},
-		limit:  limit,
-		window: window,
-	}
-}
-
-func (r *RateLimiter) Allow(key string) bool {
-	if r == nil || r.limit <= 0 {
-		return true
-	}
-	if key == "" {
-		return false
-	}
-	now := time.Now()
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	entry, ok := r.limits[key]
-	if !ok || now.After(entry.resetTime) {
-		r.limits[key] = &rateEntry{count: 1, resetTime: now.Add(r.window)}
-		return true
-	}
-	if entry.count >= r.limit {
-		return false
-	}
-	entry.count++
-	return true
+	Redis  RedisLimiter
+	Limit  int
+	Window time.Duration
+	Prefix string
 }
 
 func RateLimitMiddleware(limiter *RateLimiter) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if limiter == nil || limiter.Redis == nil {
+			c.Next()
+			return
+		}
 		key := clientKey(c)
-		if !limiter.Allow(key) {
+		allowed, err := limiter.Redis.Allow(c.Request.Context(), limiter.Prefix+key, limiter.Limit, limiter.Window)
+		if err != nil || !allowed {
 			c.AbortWithStatusJSON(429, gin.H{"error": "rate_limited"})
 			return
 		}
@@ -75,6 +50,42 @@ func InternalAuthMiddleware(enabled bool, token string) gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func RequestIDMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		traceID := c.GetHeader("X-Trace-Id")
+		if traceID == "" {
+			traceID = uuid.NewString()
+		}
+		requestID := c.GetHeader("X-Request-Id")
+		if requestID == "" {
+			requestID = uuid.NewString()
+		}
+		c.Set("trace_id", traceID)
+		c.Set("request_id", requestID)
+		c.Writer.Header().Set("X-Trace-Id", traceID)
+		c.Writer.Header().Set("X-Request-Id", requestID)
+		c.Next()
+	}
+}
+
+func GetTraceID(c *gin.Context) string {
+	if val, ok := c.Get("trace_id"); ok {
+		if s, ok := val.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+func GetRequestID(c *gin.Context) string {
+	if val, ok := c.Get("request_id"); ok {
+		if s, ok := val.(string); ok {
+			return s
+		}
+	}
+	return ""
 }
 
 func clientKey(c *gin.Context) string {

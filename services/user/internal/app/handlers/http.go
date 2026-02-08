@@ -37,6 +37,12 @@ type refreshRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type verifyRequest struct {
+	Channel string `json:"channel"`
+	Target  string `json:"target"`
+	Code    string `json:"code"`
+}
+
 type tokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
@@ -46,6 +52,7 @@ type tokenResponse struct {
 
 func RegisterRoutes(r *gin.Engine, svc *usecase.Service, logger *zap.Logger, authMetrics *metrics.AuthMetrics, limiter *RateLimiter, internalAuthEnabled bool, internalAuthToken string) {
 	h := &Handler{Service: svc, Logger: logger, Metrics: authMetrics}
+	r.Use(RequestIDMiddleware())
 	v1 := r.Group("/v1")
 
 	if limiter != nil {
@@ -53,11 +60,13 @@ func RegisterRoutes(r *gin.Engine, svc *usecase.Service, logger *zap.Logger, aut
 		v1.POST("/auth/login", RateLimitMiddleware(limiter), h.Login)
 		v1.POST("/auth/refresh", RateLimitMiddleware(limiter), h.Refresh)
 		v1.POST("/auth/logout", RateLimitMiddleware(limiter), h.Logout)
+		v1.POST("/auth/verify", RateLimitMiddleware(limiter), h.Verify)
 	} else {
 		v1.POST("/auth/register", h.Register)
 		v1.POST("/auth/login", h.Login)
 		v1.POST("/auth/refresh", h.Refresh)
 		v1.POST("/auth/logout", h.Logout)
+		v1.POST("/auth/verify", h.Verify)
 	}
 
 	protected := v1.Group("/")
@@ -76,7 +85,7 @@ func (h *Handler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request"})
 		return
 	}
-	user, tokens, err := h.Service.Register(c.Request.Context(), usecase.RegisterInput{
+	user, tokens, code, err := h.Service.Register(c.Request.Context(), usecase.RegisterInput{
 		Email:    strings.TrimSpace(req.Email),
 		Phone:    strings.TrimSpace(req.Phone),
 		Password: req.Password,
@@ -85,6 +94,9 @@ func (h *Handler) Register(c *gin.Context) {
 	})
 	if err != nil {
 		switch err {
+		case usecase.ErrWeakPassword:
+			h.respondWithMetrics(c, "register", "weak_password", start)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "weak_password"})
 		case usecase.ErrInvalidCredentials, usecase.ErrInvalidRole:
 			h.respondWithMetrics(c, "register", "bad_request", start)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request"})
@@ -97,16 +109,17 @@ func (h *Handler) Register(c *gin.Context) {
 		}
 		return
 	}
-	h.audit("register", user.ID, "ok")
+	h.audit(c, "register", user.ID, "ok")
 	h.respondWithMetrics(c, "register", "ok", start)
 	c.JSON(http.StatusOK, gin.H{
-		"user": userResponse(user),
+		"user": userResponse(user, nil, nil),
 		"tokens": tokenResponse{
 			AccessToken:  tokens.AccessToken,
 			RefreshToken: tokens.RefreshToken,
 			TokenType:    "bearer",
 			ExpiresIn:    tokens.ExpiresIn,
 		},
+		"verification_code": code,
 	})
 }
 
@@ -124,15 +137,21 @@ func (h *Handler) Login(c *gin.Context) {
 		Password: req.Password,
 	})
 	if err != nil {
-		h.audit("login", "", "invalid_credentials")
+		if err == usecase.ErrAccountLocked {
+			h.audit(c, "login", user.ID, "locked")
+			h.respondWithMetrics(c, "login", "locked", start)
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "account_locked"})
+			return
+		}
+		h.audit(c, "login", "", "invalid_credentials")
 		h.respondWithMetrics(c, "login", "unauthorized", start)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_credentials"})
 		return
 	}
-	h.audit("login", user.ID, "ok")
+	h.audit(c, "login", user.ID, "ok")
 	h.respondWithMetrics(c, "login", "ok", start)
 	c.JSON(http.StatusOK, gin.H{
-		"user": userResponse(user),
+		"user": userResponse(user, nil, nil),
 		"tokens": tokenResponse{
 			AccessToken:  tokens.AccessToken,
 			RefreshToken: tokens.RefreshToken,
@@ -156,10 +175,10 @@ func (h *Handler) Refresh(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_refresh"})
 		return
 	}
-	h.audit("refresh", user.ID, "ok")
+	h.audit(c, "refresh", user.ID, "ok")
 	h.respondWithMetrics(c, "refresh", "ok", start)
 	c.JSON(http.StatusOK, gin.H{
-		"user": userResponse(user),
+		"user": userResponse(user, nil, nil),
 		"tokens": tokenResponse{
 			AccessToken:  tokens.AccessToken,
 			RefreshToken: tokens.RefreshToken,
@@ -182,7 +201,7 @@ func (h *Handler) Logout(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_refresh"})
 		return
 	}
-	h.audit("logout", "", "ok")
+	h.audit(c, "logout", "", "ok")
 	h.respondWithMetrics(c, "logout", "ok", start)
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
@@ -200,8 +219,26 @@ func (h *Handler) LogoutAll(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal"})
 		return
 	}
-	h.audit("logout_all", userID, "ok")
+	h.audit(c, "logout_all", userID, "ok")
 	h.respondWithMetrics(c, "logout_all", "ok", start)
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func (h *Handler) Verify(c *gin.Context) {
+	start := time.Now()
+	var req verifyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.respondWithMetrics(c, "verify", "bad_request", start)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request"})
+		return
+	}
+	if err := h.Service.Verify(c.Request.Context(), req.Channel, req.Target, req.Code); err != nil {
+		h.respondWithMetrics(c, "verify", "unauthorized", start)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_code"})
+		return
+	}
+	h.audit(c, "verify", "", "ok")
+	h.respondWithMetrics(c, "verify", "ok", start)
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
@@ -224,17 +261,31 @@ func (h *Handler) Me(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal"})
 		return
 	}
+	var rider *db.RiderProfile
+	var driver *db.DriverProfile
+	if user.Role == "rider" {
+		if prof, err := h.Service.Repo.GetRiderProfile(c.Request.Context(), user.ID); err == nil {
+			rider = &prof
+		}
+	} else if user.Role == "driver" {
+		if prof, err := h.Service.Repo.GetDriverProfile(c.Request.Context(), user.ID); err == nil {
+			driver = &prof
+		}
+	}
 	h.respondWithMetrics(c, "me", "ok", start)
-	c.JSON(http.StatusOK, gin.H{"user": userResponse(user)})
+	c.JSON(http.StatusOK, gin.H{"user": userResponse(user, rider, driver)})
 }
 
-func (h *Handler) respondWithMetrics(_ *gin.Context, endpoint string, status string, start time.Time) {
+func (h *Handler) respondWithMetrics(c *gin.Context, endpoint string, status string, start time.Time) {
 	if h.Metrics != nil {
 		h.Metrics.Record(endpoint, status, time.Since(start))
 	}
+	if h.Logger != nil {
+		h.Logger.Debug("request", zap.String("endpoint", endpoint), zap.String("status", status), zap.String("trace_id", GetTraceID(c)), zap.String("request_id", GetRequestID(c)))
+	}
 }
 
-func (h *Handler) audit(action string, userID string, status string) {
+func (h *Handler) audit(c *gin.Context, action string, userID string, status string) {
 	if h.Logger == nil {
 		return
 	}
@@ -242,10 +293,12 @@ func (h *Handler) audit(action string, userID string, status string) {
 		zap.String("action", action),
 		zap.String("user_id", userID),
 		zap.String("status", status),
+		zap.String("trace_id", GetTraceID(c)),
+		zap.String("request_id", GetRequestID(c)),
 	)
 }
 
-func userResponse(user db.User) gin.H {
+func userResponse(user db.User, rider *db.RiderProfile, driver *db.DriverProfile) gin.H {
 	resp := gin.H{
 		"id":   user.ID,
 		"role": user.Role,
@@ -256,6 +309,27 @@ func userResponse(user db.User) gin.H {
 	}
 	if user.Phone != nil {
 		resp["phone"] = *user.Phone
+	}
+	if user.EmailVerifiedAt != nil {
+		resp["email_verified_at"] = user.EmailVerifiedAt.UTC().Format(time.RFC3339)
+	}
+	if user.PhoneVerifiedAt != nil {
+		resp["phone_verified_at"] = user.PhoneVerifiedAt.UTC().Format(time.RFC3339)
+	}
+	if rider != nil {
+		resp["rider_profile"] = gin.H{
+			"rating":             rider.Rating,
+			"preferred_language": rider.PreferredLanguage,
+		}
+	}
+	if driver != nil {
+		resp["driver_profile"] = gin.H{
+			"vehicle_make":   driver.VehicleMake,
+			"vehicle_plate":  driver.VehiclePlate,
+			"license_number": driver.LicenseNumber,
+			"verified":       driver.Verified,
+			"rating":         driver.Rating,
+		}
 	}
 	return resp
 }

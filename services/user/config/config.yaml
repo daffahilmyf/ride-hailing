@@ -15,6 +15,11 @@ shutdown:
 postgres:
   dsn: "postgres://ride:ride@postgres:5432/users?sslmode=disable"
 
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: 0
+
 auth:
   jwt_secret: ""
   issuer: "ride-hailing"
@@ -29,6 +34,7 @@ internal_auth:
 rate_limit:
   auth_requests: 30
   window_seconds: 60
+  key_prefix: "user:rate:"
 
 observability:
   metrics_enabled: true

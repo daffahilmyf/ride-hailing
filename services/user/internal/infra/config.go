@@ -8,6 +8,9 @@ type Config struct {
 	GRPCAddr                string
 	ShutdownTimeoutSeconds  int
 	PostgresDSN             string
+	RedisAddr               string
+	RedisPassword           string
+	RedisDB                 int
 	Auth                    AuthConfig
 	InternalAuth            InternalAuthConfig
 	RateLimit               RateLimitConfig
@@ -30,6 +33,7 @@ type InternalAuthConfig struct {
 type RateLimitConfig struct {
 	AuthRequests  int
 	WindowSeconds int
+	KeyPrefix     string
 }
 
 type ObservabilityConfig struct {
@@ -46,6 +50,9 @@ func DefaultConfig() Config {
 		GRPCAddr:                ":50054",
 		ShutdownTimeoutSeconds:  10,
 		PostgresDSN:             "postgres://ride:ride@localhost:5432/users?sslmode=disable",
+		RedisAddr:               "localhost:6379",
+		RedisPassword:           "",
+		RedisDB:                 0,
 		Auth: AuthConfig{
 			JWTSecret:         "",
 			Issuer:            "ride-hailing",
@@ -60,6 +67,7 @@ func DefaultConfig() Config {
 		RateLimit: RateLimitConfig{
 			AuthRequests:  30,
 			WindowSeconds: 60,
+			KeyPrefix:     "user:rate:",
 		},
 		Observability: ObservabilityConfig{
 			MetricsEnabled: true,

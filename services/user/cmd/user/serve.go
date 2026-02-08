@@ -8,8 +8,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/daffahilmyf/ride-hailing/services/user/internal/adapters/db"
+	dbadapter "github.com/daffahilmyf/ride-hailing/services/user/internal/adapters/db"
 	grpcadapter "github.com/daffahilmyf/ride-hailing/services/user/internal/adapters/grpc"
+	redisadapter "github.com/daffahilmyf/ride-hailing/services/user/internal/adapters/redis"
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/handlers"
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/metrics"
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/usecase"
@@ -17,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -31,16 +33,26 @@ var serveCmd = &cobra.Command{
 		defer logger.Sync()
 
 		ctx := context.Background()
-		store, err := db.NewPostgres(ctx, cfg.PostgresDSN)
+		store, err := dbadapter.NewPostgres(ctx, cfg.PostgresDSN)
 		if err != nil {
 			logger.Fatal("postgres.connect_failed", zap.Error(err))
 		}
 
-		repo := db.NewRepo(store.DB)
+		repo := dbadapter.NewRepo(store.DB)
 		uc := &usecase.Service{
 			Repo:       repo,
 			AuthConfig: cfg.Auth,
 		}
+
+		redisClient := redis.NewClient(&redis.Options{
+			Addr:     cfg.RedisAddr,
+			Password: cfg.RedisPassword,
+			DB:       cfg.RedisDB,
+		})
+		if err := redisClient.Ping(ctx).Err(); err != nil {
+			logger.Warn("redis.connect_failed", zap.Error(err))
+		}
+		rLimiter := redisadapter.NewRateLimiter(redisClient)
 
 		grpcSrv := grpcadapter.NewServer(logger, grpcadapter.Dependencies{Usecase: uc}, grpcadapter.AuthConfig{
 			Enabled: cfg.InternalAuth.Enabled,
@@ -65,7 +77,12 @@ var serveCmd = &cobra.Command{
 
 		router := gin.New()
 		router.Use(gin.Recovery())
-		limiter := handlers.NewRateLimiter(cfg.RateLimit.AuthRequests, time.Duration(cfg.RateLimit.WindowSeconds)*time.Second)
+		limiter := &handlers.RateLimiter{
+			Redis:  rLimiter,
+			Limit:  cfg.RateLimit.AuthRequests,
+			Window: time.Duration(cfg.RateLimit.WindowSeconds) * time.Second,
+			Prefix: cfg.RateLimit.KeyPrefix,
+		}
 		handlers.RegisterRoutes(router, uc, logger, authMetrics, limiter, cfg.InternalAuth.Enabled, cfg.InternalAuth.Token)
 
 		httpSrv := &http.Server{

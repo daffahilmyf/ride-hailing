@@ -1,72 +1,25 @@
 package app
 
 import (
-	"time"
-
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/adapters/cache"
-	grpcadapter "github.com/daffahilmyf/ride-hailing/services/gateway/internal/adapters/grpc"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/handlers"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/app/middleware"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/infra"
 )
 
-func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *redis.Client, grpcClients *grpcadapter.Clients) *gin.Engine {
+func NewRouter(logger *zap.Logger, deps Dependencies, cfg infra.Config) *gin.Engine {
 	r := gin.New()
-	r.Use(gin.Recovery())
-	r.Use(middleware.LoggerMiddleware(logger, cfg.ServiceName))
-	r.Use(middleware.RequestTimeout(time.Duration(cfg.HTTP.RequestTimeoutSeconds) * time.Second))
-	if cfg.Observability.TracingEnabled {
-		r.Use(middleware.TraceMiddleware(cfg.ServiceName))
-	}
-	if cfg.HTTP.GzipEnabled {
-		r.Use(gzip.Gzip(gzip.DefaultCompression))
-	}
-	if cfg.Observability.MetricsEnabled {
-		metrics := middleware.NewMetrics(cfg.ServiceName)
-		registry := prometheus.NewRegistry()
-		registry.MustRegister(metrics.Requests, metrics.Latency)
-		r.Use(middleware.MetricsMiddleware(metrics))
-		r.GET("/metrics", gin.WrapH(promhttp.HandlerFor(registry, promhttp.HandlerOpts{})))
-	}
-	r.Use(middleware.MaxBodyBytes(cfg.MaxBodyBytes))
-	r.Use(middleware.SecurityHeaders())
+	r.Use(middleware.RequestLoggerMiddleware(logger, cfg.ServiceName))
+	r.Use(middleware.RequestIDMiddleware())
+	r.Use(middleware.RecoveryMiddleware(logger))
+	r.Use(middleware.RateLimitMiddleware(globalLimiter, cfg.RateLimit.Requests))
+	r.Use(middleware.GzipMiddleware(cfg.HTTP.GzipEnabled))
+	r.Use(middleware.MaxBodyMiddleware(cfg.MaxBodyBytes))
+	r.Use(middleware.TimeoutMiddleware(cfg.HTTP.RequestTimeoutSeconds))
 
-	limiter := cache.NewRedisLimiter(
-		redisClient,
-		cache.WithLimiterRequests(cfg.RateLimit.Requests),
-		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.WindowSeconds)*time.Second),
-		cache.WithLimiterPrefix("rl"),
-	)
-	r.Use(middleware.RateLimitMiddleware(limiter, cfg.RateLimit.Requests))
-
-	nearbyLimiter := cache.NewRedisLimiter(
-		redisClient,
-		cache.WithLimiterRequests(cfg.RateLimit.NearbyRequests),
-		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.NearbyWindowSeconds)*time.Second),
-		cache.WithLimiterPrefix("rl:nearby"),
-	)
-	notifyLimiter := cache.NewRedisLimiter(
-		redisClient,
-		cache.WithLimiterRequests(cfg.RateLimit.NotifyRequests),
-		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.NotifyWindowSeconds)*time.Second),
-		cache.WithLimiterPrefix("rl:notify"),
-	)
-
-	var readyCache = handlers.ReadinessCache{Key: "gateway:readyz"}
-	if cfg.Cache.Enabled {
-		readyCache.Cache = cache.NewRedisCache(redisClient)
-		readyCache.TTL = cache.DefaultTTL(cfg.Cache)
-	}
-
-	r.GET("/healthz", handlers.Health())
 	r.StaticFile("/favicon.ico", "config/favicon.ico")
 	var grpcConns []*grpc.ClientConn
 	if grpcClients != nil {
@@ -90,6 +43,7 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		v1.POST("/auth/login", handlers.ProxyUser(cfg.User.BaseURL, false, cfg.User.InternalToken))
 		v1.POST("/auth/refresh", handlers.ProxyUser(cfg.User.BaseURL, false, cfg.User.InternalToken))
 		v1.POST("/auth/logout", handlers.ProxyUser(cfg.User.BaseURL, false, cfg.User.InternalToken))
+		v1.POST("/auth/verify", handlers.ProxyUser(cfg.User.BaseURL, false, cfg.User.InternalToken))
 
 		authGroup := v1.Group("/")
 		authGroup.Use(middleware.AuthMiddleware(logger, middleware.AuthConfig{
