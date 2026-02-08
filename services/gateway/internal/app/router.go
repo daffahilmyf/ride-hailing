@@ -1,6 +1,8 @@
 package app
 
 import (
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +47,16 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 	r.Use(middleware.RequestTimeout(time.Duration(cfg.HTTP.RequestTimeoutSeconds) * time.Second))
 
 	r.StaticFile("/favicon.ico", "config/favicon.ico")
-	r.StaticFile("/openapi.yaml", "config/openapi.yaml")
+	r.GET("/openapi.yaml", func(c *gin.Context) {
+		paths := []string{"/config/openapi.yaml", "config/openapi.yaml"}
+		for _, path := range paths {
+			if _, err := os.Stat(path); err == nil {
+				c.File(path)
+				return
+			}
+		}
+		c.Status(http.StatusNotFound)
+	})
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/openapi.yaml")))
 	var grpcConns []*grpc.ClientConn
 	if grpcClients != nil {
