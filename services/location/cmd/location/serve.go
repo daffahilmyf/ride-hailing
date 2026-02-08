@@ -173,10 +173,31 @@ func ensureStream(logger *zap.Logger, js nats.JetStreamContext, name string, sub
 	if js == nil {
 		return
 	}
-	if _, err := js.StreamInfo(name); err == nil {
+	info, err := js.StreamInfo(name)
+	if err == nil {
+		existing := map[string]struct{}{}
+		for _, s := range info.Config.Subjects {
+			existing[s] = struct{}{}
+		}
+		updated := false
+		for _, s := range subjects {
+			if _, ok := existing[s]; !ok {
+				info.Config.Subjects = append(info.Config.Subjects, s)
+				updated = true
+			}
+		}
+		if !updated {
+			return
+		}
+		if _, err := js.UpdateStream(&info.Config); err != nil {
+			logger.Warn("nats.stream_update_failed", zap.String("stream", name), zap.Error(err))
+			return
+		}
+		logger.Info("nats.stream_updated", zap.String("stream", name))
 		return
 	}
-	_, err := js.AddStream(&nats.StreamConfig{
+
+	_, err = js.AddStream(&nats.StreamConfig{
 		Name:      name,
 		Subjects:  subjects,
 		Storage:   nats.FileStorage,
