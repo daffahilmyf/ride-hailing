@@ -15,6 +15,7 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/app/handlers"
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/app/usecase"
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/infra"
+	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -93,6 +94,8 @@ var serveCmd = &cobra.Command{
 			LocationTTL:    time.Duration(cfg.LocationTTLSeconds) * time.Second,
 			MinUpdateGap:   time.Duration(cfg.RateLimitMinGapMs) * time.Millisecond,
 			RateKeyPrefix:  cfg.RateLimitKeyPrefix,
+			Clock:          usecase.SystemClock{},
+			IDGen:          uuid.NewString,
 		}
 
 		grpcMetrics := grpcadapter.NewMetrics()

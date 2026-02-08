@@ -28,7 +28,7 @@ func NewDriverLocation(driverID string, lat float64, lng float64, accuracy float
 		return DriverLocation{}, ErrInvalidLocation
 	}
 	if recordedAt.IsZero() {
-		recordedAt = time.Now().UTC()
+		return DriverLocation{}, ErrInvalidLocation
 	}
 	return DriverLocation{
 		DriverID:   driverID,

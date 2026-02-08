@@ -18,6 +18,8 @@ type RideService struct {
 	Outbox       outbound.OutboxRepo
 	Offers       outbound.RideOfferRepo
 	OfferMetrics *OfferMetrics
+	Clock        Clock
+	IDGen        IDGenerator
 }
 
 type CreateRideCmd struct {
@@ -43,9 +45,9 @@ type OfferActionCmd struct {
 
 func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain.Ride, error) {
 	return s.withIdempotency(ctx, cmd.IdempotencyKey, func(repo outbound.RideRepo, idem outbound.IdempotencyRepo, outbox outbound.OutboxRepo) (domain.Ride, error) {
-		now := time.Now().UTC()
+		now := s.now()
 		ride := domain.Ride{
-			ID:         uuid.NewString(),
+			ID:         s.newID(),
 			RiderID:    cmd.RiderID,
 			Status:     domain.StatusRequested,
 			PickupLat:  cmd.PickupLat,
@@ -69,7 +71,7 @@ func (s *RideService) CreateRide(ctx context.Context, cmd CreateRideCmd) (domain
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := enqueueEvent(ctx, outbox, "ride.requested", map[string]any{
+		if err := s.enqueueEvent(ctx, outbox, "ride.requested", map[string]any{
 			"ride_id":    ride.ID,
 			"rider_id":   ride.RiderID,
 			"pickup_lat": ride.PickupLat,
@@ -92,10 +94,10 @@ func (s *RideService) CancelRide(ctx context.Context, id string, reason string, 
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), s.now()); err != nil {
 			return domain.Ride{}, err
 		}
-		if err := enqueueEvent(ctx, outbox, "ride.cancelled", map[string]string{
+		if err := s.enqueueEvent(ctx, outbox, "ride.cancelled", map[string]string{
 			"ride_id":  updated.ID,
 			"reason":   reason,
 			"status":   string(updated.Status),
@@ -118,10 +120,10 @@ func (s *RideService) StartMatching(ctx context.Context, rideID string, idempote
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), s.now()); err != nil {
 			return domain.Ride{}, err
 		}
-		if err := enqueueEvent(ctx, outbox, "ride.matching.started", map[string]string{
+		if err := s.enqueueEvent(ctx, outbox, "ride.matching.started", map[string]string{
 			"ride_id": updated.ID,
 			"status":  string(updated.Status),
 		}); err != nil {
@@ -144,10 +146,10 @@ func (s *RideService) AssignDriver(ctx context.Context, rideID, driverID string,
 		}
 		next.DriverID = &driverID
 
-		if err := repo.AssignDriverIfCurrent(ctx, next.ID, driverID, string(ride.Status), string(next.Status), time.Now().UTC()); err != nil {
+		if err := repo.AssignDriverIfCurrent(ctx, next.ID, driverID, string(ride.Status), string(next.Status), s.now()); err != nil {
 			return domain.Ride{}, err
 		}
-		if err := enqueueEvent(ctx, outbox, "ride.driver.assigned", map[string]string{
+		if err := s.enqueueEvent(ctx, outbox, "ride.driver.assigned", map[string]string{
 			"ride_id":   next.ID,
 			"driver_id": driverID,
 			"status":    string(next.Status),
@@ -168,10 +170,10 @@ func (s *RideService) StartRide(ctx context.Context, rideID string, idempotencyK
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), s.now()); err != nil {
 			return domain.Ride{}, err
 		}
-		if err := enqueueEvent(ctx, outbox, "ride.in_progress", map[string]string{
+		if err := s.enqueueEvent(ctx, outbox, "ride.in_progress", map[string]string{
 			"ride_id": updated.ID,
 			"status":  string(updated.Status),
 		}); err != nil {
@@ -191,10 +193,10 @@ func (s *RideService) CompleteRide(ctx context.Context, rideID string, idempoten
 		if err != nil {
 			return domain.Ride{}, err
 		}
-		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), time.Now().UTC()); err != nil {
+		if err := repo.UpdateStatusIfCurrent(ctx, updated.ID, string(ride.Status), string(updated.Status), s.now()); err != nil {
 			return domain.Ride{}, err
 		}
-		if err := enqueueEvent(ctx, outbox, "ride.completed", map[string]string{
+		if err := s.enqueueEvent(ctx, outbox, "ride.completed", map[string]string{
 			"ride_id": updated.ID,
 			"status":  string(updated.Status),
 		}); err != nil {
@@ -210,7 +212,7 @@ func (s *RideService) CreateOffer(ctx context.Context, cmd StartMatchingCmd) (do
 		if ttl <= 0 {
 			ttl = 15 * time.Second
 		}
-		offer := domain.NewRideOffer(cmd.RideID, cmd.DriverID, ttl)
+		offer := domain.NewRideOfferWith(cmd.RideID, cmd.DriverID, ttl, s.now(), s.newID())
 		if err := offers.Create(ctx, outbound.RideOffer{
 			ID:        offer.ID,
 			RideID:    offer.RideID,
@@ -222,7 +224,7 @@ func (s *RideService) CreateOffer(ctx context.Context, cmd StartMatchingCmd) (do
 			return domain.RideOffer{}, err
 		}
 		s.OfferMetrics.IncCreated()
-		if err := enqueueEvent(ctx, outbox, "ride.offer.sent", map[string]string{
+		if err := s.enqueueEvent(ctx, outbox, "ride.offer.sent", map[string]string{
 			"ride_id":   offer.RideID,
 			"driver_id": offer.DriverID,
 			"offer_id":  offer.ID,
@@ -362,14 +364,14 @@ func (s *RideService) withIdempotencyOffer(ctx context.Context, key string, fn f
 	return offer, nil
 }
 
-func enqueueEvent(ctx context.Context, outbox outbound.OutboxRepo, topic string, payload any) error {
+func (s *RideService) enqueueEvent(ctx context.Context, outbox outbound.OutboxRepo, topic string, payload any) error {
 	if outbox == nil {
 		return nil
 	}
 	traceID := getStringFromContext(ctx, "trace_id")
 	requestID := getStringFromContext(ctx, "request_id")
-	envelope := domain.NewEventEnvelope(topic, "ride-service", traceID, requestID, payload)
-	event, err := domain.NewOutboxEvent(topic, envelope)
+	envelope := domain.NewEventEnvelopeWith(topic, "ride-service", traceID, requestID, payload, s.now(), s.newID())
+	event, err := domain.NewOutboxEventWith(topic, envelope, s.now(), s.newID())
 	if err != nil {
 		return err
 	}
@@ -390,6 +392,20 @@ func getStringFromContext(ctx context.Context, key string) string {
 		}
 	}
 	return ""
+}
+
+func (s *RideService) now() time.Time {
+	if s != nil && s.Clock != nil {
+		return s.Clock.Now()
+	}
+	return time.Now().UTC()
+}
+
+func (s *RideService) newID() string {
+	if s != nil && s.IDGen != nil {
+		return s.IDGen()
+	}
+	return uuid.NewString()
 }
 
 func (s *RideService) updateOffer(ctx context.Context, cmd OfferActionCmd, next domain.RideOfferStatus, topic string) (domain.RideOffer, error) {
@@ -422,7 +438,7 @@ func (s *RideService) updateOffer(ctx context.Context, cmd OfferActionCmd, next 
 		case domain.OfferExpired:
 			s.OfferMetrics.IncExpired()
 		}
-		if err := enqueueEvent(ctx, outbox, topic, map[string]string{
+		if err := s.enqueueEvent(ctx, outbox, topic, map[string]string{
 			"offer_id":  updated.ID,
 			"ride_id":   updated.RideID,
 			"driver_id": updated.DriverID,

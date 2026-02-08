@@ -18,11 +18,15 @@ type EventEnvelope struct {
 }
 
 func NewEventEnvelope(eventType string, producer string, traceID string, requestID string, data any) EventEnvelope {
+	return NewEventEnvelopeWith(eventType, producer, traceID, requestID, data, time.Now().UTC(), uuid.NewString())
+}
+
+func NewEventEnvelopeWith(eventType string, producer string, traceID string, requestID string, data any, occurredAt time.Time, id string) EventEnvelope {
 	return EventEnvelope{
-		ID:         uuid.NewString(),
+		ID:         id,
 		Type:       eventType,
 		Version:    "v1",
-		OccurredAt: time.Now().UTC(),
+		OccurredAt: occurredAt.UTC(),
 		Producer:   producer,
 		TraceID:    traceID,
 		RequestID:  requestID,

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -75,6 +76,8 @@ var serveCmd = &cobra.Command{
 			OfferRetryMax:   cfg.OfferRetryMax,
 			OfferBackoffMs:  cfg.OfferRetryBackoffMs,
 			OfferMaxBackoff: cfg.OfferRetryMaxBackoffMs,
+			Sleep:           time.Sleep,
+			Rand:            rand.New(rand.NewSource(time.Now().UnixNano())),
 		}
 
 		grpcMetrics := grpcadapter.NewMetrics()

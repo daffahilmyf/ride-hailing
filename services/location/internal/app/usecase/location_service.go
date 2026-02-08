@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/domain"
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/ports/outbound"
 )
@@ -17,6 +19,8 @@ type LocationService struct {
 	LocationTTL    time.Duration
 	MinUpdateGap   time.Duration
 	RateKeyPrefix  string
+	Clock          Clock
+	IDGen          IDGenerator
 }
 
 func (s *LocationService) UpdateDriverLocation(ctx context.Context, driverID string, lat float64, lng float64, accuracy float64) (domain.DriverLocation, error) {
@@ -33,7 +37,7 @@ func (s *LocationService) UpdateDriverLocation(ctx context.Context, driverID str
 			return domain.DriverLocation{}, nil
 		}
 	}
-	location, err := domain.NewDriverLocation(driverID, lat, lng, accuracy, time.Now().UTC())
+	location, err := domain.NewDriverLocation(driverID, lat, lng, accuracy, s.now())
 	if err != nil {
 		return domain.DriverLocation{}, err
 	}
@@ -52,13 +56,13 @@ func (s *LocationService) UpdateDriverLocation(ctx context.Context, driverID str
 	if s.PublishEnabled && s.Publisher != nil {
 		traceID := getStringFromContext(ctx, "trace_id")
 		requestID := getStringFromContext(ctx, "request_id")
-		envelope := domain.NewEventEnvelope("driver.location.updated", "location-service", traceID, requestID, map[string]any{
+		envelope := domain.NewEventEnvelopeWith("driver.location.updated", "location-service", traceID, requestID, map[string]any{
 			"driver_id":        location.DriverID,
 			"lat":              location.Lat,
 			"lng":              location.Lng,
 			"accuracy_m":       location.AccuracyM,
 			"recorded_at_unix": location.RecordedAt.Unix(),
-		})
+		}, s.now(), s.newID())
 		payload, err := json.Marshal(envelope)
 		if err != nil {
 			return domain.DriverLocation{}, err
@@ -99,4 +103,18 @@ func getStringFromContext(ctx context.Context, key string) string {
 		}
 	}
 	return ""
+}
+
+func (s *LocationService) now() time.Time {
+	if s != nil && s.Clock != nil {
+		return s.Clock.Now()
+	}
+	return time.Now().UTC()
+}
+
+func (s *LocationService) newID() string {
+	if s != nil && s.IDGen != nil {
+		return s.IDGen()
+	}
+	return uuid.NewString()
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/usecase"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/app/workers"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/infra"
+	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -52,6 +53,8 @@ var serveCmd = &cobra.Command{
 			Outbox:       outbox,
 			Offers:       offers,
 			OfferMetrics: &usecase.OfferMetrics{},
+			Clock:        usecase.SystemClock{},
+			IDGen:        uuid.NewString,
 		}
 
 		grpcMetrics := grpcadapter.NewMetrics()

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
-	"math/rand"
 	"time"
 
 	ridev1 "github.com/daffahilmyf/ride-hailing/proto/ride/v1"
@@ -26,6 +25,8 @@ type MatchingService struct {
 	OfferBackoffMs  int
 	OfferMaxBackoff int
 	Metrics         *metrics.MatchingMetrics
+	Rand            Rand
+	Sleep           Sleeper
 }
 
 func (s *MatchingService) UpdateDriverStatus(ctx context.Context, driverID string, status string) error {
@@ -128,9 +129,9 @@ func (s *MatchingService) HandleRideRequested(ctx context.Context, payload []byt
 				s.Metrics.IncFailed()
 			}
 			attempts++
-			backoff := computeBackoff(attempts, s.OfferBackoffMs, s.OfferMaxBackoff)
+			backoff := s.computeBackoff(attempts, s.OfferBackoffMs, s.OfferMaxBackoff)
 			if backoff > 0 {
-				time.Sleep(backoff)
+				s.sleep(backoff)
 			}
 			continue
 		}
@@ -180,7 +181,7 @@ func withInternalToken(ctx context.Context, token string) context.Context {
 	return metadata.AppendToOutgoingContext(ctx, "x-internal-token", token)
 }
 
-func computeBackoff(attempt int, baseMs int, maxMs int) time.Duration {
+func (s *MatchingService) computeBackoff(attempt int, baseMs int, maxMs int) time.Duration {
 	if attempt <= 0 {
 		return 0
 	}
@@ -196,7 +197,7 @@ func computeBackoff(attempt int, baseMs int, maxMs int) time.Duration {
 	if backoff > float64(max) {
 		backoff = float64(max)
 	}
-	jitter := time.Duration(rand.Intn(100)) * time.Millisecond
+	jitter := time.Duration(s.randIntn(100)) * time.Millisecond
 	return time.Duration(backoff) + jitter
 }
 
