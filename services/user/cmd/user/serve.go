@@ -81,12 +81,17 @@ var serveCmd = &cobra.Command{
 
 		router := gin.New()
 		router.Use(gin.Recovery())
-		limiter := &handlers.RateLimiter{
-			Redis:  rLimiter,
-			Limit:  cfg.RateLimit.AuthRequests,
-			Window: time.Duration(cfg.RateLimit.WindowSeconds) * time.Second,
-			Prefix: cfg.RateLimit.KeyPrefix,
+	limiter := &handlers.RateLimiter{
+		Redis:  rLimiter,
+		Limit:  cfg.RateLimit.AuthRequests,
+		Window: time.Duration(cfg.RateLimit.WindowSeconds) * time.Second,
+		Prefix: cfg.RateLimit.KeyPrefix,
+	}
+	if authMetrics != nil {
+		limiter.OnLimit = func(endpoint string) {
+			authMetrics.Record(endpoint, "rate_limited", 0)
 		}
+	}
 		handlers.RegisterRoutes(router, uc, logger, authMetrics, limiter, cfg.InternalAuth.Enabled, cfg.InternalAuth.Token)
 
 		httpSrv := &http.Server{
