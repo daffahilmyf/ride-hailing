@@ -12,9 +12,12 @@ services:
     mem_limit: 256m
     cpus: "0.50"
     depends_on:
-      - nats
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
 
   ride:
     container_name: service-ride
@@ -31,8 +34,10 @@ services:
     mem_limit: 256m
     cpus: "0.50"
     depends_on:
-      - postgres
-      - nats
+      postgres:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
 
   location:
     container_name: service-location
@@ -49,8 +54,10 @@ services:
     mem_limit: 256m
     cpus: "0.50"
     depends_on:
-      - redis
-      - nats
+      redis:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
 
   matching:
     container_name: service-matching
@@ -68,9 +75,12 @@ services:
     mem_limit: 256m
     cpus: "0.50"
     depends_on:
-      - redis
-      - nats
-      - ride
+      redis:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
+      ride:
+        condition: service_started
 
   nats:
     container_name: nats
@@ -91,7 +101,7 @@ services:
       [
         "sh",
         "-c",
-        "nats --server nats:4222 stream add RIDES --subjects 'ride.*' --storage file --retention limits || true; nats --server nats:4222 stream add DRIVERS --subjects 'driver.*' --storage file --retention limits || true"
+        "until nats --server nats:4222 stream ls >/dev/null 2>&1; do echo 'waiting for nats'; sleep 1; done; nats --server nats:4222 stream add RIDES --subjects 'ride.*' --storage file --retention limits || true; nats --server nats:4222 stream add DRIVERS --subjects 'driver.*' --storage file --retention limits || true"
       ]
     restart: "no"
 
@@ -117,6 +127,11 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     mem_limit: 128m
     cpus: "0.25"
 
