@@ -107,8 +107,14 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		driverGroup.Use(middleware.RequireRole(middleware.RoleDriver))
 		driverGroup.Use(middleware.RequireScope("drivers:write"))
 		driverGroup.Use(middleware.AuditLogger(logger, "drivers:write"))
-		driverGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatus(deps.MatchingClient))
-		driverGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocation(deps.LocationClient, cfg.GRPC.InternalToken))
+		driverGroup.POST("/drivers/:driver_id/status",
+			middleware.RequireSubjectMatch("driver_id"),
+			handlers.UpdateDriverStatus(deps.MatchingClient),
+		)
+		driverGroup.POST("/drivers/:driver_id/location",
+			middleware.RequireSubjectMatch("driver_id"),
+			handlers.UpdateDriverLocation(deps.LocationClient, cfg.GRPC.InternalToken),
+		)
 		driverGroup.POST("/drivers/nearby",
 			middleware.RateLimitMiddleware(nearbyLimiter, cfg.RateLimit.NearbyRequests),
 			handlers.ListNearbyDrivers(deps.LocationClient, cfg.GRPC.InternalToken),

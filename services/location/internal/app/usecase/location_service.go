@@ -34,7 +34,7 @@ func (s *LocationService) UpdateDriverLocation(ctx context.Context, driverID str
 			return domain.DriverLocation{}, err
 		}
 		if !allowed {
-			return domain.DriverLocation{}, nil
+			return domain.DriverLocation{}, domain.ErrRateLimited
 		}
 	}
 	location, err := domain.NewDriverLocation(driverID, lat, lng, accuracy, s.now())

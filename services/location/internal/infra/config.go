@@ -13,6 +13,9 @@ type Config struct {
 	RateLimitEnabled       bool
 	RateLimitMinGapMs      int
 	RateLimitKeyPrefix     string
+	CleanupEnabled         bool
+	CleanupIntervalSeconds int
+	CleanupBatchSize       int
 	NATSURL                string
 	NATSSelfHeal           bool
 	EventsEnabled          bool
@@ -35,6 +38,9 @@ func DefaultConfig() Config {
 		RateLimitEnabled:       true,
 		RateLimitMinGapMs:      300,
 		RateLimitKeyPrefix:     "driver:location:rate:",
+		CleanupEnabled:         true,
+		CleanupIntervalSeconds: 60,
+		CleanupBatchSize:       1000,
 		NATSURL:                "nats://nats:4222",
 		NATSSelfHeal:           true,
 		EventsEnabled:          true,

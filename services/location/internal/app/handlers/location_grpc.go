@@ -80,6 +80,8 @@ func mapError(err error, msg string) error {
 	switch {
 	case errors.Is(err, domain.ErrInvalidLocation):
 		return status.Error(codes.InvalidArgument, "invalid location")
+	case errors.Is(err, domain.ErrRateLimited):
+		return status.Error(codes.ResourceExhausted, "rate limited")
 	case errors.Is(err, outbound.ErrNotFound):
 		return status.Error(codes.NotFound, "location not found")
 	default:

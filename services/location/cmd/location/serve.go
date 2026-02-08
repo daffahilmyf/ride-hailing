@@ -13,6 +13,7 @@ import (
 	grpcadapter "github.com/daffahilmyf/ride-hailing/services/location/internal/adapters/grpc"
 	redisadapter "github.com/daffahilmyf/ride-hailing/services/location/internal/adapters/redis"
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/app/handlers"
+	"github.com/daffahilmyf/ride-hailing/services/location/internal/app/metrics"
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/app/usecase"
 	"github.com/daffahilmyf/ride-hailing/services/location/internal/infra"
 	"github.com/google/uuid"
@@ -59,7 +60,8 @@ var serveCmd = &cobra.Command{
 		logger.Info("redis.connected", zap.String("addr", cfg.RedisAddr))
 		defer redisClient.Close()
 
-		repo := redisadapter.NewLocationRepo(redisClient, cfg.LocationKeyPrefix, cfg.GeoKey)
+		locMetrics := &metrics.LocationMetrics{}
+		repo := redisadapter.NewLocationRepo(redisClient, cfg.LocationKeyPrefix, cfg.GeoKey, locMetrics)
 		var limiter *redisadapter.RateLimiter
 		if cfg.RateLimitEnabled {
 			limiter = redisadapter.NewRateLimiter(redisClient)
@@ -101,10 +103,29 @@ var serveCmd = &cobra.Command{
 		grpcMetrics := grpcadapter.NewMetrics()
 		if cfg.Observability.MetricsEnabled {
 			promMetrics := grpcadapter.NewPromMetrics(cfg.ServiceName)
+			locPromMetrics := metrics.NewPromMetrics(cfg.ServiceName)
 			registry := prometheus.NewRegistry()
-			registry.MustRegister(promMetrics.Requests, promMetrics.Latency)
+			registry.MustRegister(promMetrics.Requests, promMetrics.Latency, locPromMetrics.StaleGeoRemoved)
 			grpcMetrics.AttachProm(promMetrics)
+			locMetrics.AttachProm(locPromMetrics)
 			go serveMetrics(cfg.Observability.MetricsAddr, registry, logger)
+		}
+
+		if cfg.CleanupEnabled && cfg.CleanupIntervalSeconds > 0 {
+			go func() {
+				ticker := time.NewTicker(time.Duration(cfg.CleanupIntervalSeconds) * time.Second)
+				defer ticker.Stop()
+				cursor := uint64(0)
+				for range ticker.C {
+					next, removed, err := repo.CleanStaleGeo(context.Background(), cursor, cfg.CleanupBatchSize)
+					if err != nil {
+						logger.Warn("cleanup.stale_geo_failed", zap.Error(err))
+					} else if removed > 0 {
+						logger.Info("cleanup.stale_geo_removed", zap.Int("count", removed))
+					}
+					cursor = next
+				}
+			}()
 		}
 		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, grpcMetrics, grpcadapter.AuthConfig{
 			Enabled: cfg.InternalAuthEnabled,

@@ -75,7 +75,7 @@ func TestUpdateDriverLocation(t *testing.T) {
 		{"repo_error", errors.New("db"), nil, false, true, nil, 0, 1, true},
 		{"publish_disabled", nil, nil, false, true, nil, 0, 1, false},
 		{"publish_enabled", nil, nil, true, true, nil, 0, 1, false},
-		{"rate_limited", nil, nil, false, false, nil, 10 * time.Second, 1, false},
+		{"rate_limited", nil, nil, false, false, nil, 10 * time.Second, 1, true},
 	}
 
 	for _, tt := range tests {

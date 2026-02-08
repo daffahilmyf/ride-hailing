@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrInvalidLocation = errors.New("invalid location")
+	ErrRateLimited     = errors.New("rate limited")
 )
 
 type DriverLocation struct {

@@ -22,6 +22,11 @@ rate_limit:
   min_gap_ms: 300
   key_prefix: "driver:location:rate:"
 
+cleanup:
+  enabled: true
+  interval_seconds: 60
+  batch_size: 1000
+
 nats:
   url: "nats://nats:4222"
   self_heal: true

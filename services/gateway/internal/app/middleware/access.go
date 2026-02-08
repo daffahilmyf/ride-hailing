@@ -63,6 +63,29 @@ func RequireScope(required ...string) gin.HandlerFunc {
 	}
 }
 
+func RequireSubjectMatch(paramName string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		subject := contextdata.GetUserID(c)
+		if subject == "" {
+			responses.RespondErrorCode(c, responses.CodeForbidden, map[string]string{"reason": "MISSING_SUBJECT"})
+			c.Abort()
+			return
+		}
+		param := c.Param(paramName)
+		if param == "" {
+			responses.RespondErrorCode(c, responses.CodeForbidden, map[string]string{"reason": "MISSING_PARAM"})
+			c.Abort()
+			return
+		}
+		if param != subject {
+			responses.RespondErrorCode(c, responses.CodeForbidden, map[string]string{"reason": "SUBJECT_MISMATCH"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
 func AuditLogger(logger *zap.Logger, action string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
