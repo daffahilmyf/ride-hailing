@@ -22,7 +22,11 @@ func UpdateDriverStatus(matchingClient outbound.MatchingService) gin.HandlerFunc
 			return
 		}
 
-		driverID := c.Param("driver_id")
+		driverID := contextdata.GetUserID(c)
+		if driverID == "" {
+			responses.RespondErrorCode(c, responses.CodeUnauthorized, map[string]string{"reason": "MISSING_USER"})
+			return
+		}
 		if _, err := uuid.Parse(driverID); err != nil {
 			responses.RespondErrorCode(c, responses.CodeValidationError, map[string]string{"field": "driver_id"})
 			return
@@ -62,7 +66,11 @@ func UpdateDriverLocation(locationClient outbound.LocationService, internalToken
 			return
 		}
 
-		driverID := c.Param("driver_id")
+		driverID := contextdata.GetUserID(c)
+		if driverID == "" {
+			responses.RespondErrorCode(c, responses.CodeUnauthorized, map[string]string{"reason": "MISSING_USER"})
+			return
+		}
 		if _, err := uuid.Parse(driverID); err != nil {
 			responses.RespondErrorCode(c, responses.CodeValidationError, map[string]string{"field": "driver_id"})
 			return

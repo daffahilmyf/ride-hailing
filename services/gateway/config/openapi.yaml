@@ -447,18 +447,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponseUpstream"
-  /v1/drivers/{driver_id}/location:
+  /v1/drivers/location:
     post:
       summary: Update driver location
       tags: [Drivers]
       security:
         - bearerAuth: []
-      parameters:
-        - name: driver_id
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -484,18 +478,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponseUpstream"
-  /v1/drivers/{driver_id}/status:
+  /v1/drivers/status:
     post:
       summary: Update driver status
       tags: [Drivers]
       security:
         - bearerAuth: []
-      parameters:
-        - name: driver_id
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
