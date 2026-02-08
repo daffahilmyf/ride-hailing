@@ -69,6 +69,7 @@ var serveCmd = &cobra.Command{
 			RideClient:     grpcClients.RideClient,
 			MatchingClient: grpcClients.MatchingClient,
 			LocationClient: grpcClients.LocationClient,
+			AuthClient:     grpcClients.AuthClient,
 		}
 
 		router := app.NewRouter(cfg, logger, deps, redisClient, grpcClients)

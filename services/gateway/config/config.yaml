@@ -21,6 +21,7 @@ grpc:
   ride_addr: "ride:50051"
   matching_addr: "matching:50052"
   location_addr: "location:50053"
+  user_addr: "user:50054"
   timeout_seconds: 2
   retry_max: 2
   retry_backoff_ms: 100

@@ -7,6 +7,7 @@ import (
 	locationv1 "github.com/daffahilmyf/ride-hailing/proto/location/v1"
 	matchingv1 "github.com/daffahilmyf/ride-hailing/proto/matching/v1"
 	ridev1 "github.com/daffahilmyf/ride-hailing/proto/ride/v1"
+	userv1 "github.com/daffahilmyf/ride-hailing/proto/user/v1"
 	"github.com/daffahilmyf/ride-hailing/services/gateway/internal/infra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -19,10 +20,12 @@ type Clients struct {
 	RideConn     *grpc.ClientConn
 	MatchingConn *grpc.ClientConn
 	LocationConn *grpc.ClientConn
+	UserConn     *grpc.ClientConn
 
 	RideClient     ridev1.RideServiceClient
 	MatchingClient matchingv1.MatchingServiceClient
 	LocationClient locationv1.LocationServiceClient
+	AuthClient     userv1.AuthServiceClient
 }
 
 func NewClients(ctx context.Context, cfg infra.GRPCConfig) (*Clients, error) {
@@ -49,14 +52,23 @@ func NewClients(ctx context.Context, cfg infra.GRPCConfig) (*Clients, error) {
 		_ = matchingConn.Close()
 		return nil, err
 	}
+	userConn, err := dialWithTimeout(ctx, cfg.UserAddr, dialOpts...)
+	if err != nil {
+		_ = rideConn.Close()
+		_ = matchingConn.Close()
+		_ = locationConn.Close()
+		return nil, err
+	}
 
 	return &Clients{
 		RideConn:       rideConn,
 		MatchingConn:   matchingConn,
 		LocationConn:   locationConn,
+		UserConn:       userConn,
 		RideClient:     ridev1.NewRideServiceClient(rideConn),
 		MatchingClient: matchingv1.NewMatchingServiceClient(matchingConn),
 		LocationClient: locationv1.NewLocationServiceClient(locationConn),
+		AuthClient:     userv1.NewAuthServiceClient(userConn),
 	}, nil
 }
 
@@ -72,6 +84,9 @@ func (c *Clients) Close() error {
 	}
 	if c.LocationConn != nil {
 		_ = c.LocationConn.Close()
+	}
+	if c.UserConn != nil {
+		_ = c.UserConn.Close()
 	}
 	return nil
 }

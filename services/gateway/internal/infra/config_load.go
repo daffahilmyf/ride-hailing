@@ -18,6 +18,7 @@ func LoadConfig() Config {
 	cfg.GRPC.RideAddr = viper.GetString("grpc.ride_addr")
 	cfg.GRPC.MatchingAddr = viper.GetString("grpc.matching_addr")
 	cfg.GRPC.LocationAddr = viper.GetString("grpc.location_addr")
+	cfg.GRPC.UserAddr = viper.GetString("grpc.user_addr")
 	cfg.GRPC.TimeoutSeconds = viper.GetInt("grpc.timeout_seconds")
 	cfg.GRPC.RetryMax = viper.GetInt("grpc.retry_max")
 	cfg.GRPC.RetryBackoffMs = viper.GetInt("grpc.retry_backoff_ms")

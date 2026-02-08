@@ -49,7 +49,7 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/docs/openapi.yaml")))
 	var grpcConns []*grpc.ClientConn
 	if grpcClients != nil {
-		grpcConns = []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn}
+		grpcConns = []*grpc.ClientConn{grpcClients.RideConn, grpcClients.MatchingConn, grpcClients.LocationConn, grpcClients.UserConn}
 	}
 
 	readyCache := handlers.ReadinessCache{
@@ -72,11 +72,11 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 			GRPC:  grpcConns,
 			Cache: readyCache,
 		}))
-		v1.POST("/auth/register", handlers.ProxyUser(cfg.User.BaseURL, false, cfg.User.InternalToken))
-		v1.POST("/auth/login", handlers.ProxyUser(cfg.User.BaseURL, false, cfg.User.InternalToken))
-		v1.POST("/auth/refresh", handlers.ProxyUser(cfg.User.BaseURL, false, cfg.User.InternalToken))
-		v1.POST("/auth/logout", handlers.ProxyUser(cfg.User.BaseURL, false, cfg.User.InternalToken))
-		v1.POST("/auth/verify", handlers.ProxyUser(cfg.User.BaseURL, false, cfg.User.InternalToken))
+		v1.POST("/auth/register", handlers.RegisterAuth(deps.AuthClient, cfg.GRPC.InternalToken))
+		v1.POST("/auth/login", handlers.LoginAuth(deps.AuthClient, cfg.GRPC.InternalToken))
+		v1.POST("/auth/refresh", handlers.RefreshAuth(deps.AuthClient, cfg.GRPC.InternalToken))
+		v1.POST("/auth/logout", handlers.LogoutAuth(deps.AuthClient, cfg.GRPC.InternalToken))
+		v1.POST("/auth/verify", handlers.VerifyAuth(deps.AuthClient, cfg.GRPC.InternalToken))
 
 		authGroup := v1.Group("/")
 		authGroup.Use(middleware.AuthMiddleware(logger, middleware.AuthConfig{
@@ -116,10 +116,10 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 
 		userGroup := authGroup.Group("/")
 		userGroup.Use(middleware.RequireRole(middleware.RoleRider, middleware.RoleDriver))
-		userGroup.GET("/users/me", handlers.ProxyUser(cfg.User.BaseURL, true, cfg.User.InternalToken))
-		userGroup.POST("/auth/logout_all", handlers.ProxyUser(cfg.User.BaseURL, true, cfg.User.InternalToken))
-		userGroup.POST("/auth/logout_device", handlers.ProxyUser(cfg.User.BaseURL, true, cfg.User.InternalToken))
-		userGroup.GET("/auth/sessions", handlers.ProxyUser(cfg.User.BaseURL, true, cfg.User.InternalToken))
+		userGroup.GET("/users/me", handlers.MeAuth(deps.AuthClient, cfg.GRPC.InternalToken))
+		userGroup.POST("/auth/logout_all", handlers.LogoutAllAuth(deps.AuthClient, cfg.GRPC.InternalToken))
+		userGroup.POST("/auth/logout_device", handlers.LogoutDeviceAuth(deps.AuthClient, cfg.GRPC.InternalToken))
+		userGroup.GET("/auth/sessions", handlers.ListSessionsAuth(deps.AuthClient, cfg.GRPC.InternalToken))
 
 		authGroup.GET("/notify/sse",
 			middleware.RateLimitMiddleware(notifyLimiter, cfg.RateLimit.NotifyRequests),

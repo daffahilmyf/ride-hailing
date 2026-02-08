@@ -6,4 +6,5 @@ type Deps struct {
 	RideClient     outbound.RideService
 	MatchingClient outbound.MatchingService
 	LocationClient outbound.LocationService
+	AuthClient     outbound.AuthService
 }

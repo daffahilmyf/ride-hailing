@@ -28,6 +28,7 @@ type GRPCConfig struct {
 	RideAddr        string
 	MatchingAddr    string
 	LocationAddr    string
+	UserAddr        string
 	TimeoutSeconds  int
 	RetryMax        int
 	RetryBackoffMs  int
@@ -85,6 +86,7 @@ func DefaultConfig() Config {
 			RideAddr:        "localhost:50051",
 			MatchingAddr:    "localhost:50052",
 			LocationAddr:    "localhost:50053",
+			UserAddr:        "localhost:50054",
 			TimeoutSeconds:  2,
 			RetryMax:        2,
 			RetryBackoffMs:  100,
