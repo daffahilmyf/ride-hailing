@@ -401,6 +401,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
         "503":
           description: Upstream unavailable
           content:
@@ -443,6 +449,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
         "503":
           description: Upstream unavailable
           content:
@@ -474,6 +486,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
         "503":
           description: Upstream unavailable
           content:
@@ -505,6 +523,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
         "503":
           description: Upstream unavailable
           content:
@@ -579,6 +603,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
         "403":
           description: Forbidden
           content:
@@ -622,6 +652,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
         "403":
           description: Forbidden
           content:
@@ -664,6 +700,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
         "503":
           description: Upstream unavailable
           content:
@@ -700,6 +742,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
         "503":
           description: Upstream unavailable
           content:
@@ -736,6 +784,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
         "503":
           description: Upstream unavailable
           content:

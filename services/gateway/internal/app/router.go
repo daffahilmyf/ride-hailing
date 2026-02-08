@@ -37,6 +37,16 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.NotifyWindowSeconds)*time.Second),
 		cache.WithLimiterPrefix("gateway:notify"),
 	)
+	locationLimiter := cache.NewRedisLimiter(redisClient,
+		cache.WithLimiterRequests(cfg.RateLimit.DriverLocRequests),
+		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.DriverLocWindow)*time.Second),
+		cache.WithLimiterPrefix("gateway:driver_location"),
+	)
+	offerLimiter := cache.NewRedisLimiter(redisClient,
+		cache.WithLimiterRequests(cfg.RateLimit.OfferRequests),
+		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.OfferWindowSeconds)*time.Second),
+		cache.WithLimiterPrefix("gateway:offers"),
+	)
 
 	metrics := middleware.NewMetrics(cfg.ServiceName)
 	r.Use(middleware.LoggerMiddleware(logger, cfg.ServiceName))
@@ -103,28 +113,46 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		riderGroup.Use(middleware.AuditLogger(logger, "rides:write"))
 		riderGroup.POST("/rides", handlers.CreateRide(deps.RideClient, cfg.GRPC.InternalToken))
 		riderGroup.POST("/rides/:ride_id/cancel", handlers.CancelRide(deps.RideClient, cfg.GRPC.InternalToken))
-		riderGroup.POST("/rides/:ride_id/offers", handlers.CreateOffer(deps.RideClient, cfg.GRPC.InternalToken))
+		riderGroup.POST("/rides/:ride_id/offers",
+			middleware.RateLimitMiddleware(offerLimiter, cfg.RateLimit.OfferRequests),
+			handlers.CreateOffer(deps.RideClient, cfg.GRPC.InternalToken),
+		)
 
 		driverGroup := authGroup.Group("/")
 		driverGroup.Use(middleware.RequireRole(middleware.RoleDriver))
 		driverGroup.Use(middleware.RequireScope("drivers:write"))
 		driverGroup.Use(middleware.AuditLogger(logger, "drivers:write"))
 		driverGroup.POST("/drivers/status", handlers.UpdateDriverStatus(deps.MatchingClient))
-		driverGroup.POST("/drivers/location", handlers.UpdateDriverLocation(deps.LocationClient, cfg.GRPC.InternalToken))
+		driverGroup.POST("/drivers/location",
+			middleware.RateLimitMiddleware(locationLimiter, cfg.RateLimit.DriverLocRequests),
+			handlers.UpdateDriverLocation(deps.LocationClient, cfg.GRPC.InternalToken),
+		)
 		driverGroup.POST("/drivers/nearby",
 			middleware.RateLimitMiddleware(nearbyLimiter, cfg.RateLimit.NearbyRequests),
 			handlers.ListNearbyDrivers(deps.LocationClient, cfg.GRPC.InternalToken),
 		)
-		driverGroup.POST("/offers/:offer_id/accept", handlers.AcceptOffer(deps.RideClient, cfg.GRPC.InternalToken))
-		driverGroup.POST("/offers/:offer_id/decline", handlers.DeclineOffer(deps.RideClient, cfg.GRPC.InternalToken))
-		driverGroup.POST("/offers/:offer_id/expire", handlers.ExpireOffer(deps.RideClient, cfg.GRPC.InternalToken))
+		driverGroup.POST("/offers/:offer_id/accept",
+			middleware.RateLimitMiddleware(offerLimiter, cfg.RateLimit.OfferRequests),
+			handlers.AcceptOffer(deps.RideClient, cfg.GRPC.InternalToken),
+		)
+		driverGroup.POST("/offers/:offer_id/decline",
+			middleware.RateLimitMiddleware(offerLimiter, cfg.RateLimit.OfferRequests),
+			handlers.DeclineOffer(deps.RideClient, cfg.GRPC.InternalToken),
+		)
+		driverGroup.POST("/offers/:offer_id/expire",
+			middleware.RateLimitMiddleware(offerLimiter, cfg.RateLimit.OfferRequests),
+			handlers.ExpireOffer(deps.RideClient, cfg.GRPC.InternalToken),
+		)
 
 		adminGroup := authGroup.Group("/admin")
 		adminGroup.Use(middleware.RequireRole(middleware.RoleAdmin))
 		adminGroup.Use(middleware.RequireScope("admin:drivers:write"))
 		adminGroup.Use(middleware.AuditLogger(logger, "admin:drivers:write"))
 		adminGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatusFor(deps.MatchingClient))
-		adminGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocationFor(deps.LocationClient, cfg.GRPC.InternalToken))
+		adminGroup.POST("/drivers/:driver_id/location",
+			middleware.RateLimitMiddleware(locationLimiter, cfg.RateLimit.DriverLocRequests),
+			handlers.UpdateDriverLocationFor(deps.LocationClient, cfg.GRPC.InternalToken),
+		)
 
 		userGroup := authGroup.Group("/")
 		userGroup.Use(middleware.RequireRole(middleware.RoleRider, middleware.RoleDriver))

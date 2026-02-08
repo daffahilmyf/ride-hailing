@@ -15,6 +15,12 @@ func ValidateConfig(cfg Config) error {
 	if cfg.RateLimit.Requests <= 0 || cfg.RateLimit.WindowSeconds <= 0 {
 		return errors.New("rate_limit.requests and rate_limit.window_seconds must be > 0")
 	}
+	if cfg.RateLimit.DriverLocRequests <= 0 || cfg.RateLimit.DriverLocWindow <= 0 {
+		return errors.New("rate_limit.driver_location_requests and rate_limit.driver_location_window_seconds must be > 0")
+	}
+	if cfg.RateLimit.OfferRequests <= 0 || cfg.RateLimit.OfferWindowSeconds <= 0 {
+		return errors.New("rate_limit.offer_requests and rate_limit.offer_window_seconds must be > 0")
+	}
 	if cfg.Redis.Addr == "" {
 		return errors.New("redis.addr is required")
 	}
