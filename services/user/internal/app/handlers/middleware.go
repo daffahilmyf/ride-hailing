@@ -30,18 +30,20 @@ func RateLimitMiddleware(limiter *RateLimiter) gin.HandlerFunc {
 		}
 		key := clientKey(c)
 		allowed, err := limiter.Redis.Allow(c.Request.Context(), limiter.Prefix+key, limiter.Limit, limiter.Window)
-		if err != nil || !allowed {
-			if limiter.OnLimit != nil {
-				path := c.FullPath()
-				if path == "" {
-					path = c.Request.URL.Path
-				}
-				limiter.OnLimit(path)
-			}
-			c.AbortWithStatusJSON(429, gin.H{"error": "rate_limited"})
+		if err == nil && allowed {
+			c.Next()
 			return
 		}
-		c.Next()
+
+		if limiter.OnLimit != nil {
+			path := c.FullPath()
+			if path == "" {
+				path = c.Request.URL.Path
+			}
+			limiter.OnLimit(path)
+		}
+		c.AbortWithStatusJSON(429, gin.H{"error": "rate_limited"})
+		return
 	}
 }
 
