@@ -31,7 +31,10 @@ func (c mdCarrier) Keys() []string {
 }
 
 func WithTraceContext(ctx context.Context) context.Context {
-	md := metadata.New(nil)
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		md = metadata.New(nil)
+	}
 	otel.GetTextMapPropagator().Inject(ctx, propagation.TextMapCarrier(mdCarrier(md)))
 	return metadata.NewOutgoingContext(ctx, md)
 }

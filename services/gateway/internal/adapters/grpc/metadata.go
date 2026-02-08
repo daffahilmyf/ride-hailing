@@ -7,9 +7,8 @@ import (
 )
 
 func WithRequestMetadata(ctx context.Context, traceID, requestID string) context.Context {
-	md := metadata.Pairs(
+	return metadata.AppendToOutgoingContext(ctx,
 		"x-trace-id", traceID,
 		"x-request-id", requestID,
 	)
-	return metadata.NewOutgoingContext(ctx, md)
 }

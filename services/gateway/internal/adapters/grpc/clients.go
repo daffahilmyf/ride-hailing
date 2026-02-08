@@ -148,6 +148,5 @@ func WithInternalToken(ctx context.Context, token string) context.Context {
 	if token == "" {
 		return ctx
 	}
-	md := metadata.Pairs("x-internal-token", token)
-	return metadata.NewOutgoingContext(ctx, md)
+	return metadata.AppendToOutgoingContext(ctx, "x-internal-token", token)
 }
