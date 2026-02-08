@@ -184,22 +184,56 @@ func offerAction(rideClient outbound.RideService, internalToken string, action s
 		WithGRPCMeta(c, "ride-service")
 
 		idempotencyKey := c.GetHeader("Idempotency-Key")
-		req := &ridev1.OfferActionRequest{
-			OfferId:        offerID,
-			IdempotencyKey: idempotencyKey,
-			TraceId:        contextdata.GetTraceID(c),
-			RequestId:      contextdata.GetRequestID(c),
-		}
-
-		var resp *ridev1.OfferActionResponse
+		traceID := contextdata.GetTraceID(c)
+		requestID := contextdata.GetRequestID(c)
 		var err error
+		var offerIDResp string
+		var rideIDResp string
+		var driverIDResp string
+		var statusResp string
 		switch action {
 		case "accept":
-			resp, err = rideClient.AcceptOffer(ctx, req)
+			resp, callErr := rideClient.AcceptOffer(ctx, &ridev1.AcceptOfferRequest{
+				OfferId:        offerID,
+				IdempotencyKey: idempotencyKey,
+				TraceId:        traceID,
+				RequestId:      requestID,
+			})
+			err = callErr
+			if err == nil {
+				offerIDResp = resp.GetOfferId()
+				rideIDResp = resp.GetRideId()
+				driverIDResp = resp.GetDriverId()
+				statusResp = resp.GetStatus()
+			}
 		case "decline":
-			resp, err = rideClient.DeclineOffer(ctx, req)
+			resp, callErr := rideClient.DeclineOffer(ctx, &ridev1.DeclineOfferRequest{
+				OfferId:        offerID,
+				IdempotencyKey: idempotencyKey,
+				TraceId:        traceID,
+				RequestId:      requestID,
+			})
+			err = callErr
+			if err == nil {
+				offerIDResp = resp.GetOfferId()
+				rideIDResp = resp.GetRideId()
+				driverIDResp = resp.GetDriverId()
+				statusResp = resp.GetStatus()
+			}
 		case "expire":
-			resp, err = rideClient.ExpireOffer(ctx, req)
+			resp, callErr := rideClient.ExpireOffer(ctx, &ridev1.ExpireOfferRequest{
+				OfferId:        offerID,
+				IdempotencyKey: idempotencyKey,
+				TraceId:        traceID,
+				RequestId:      requestID,
+			})
+			err = callErr
+			if err == nil {
+				offerIDResp = resp.GetOfferId()
+				rideIDResp = resp.GetRideId()
+				driverIDResp = resp.GetDriverId()
+				statusResp = resp.GetStatus()
+			}
 		default:
 			responses.RespondErrorCode(c, responses.CodeInternal, map[string]string{"reason": "INVALID_ACTION"})
 			return
@@ -211,10 +245,10 @@ func offerAction(rideClient outbound.RideService, internalToken string, action s
 		}
 
 		responses.RespondOK(c, 200, map[string]interface{}{
-			"offer_id":  resp.GetOfferId(),
-			"ride_id":   resp.GetRideId(),
-			"driver_id": resp.GetDriverId(),
-			"status":    resp.GetStatus(),
+			"offer_id":  offerIDResp,
+			"ride_id":   rideIDResp,
+			"driver_id": driverIDResp,
+			"status":    statusResp,
 		})
 	}
 }

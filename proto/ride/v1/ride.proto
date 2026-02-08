@@ -17,11 +17,11 @@ service RideService {
   // CreateOffer creates a ride offer for a driver.
   rpc CreateOffer(CreateOfferRequest) returns (CreateOfferResponse);
   // AcceptOffer marks a pending offer as accepted.
-  rpc AcceptOffer(OfferActionRequest) returns (OfferActionResponse);
+  rpc AcceptOffer(AcceptOfferRequest) returns (AcceptOfferResponse);
   // DeclineOffer marks a pending offer as declined.
-  rpc DeclineOffer(OfferActionRequest) returns (OfferActionResponse);
+  rpc DeclineOffer(DeclineOfferRequest) returns (DeclineOfferResponse);
   // ExpireOffer marks a pending offer as expired.
-  rpc ExpireOffer(OfferActionRequest) returns (OfferActionResponse);
+  rpc ExpireOffer(ExpireOfferRequest) returns (ExpireOfferResponse);
 }
 
 message CreateRideRequest {
@@ -136,7 +136,7 @@ message CreateOfferResponse {
   int64 expires_at = 5;
 }
 
-message OfferActionRequest {
+message AcceptOfferRequest {
   // Offer identifier.
   string offer_id = 1;
   // Idempotency key for retry-safe calls.
@@ -147,7 +147,51 @@ message OfferActionRequest {
   string request_id = 4;
 }
 
-message OfferActionResponse {
+message AcceptOfferResponse {
+  // Offer identifier.
+  string offer_id = 1;
+  // Ride identifier.
+  string ride_id = 2;
+  // Driver identifier.
+  string driver_id = 3;
+  // Offer status.
+  string status = 4;
+}
+
+message DeclineOfferRequest {
+  // Offer identifier.
+  string offer_id = 1;
+  // Idempotency key for retry-safe calls.
+  string idempotency_key = 2;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 3;
+  // Request identifier for idempotency/tracing.
+  string request_id = 4;
+}
+
+message DeclineOfferResponse {
+  // Offer identifier.
+  string offer_id = 1;
+  // Ride identifier.
+  string ride_id = 2;
+  // Driver identifier.
+  string driver_id = 3;
+  // Offer status.
+  string status = 4;
+}
+
+message ExpireOfferRequest {
+  // Offer identifier.
+  string offer_id = 1;
+  // Idempotency key for retry-safe calls.
+  string idempotency_key = 2;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 3;
+  // Request identifier for idempotency/tracing.
+  string request_id = 4;
+}
+
+message ExpireOfferResponse {
   // Offer identifier.
   string offer_id = 1;
   // Ride identifier.

@@ -17,10 +17,12 @@ import (
 type fakeRideClient struct{}
 
 type captureRideClient struct {
-	lastCreate *ridev1.CreateRideRequest
-	lastCancel *ridev1.CancelRideRequest
-	lastOffer  *ridev1.CreateOfferRequest
-	lastAction *ridev1.OfferActionRequest
+	lastCreate  *ridev1.CreateRideRequest
+	lastCancel  *ridev1.CancelRideRequest
+	lastOffer   *ridev1.CreateOfferRequest
+	lastAccept  *ridev1.AcceptOfferRequest
+	lastDecline *ridev1.DeclineOfferRequest
+	lastExpire  *ridev1.ExpireOfferRequest
 }
 
 func (f *captureRideClient) CreateRide(ctx context.Context, in *ridev1.CreateRideRequest, opts ...grpc.CallOption) (*ridev1.CreateRideResponse, error) {
@@ -38,19 +40,19 @@ func (f *captureRideClient) CreateOffer(ctx context.Context, in *ridev1.CreateOf
 	return &ridev1.CreateOfferResponse{OfferId: "o1", RideId: in.RideId, DriverId: in.DriverId, Status: "PENDING"}, nil
 }
 
-func (f *captureRideClient) AcceptOffer(ctx context.Context, in *ridev1.OfferActionRequest, opts ...grpc.CallOption) (*ridev1.OfferActionResponse, error) {
-	f.lastAction = in
-	return &ridev1.OfferActionResponse{OfferId: in.OfferId, RideId: "r1", DriverId: "d1", Status: "ACCEPTED"}, nil
+func (f *captureRideClient) AcceptOffer(ctx context.Context, in *ridev1.AcceptOfferRequest, opts ...grpc.CallOption) (*ridev1.AcceptOfferResponse, error) {
+	f.lastAccept = in
+	return &ridev1.AcceptOfferResponse{OfferId: in.OfferId, RideId: "r1", DriverId: "d1", Status: "ACCEPTED"}, nil
 }
 
-func (f *captureRideClient) DeclineOffer(ctx context.Context, in *ridev1.OfferActionRequest, opts ...grpc.CallOption) (*ridev1.OfferActionResponse, error) {
-	f.lastAction = in
-	return &ridev1.OfferActionResponse{OfferId: in.OfferId, RideId: "r1", DriverId: "d1", Status: "DECLINED"}, nil
+func (f *captureRideClient) DeclineOffer(ctx context.Context, in *ridev1.DeclineOfferRequest, opts ...grpc.CallOption) (*ridev1.DeclineOfferResponse, error) {
+	f.lastDecline = in
+	return &ridev1.DeclineOfferResponse{OfferId: in.OfferId, RideId: "r1", DriverId: "d1", Status: "DECLINED"}, nil
 }
 
-func (f *captureRideClient) ExpireOffer(ctx context.Context, in *ridev1.OfferActionRequest, opts ...grpc.CallOption) (*ridev1.OfferActionResponse, error) {
-	f.lastAction = in
-	return &ridev1.OfferActionResponse{OfferId: in.OfferId, RideId: "r1", DriverId: "d1", Status: "EXPIRED"}, nil
+func (f *captureRideClient) ExpireOffer(ctx context.Context, in *ridev1.ExpireOfferRequest, opts ...grpc.CallOption) (*ridev1.ExpireOfferResponse, error) {
+	f.lastExpire = in
+	return &ridev1.ExpireOfferResponse{OfferId: in.OfferId, RideId: "r1", DriverId: "d1", Status: "EXPIRED"}, nil
 }
 
 func setupRideRouter(client *captureRideClient, withUser bool) *gin.Engine {

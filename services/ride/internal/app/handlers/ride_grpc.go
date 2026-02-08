@@ -107,7 +107,7 @@ func (s *RideServer) CreateOffer(ctx context.Context, req *ridev1.CreateOfferReq
 	}, nil
 }
 
-func (s *RideServer) AcceptOffer(ctx context.Context, req *ridev1.OfferActionRequest) (*ridev1.OfferActionResponse, error) {
+func (s *RideServer) AcceptOffer(ctx context.Context, req *ridev1.AcceptOfferRequest) (*ridev1.AcceptOfferResponse, error) {
 	offer, err := s.usecase.AcceptOffer(ctx, usecase.OfferActionCmd{
 		OfferID:        req.GetOfferId(),
 		IdempotencyKey: req.GetIdempotencyKey(),
@@ -115,7 +115,7 @@ func (s *RideServer) AcceptOffer(ctx context.Context, req *ridev1.OfferActionReq
 	if err != nil {
 		return nil, mapError(err, "failed to accept offer")
 	}
-	return &ridev1.OfferActionResponse{
+	return &ridev1.AcceptOfferResponse{
 		OfferId:  offer.ID,
 		RideId:   offer.RideID,
 		DriverId: offer.DriverID,
@@ -123,7 +123,7 @@ func (s *RideServer) AcceptOffer(ctx context.Context, req *ridev1.OfferActionReq
 	}, nil
 }
 
-func (s *RideServer) DeclineOffer(ctx context.Context, req *ridev1.OfferActionRequest) (*ridev1.OfferActionResponse, error) {
+func (s *RideServer) DeclineOffer(ctx context.Context, req *ridev1.DeclineOfferRequest) (*ridev1.DeclineOfferResponse, error) {
 	offer, err := s.usecase.DeclineOffer(ctx, usecase.OfferActionCmd{
 		OfferID:        req.GetOfferId(),
 		IdempotencyKey: req.GetIdempotencyKey(),
@@ -131,7 +131,7 @@ func (s *RideServer) DeclineOffer(ctx context.Context, req *ridev1.OfferActionRe
 	if err != nil {
 		return nil, mapError(err, "failed to decline offer")
 	}
-	return &ridev1.OfferActionResponse{
+	return &ridev1.DeclineOfferResponse{
 		OfferId:  offer.ID,
 		RideId:   offer.RideID,
 		DriverId: offer.DriverID,
@@ -139,7 +139,7 @@ func (s *RideServer) DeclineOffer(ctx context.Context, req *ridev1.OfferActionRe
 	}, nil
 }
 
-func (s *RideServer) ExpireOffer(ctx context.Context, req *ridev1.OfferActionRequest) (*ridev1.OfferActionResponse, error) {
+func (s *RideServer) ExpireOffer(ctx context.Context, req *ridev1.ExpireOfferRequest) (*ridev1.ExpireOfferResponse, error) {
 	offer, err := s.usecase.ExpireOffer(ctx, usecase.OfferActionCmd{
 		OfferID:        req.GetOfferId(),
 		IdempotencyKey: req.GetIdempotencyKey(),
@@ -147,7 +147,7 @@ func (s *RideServer) ExpireOffer(ctx context.Context, req *ridev1.OfferActionReq
 	if err != nil {
 		return nil, mapError(err, "failed to expire offer")
 	}
-	return &ridev1.OfferActionResponse{
+	return &ridev1.ExpireOfferResponse{
 		OfferId:  offer.ID,
 		RideId:   offer.RideID,
 		DriverId: offer.DriverID,
