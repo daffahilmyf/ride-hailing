@@ -43,6 +43,7 @@ func init() {
 	rootCmd.PersistentFlags().Int("offer_expiry.batch_size", 50, "offer expiry batch size")
 	rootCmd.PersistentFlags().Bool("internal_auth.enabled", false, "enable internal gRPC auth")
 	rootCmd.PersistentFlags().String("internal_auth.token", "", "internal auth token")
+	rootCmd.PersistentFlags().String("grpc.user_addr", "user:50054", "user service gRPC address")
 
 	_ = viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
 	_ = viper.BindPFlag("grpc.addr", rootCmd.PersistentFlags().Lookup("grpc.addr"))
@@ -60,6 +61,7 @@ func init() {
 	_ = viper.BindPFlag("offer_expiry.batch_size", rootCmd.PersistentFlags().Lookup("offer_expiry.batch_size"))
 	_ = viper.BindPFlag("internal_auth.enabled", rootCmd.PersistentFlags().Lookup("internal_auth.enabled"))
 	_ = viper.BindPFlag("internal_auth.token", rootCmd.PersistentFlags().Lookup("internal_auth.token"))
+	_ = viper.BindPFlag("grpc.user_addr", rootCmd.PersistentFlags().Lookup("grpc.user_addr"))
 }
 
 func initConfig() {

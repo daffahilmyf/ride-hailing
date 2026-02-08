@@ -21,5 +21,6 @@ func LoadConfig() Config {
 	cfg.OfferExpiryBatchSize = viper.GetInt("offer_expiry.batch_size")
 	cfg.InternalAuthEnabled = viper.GetBool("internal_auth.enabled")
 	cfg.InternalAuthToken = viper.GetString("internal_auth.token")
+	cfg.UserAddr = viper.GetString("grpc.user_addr")
 	return cfg
 }

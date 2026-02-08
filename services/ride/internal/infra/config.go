@@ -18,6 +18,7 @@ type Config struct {
 	OfferExpiryBatchSize   int
 	InternalAuthEnabled    bool
 	InternalAuthToken      string
+	UserAddr               string
 }
 
 func DefaultConfig() Config {
@@ -39,5 +40,6 @@ func DefaultConfig() Config {
 		OfferExpiryBatchSize:   50,
 		InternalAuthEnabled:    false,
 		InternalAuthToken:      "",
+		UserAddr:               "user:50054",
 	}
 }

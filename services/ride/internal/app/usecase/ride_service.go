@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	userv1 "github.com/daffahilmyf/ride-hailing/proto/user/v1"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/domain"
 	"github.com/daffahilmyf/ride-hailing/services/ride/internal/ports/outbound"
 )
@@ -17,6 +18,7 @@ type RideService struct {
 	TxManager    outbound.TxManager
 	Outbox       outbound.OutboxRepo
 	Offers       outbound.RideOfferRepo
+	UserClient   outbound.UserService
 	OfferMetrics *OfferMetrics
 	Clock        Clock
 	IDGen        IDGenerator
@@ -252,6 +254,10 @@ func (s *RideService) loadRide(ctx context.Context, id string, repo outbound.Rid
 	rideRow, err := repo.Get(ctx, id)
 	if err != nil {
 		return domain.Ride{}, err
+	}
+
+	if s.UserClient != nil && rideRow.RiderID != "" {
+		_, _ = s.UserClient.GetUserProfile(ctx, &userv1.GetUserProfileRequest{UserId: rideRow.RiderID})
 	}
 
 	return domain.Ride{

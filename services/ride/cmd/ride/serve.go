@@ -57,6 +57,14 @@ var serveCmd = &cobra.Command{
 			IDGen:        uuid.NewString,
 		}
 
+		userClient, err := grpcadapter.NewUserClient(cfg.UserAddr, 3*time.Second)
+		if err != nil {
+			logger.Warn("user_client.connect_failed", zap.Error(err))
+		} else {
+			defer userClient.Close()
+			uc.UserClient = grpcadapter.NewUserClientWithToken(userClient, cfg.InternalAuthToken)
+		}
+
 		grpcMetrics := grpcadapter.NewMetrics()
 		srv := grpcadapter.NewServer(logger, handlers.Dependencies{Usecase: uc}, grpcMetrics, grpcadapter.AuthConfig{
 			Enabled: cfg.InternalAuthEnabled,
