@@ -160,6 +160,8 @@ services:
       - POSTGRES_DB=rides
     ports:
       - "5432:5432"
+    volumes:
+      - ./services/postgres/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ride -d rides"]
       interval: 5s
@@ -168,16 +170,6 @@ services:
     mem_limit: 512m
     cpus: "1.0"
 
-  user-db-init:
-    image: postgres:16-alpine
-    container_name: user-db-init
-    restart: "no"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - PGPASSWORD=ride
-    command: ["sh", "-c", "psql -h postgres -U ride -d postgres -c \"CREATE DATABASE users\" || true"]
 
   redis:
     container_name: redis
@@ -217,8 +209,8 @@ services:
     mem_limit: 256m
     cpus: "0.25"
     depends_on:
-      user-db-init:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
     environment:
       GOOSE_DRIVER: postgres
       GOOSE_DBSTRING: postgresql://ride:ride@postgres:5432/users?sslmode=disable
