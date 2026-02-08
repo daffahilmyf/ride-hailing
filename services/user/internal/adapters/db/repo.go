@@ -153,3 +153,29 @@ func (r *Repo) ListActiveDeviceSessions(ctx context.Context, userID string) ([]R
 		Find(&tokens).Error
 	return tokens, err
 }
+
+func (r *Repo) RevokeOldestSessions(ctx context.Context, userID string, keep int) error {
+	if userID == "" || keep < 0 {
+		return nil
+	}
+	var tokens []RefreshToken
+	if err := r.DB.WithContext(ctx).
+		Where("user_id = ? AND revoked_at IS NULL AND expires_at > NOW()", userID).
+		Order("created_at ASC").
+		Find(&tokens).Error; err != nil {
+		return err
+	}
+	if len(tokens) <= keep {
+		return nil
+	}
+	toRevoke := tokens[:len(tokens)-keep]
+	ids := make([]string, 0, len(toRevoke))
+	for _, t := range toRevoke {
+		ids = append(ids, t.ID)
+	}
+	now := time.Now().UTC()
+	return r.DB.WithContext(ctx).
+		Model(&RefreshToken{}).
+		Where("id IN ?", ids).
+		Update("revoked_at", now).Error
+}

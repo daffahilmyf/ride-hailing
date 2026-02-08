@@ -36,6 +36,10 @@ rate_limit:
   window_seconds: 60
   key_prefix: "user:rate:"
 
+session_limits:
+  rider: 3
+  driver: 1
+
 observability:
   metrics_enabled: true
   metrics_addr: ":9096"

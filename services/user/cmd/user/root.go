@@ -46,6 +46,8 @@ func init() {
 	rootCmd.PersistentFlags().Int("rate_limit.auth_requests", 30, "auth requests per window")
 	rootCmd.PersistentFlags().Int("rate_limit.window_seconds", 60, "rate limit window seconds")
 	rootCmd.PersistentFlags().String("rate_limit.key_prefix", "user:rate:", "rate limit key prefix")
+	rootCmd.PersistentFlags().Int("session_limits.rider", 3, "max rider device sessions")
+	rootCmd.PersistentFlags().Int("session_limits.driver", 1, "max driver device sessions")
 	rootCmd.PersistentFlags().Bool("observability.metrics_enabled", true, "enable metrics")
 	rootCmd.PersistentFlags().String("observability.metrics_addr", ":9096", "metrics listen addr")
 
@@ -69,6 +71,8 @@ func init() {
 	_ = viper.BindPFlag("rate_limit.auth_requests", rootCmd.PersistentFlags().Lookup("rate_limit.auth_requests"))
 	_ = viper.BindPFlag("rate_limit.window_seconds", rootCmd.PersistentFlags().Lookup("rate_limit.window_seconds"))
 	_ = viper.BindPFlag("rate_limit.key_prefix", rootCmd.PersistentFlags().Lookup("rate_limit.key_prefix"))
+	_ = viper.BindPFlag("session_limits.rider", rootCmd.PersistentFlags().Lookup("session_limits.rider"))
+	_ = viper.BindPFlag("session_limits.driver", rootCmd.PersistentFlags().Lookup("session_limits.driver"))
 	_ = viper.BindPFlag("observability.metrics_enabled", rootCmd.PersistentFlags().Lookup("observability.metrics_enabled"))
 	_ = viper.BindPFlag("observability.metrics_addr", rootCmd.PersistentFlags().Lookup("observability.metrics_addr"))
 }

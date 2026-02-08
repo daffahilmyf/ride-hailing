@@ -14,6 +14,7 @@ type Config struct {
 	Auth                    AuthConfig
 	InternalAuth            InternalAuthConfig
 	RateLimit               RateLimitConfig
+	SessionLimits           SessionLimitConfig
 	Observability           ObservabilityConfig
 }
 
@@ -34,6 +35,11 @@ type RateLimitConfig struct {
 	AuthRequests  int
 	WindowSeconds int
 	KeyPrefix     string
+}
+
+type SessionLimitConfig struct {
+	Rider  int
+	Driver int
 }
 
 type ObservabilityConfig struct {
@@ -68,6 +74,10 @@ func DefaultConfig() Config {
 			AuthRequests:  30,
 			WindowSeconds: 60,
 			KeyPrefix:     "user:rate:",
+		},
+		SessionLimits: SessionLimitConfig{
+			Rider:  3,
+			Driver: 1,
 		},
 		Observability: ObservabilityConfig{
 			MetricsEnabled: true,

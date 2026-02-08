@@ -29,15 +29,21 @@ var (
 )
 
 type Service struct {
-	Repo       *db.Repo
-	AuthConfig infra.AuthConfig
-	Now        func() time.Time
+	Repo          *db.Repo
+	AuthConfig    infra.AuthConfig
+	SessionLimits SessionLimitConfig
+	Now           func() time.Time
 }
 
 type Tokens struct {
 	AccessToken  string
 	RefreshToken string
 	ExpiresIn    int64
+}
+
+type SessionLimitConfig struct {
+	Rider  int
+	Driver int
 }
 
 type RegisterInput struct {
@@ -149,11 +155,11 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (db.User, Tokens, er
 		return db.User{}, Tokens{}, ErrInvalidCredentials
 	}
 	_ = s.Repo.ResetFailedLogin(ctx, user.ID)
-	if user.Role == "driver" {
-		_ = s.Repo.RevokeAllRefreshTokens(ctx, user.ID)
-	} else {
-		_ = s.Repo.RevokeDeviceSessions(ctx, user.ID, in.DeviceID)
+	limit := s.sessionLimitForRole(user.Role)
+	if limit > 0 {
+		_ = s.Repo.RevokeOldestSessions(ctx, user.ID, limit-1)
 	}
+	_ = s.Repo.RevokeDeviceSessions(ctx, user.ID, in.DeviceID)
 	tokens, err := s.issueTokens(ctx, user, in.DeviceID, in.UserAgent, in.IP)
 	if err != nil {
 		return db.User{}, Tokens{}, err
@@ -339,6 +345,23 @@ func (s *Service) now() time.Time {
 		return s.Now()
 	}
 	return time.Now().UTC()
+}
+
+func (s *Service) sessionLimitForRole(role string) int {
+	switch role {
+	case "driver":
+		if s != nil && s.SessionLimits.Driver > 0 {
+			return s.SessionLimits.Driver
+		}
+		return 1
+	case "rider":
+		if s != nil && s.SessionLimits.Rider > 0 {
+			return s.SessionLimits.Rider
+		}
+		return 3
+	default:
+		return 0
+	}
 }
 
 func validPassword(password string) bool {

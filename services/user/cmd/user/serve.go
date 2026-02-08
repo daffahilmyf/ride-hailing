@@ -42,6 +42,10 @@ var serveCmd = &cobra.Command{
 		uc := &usecase.Service{
 			Repo:       repo,
 			AuthConfig: cfg.Auth,
+			SessionLimits: usecase.SessionLimitConfig{
+				Rider:  cfg.SessionLimits.Rider,
+				Driver: cfg.SessionLimits.Driver,
+			},
 		}
 
 		redisClient := redis.NewClient(&redis.Options{

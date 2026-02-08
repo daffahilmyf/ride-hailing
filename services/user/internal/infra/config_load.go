@@ -24,6 +24,8 @@ func LoadConfig() Config {
 	cfg.RateLimit.AuthRequests = viper.GetInt("rate_limit.auth_requests")
 	cfg.RateLimit.WindowSeconds = viper.GetInt("rate_limit.window_seconds")
 	cfg.RateLimit.KeyPrefix = viper.GetString("rate_limit.key_prefix")
+	cfg.SessionLimits.Rider = viper.GetInt("session_limits.rider")
+	cfg.SessionLimits.Driver = viper.GetInt("session_limits.driver")
 	cfg.Observability.MetricsEnabled = viper.GetBool("observability.metrics_enabled")
 	cfg.Observability.MetricsAddr = viper.GetString("observability.metrics_addr")
 	return cfg
