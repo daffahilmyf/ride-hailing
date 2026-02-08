@@ -12,21 +12,51 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyResponse"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/healthz:
     get:
       summary: Service health
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
   /v1/readyz:
     get:
       summary: Service readiness
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyResponse"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/auth/register:
     post:
       summary: Register user
+      parameters:
+        - name: X-Device-Id
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -36,15 +66,31 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserErrorResponse"
   /v1/auth/login:
     post:
       summary: Login
+      parameters:
+        - name: X-Device-Id
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -54,15 +100,31 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponse"
+        "429":
+          description: Account locked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserErrorResponse"
   /v1/auth/refresh:
     post:
       summary: Refresh tokens
+      parameters:
+        - name: X-Device-Id
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -72,15 +134,25 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponse"
   /v1/auth/logout:
     post:
       summary: Logout
+      parameters:
+        - name: X-Device-Id
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -90,15 +162,19 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStatusResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponse"
   /v1/auth/verify:
     post:
-      summary: Verify email/phone
+      summary: Verify email or phone
       requestBody:
         required: true
         content:
@@ -108,12 +184,22 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStatusResponse"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserErrorResponse"
   /v1/users/me:
     get:
       summary: Get current user profile
@@ -125,13 +211,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserProfile"
+                $ref: "#/components/schemas/MeResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserErrorResponse"
   /v1/auth/logout_all:
     post:
       summary: Logout all sessions
@@ -140,12 +232,16 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStatusResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponse"
   /v1/auth/logout_device:
     post:
       summary: Logout a specific device
@@ -160,12 +256,22 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStatusResponse"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserErrorResponse"
   /v1/auth/sessions:
     get:
       summary: List active sessions
@@ -177,18 +283,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SessionList"
+                $ref: "#/components/schemas/SessionsResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponse"
   /v1/rides:
     post:
       summary: Create ride
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -198,12 +310,16 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideResponse"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/rides/{ride_id}/cancel:
     post:
       summary: Cancel ride
@@ -215,9 +331,25 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelRideRequest"
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/rides/{ride_id}/offers:
     post:
       summary: Create offer for ride
@@ -229,21 +361,30 @@ paths:
           required: true
           schema:
             type: string
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OfferRequest"
+              $ref: "#/components/schemas/CreateOfferRequest"
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferResponse"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/drivers/{driver_id}/location:
     post:
       summary: Update driver location
@@ -260,16 +401,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LocationUpdate"
+              $ref: "#/components/schemas/UpdateDriverLocationRequest"
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/drivers/{driver_id}/status:
     post:
       summary: Update driver status
@@ -286,10 +431,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DriverStatusRequest"
+              $ref: "#/components/schemas/UpdateDriverStatusRequest"
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/drivers/nearby:
     post:
       summary: List nearby drivers
@@ -304,6 +459,16 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NearbyDriversResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/offers/{offer_id}/accept:
     post:
       summary: Accept offer
@@ -315,9 +480,24 @@ paths:
           required: true
           schema:
             type: string
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/offers/{offer_id}/decline:
     post:
       summary: Decline offer
@@ -329,9 +509,24 @@ paths:
           required: true
           schema:
             type: string
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/offers/{offer_id}/expire:
     post:
       summary: Expire offer
@@ -343,17 +538,47 @@ paths:
           required: true
           schema:
             type: string
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
   /v1/notify/sse:
     get:
       summary: Notification SSE stream
       security:
         - bearerAuth: []
+      parameters:
+        - name: ride_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: Last-Event-ID
+          in: header
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: OK
+          content:
+            text/event-stream:
+              schema:
+                type: string
 components:
   securitySchemes:
     bearerAuth:
@@ -361,51 +586,159 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    ErrorResponse:
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        trace_id:
+          type: string
+    ApiError:
+      type: object
+      properties:
+        type:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+    GatewayErrorResponse:
       type: object
       properties:
         error:
-          type: object
-          properties:
-            type:
-              type: string
-            code:
-              type: string
-            message:
-              type: string
-            details:
-              type: object
+          $ref: "#/components/schemas/ApiError"
         meta:
-          type: object
-          properties:
-            request_id:
-              type: string
-            trace_id:
-              type: string
+          $ref: "#/components/schemas/Meta"
+    HealthResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/StatusData"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    ReadyResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/StatusData"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    StatusResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/StatusData"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    RideResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/RideData"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    OfferResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/OfferData"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    NearbyDriversResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/NearbyDriversData"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    StatusData:
+      type: object
+      properties:
+        status:
+          type: string
+    RideData:
+      type: object
+      properties:
+        ride_id:
+          type: string
+        status:
+          type: string
+    OfferData:
+      type: object
+      properties:
+        offer_id:
+          type: string
+        ride_id:
+          type: string
+        driver_id:
+          type: string
+        status:
+          type: string
+        expires_at:
+          type: string
+    NearbyDriversData:
+      type: object
+      properties:
+        drivers:
+          type: array
+          items:
+            $ref: "#/components/schemas/NearbyDriver"
+    NearbyDriver:
+      type: object
+      properties:
+        driver_id:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        distance_m:
+          type: number
     RegisterRequest:
       type: object
       properties:
         email:
           type: string
+        phone:
+          type: string
         password:
           type: string
         role:
           type: string
-      required: [email, password, role]
+        name:
+          type: string
+        device_id:
+          type: string
+      required:
+        - password
+        - role
+      oneOf:
+        - required: [email]
+        - required: [phone]
     LoginRequest:
       type: object
       properties:
         email:
           type: string
+        phone:
+          type: string
         password:
           type: string
         device_id:
           type: string
-      required: [email, password, device_id]
+      required:
+        - password
+      oneOf:
+        - required: [email]
+        - required: [phone]
     RefreshRequest:
       type: object
       properties:
         refresh_token:
+          type: string
+        device_id:
           type: string
       required: [refresh_token]
     LogoutRequest:
@@ -413,23 +746,71 @@ components:
       properties:
         refresh_token:
           type: string
+        device_id:
+          type: string
       required: [refresh_token]
     VerifyRequest:
       type: object
       properties:
+        channel:
+          type: string
+        target:
+          type: string
         code:
           type: string
-        type:
-          type: string
-          description: email or phone
-      required: [code, type]
+      required: [channel, target, code]
     LogoutDeviceRequest:
       type: object
       properties:
         device_id:
           type: string
       required: [device_id]
-    SessionList:
+    UserErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+          format: int64
+    RegisterResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        tokens:
+          $ref: "#/components/schemas/TokenResponse"
+        verification_code:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        tokens:
+          $ref: "#/components/schemas/TokenResponse"
+    RefreshResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        tokens:
+          $ref: "#/components/schemas/TokenResponse"
+    UserStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+    SessionsResponse:
       type: object
       properties:
         sessions:
@@ -445,29 +826,60 @@ components:
           type: string
         ip:
           type: string
-        last_seen_at:
+        created_at:
           type: string
           format: date-time
-    UserProfile:
+        expires_at:
+          type: string
+          format: date-time
+    MeResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+    User:
       type: object
       properties:
         id:
-          type: string
-        email:
           type: string
         role:
           type: string
         name:
           type: string
+        email:
+          type: string
         phone:
           type: string
-        email_verified:
-          type: boolean
-        phone_verified:
-          type: boolean
-        created_at:
+        email_verified_at:
           type: string
           format: date-time
+        phone_verified_at:
+          type: string
+          format: date-time
+        rider_profile:
+          $ref: "#/components/schemas/RiderProfile"
+        driver_profile:
+          $ref: "#/components/schemas/DriverProfile"
+    RiderProfile:
+      type: object
+      properties:
+        rating:
+          type: number
+        preferred_language:
+          type: string
+    DriverProfile:
+      type: object
+      properties:
+        vehicle_make:
+          type: string
+        vehicle_plate:
+          type: string
+        license_number:
+          type: string
+        verified:
+          type: boolean
+        rating:
+          type: number
     CreateRideRequest:
       type: object
       properties:
@@ -480,20 +892,38 @@ components:
         dropoff_lng:
           type: number
       required: [pickup_lat, pickup_lng, dropoff_lat, dropoff_lng]
-    LocationUpdate:
+    CancelRideRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+      required: [reason]
+    CreateOfferRequest:
+      type: object
+      properties:
+        driver_id:
+          type: string
+        offer_ttl_seconds:
+          type: integer
+          format: int64
+      required: [driver_id]
+    UpdateDriverStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [OFFLINE, ONLINE_AVAILABLE]
+      required: [status]
+    UpdateDriverLocationRequest:
       type: object
       properties:
         lat:
           type: number
         lng:
           type: number
-      required: [lat, lng]
-    DriverStatusRequest:
-      type: object
-      properties:
-        status:
-          type: string
-      required: [status]
+        accuracy_m:
+          type: number
+      required: [lat, lng, accuracy_m]
     NearbyDriversRequest:
       type: object
       properties:
@@ -501,12 +931,9 @@ components:
           type: number
         lng:
           type: number
-        radius_meters:
+        radius_m:
           type: number
-      required: [lat, lng, radius_meters]
-    OfferRequest:
-      type: object
-      properties:
-        price:
-          type: number
-      required: [price]
+        limit:
+          type: integer
+          format: int32
+      required: [lat, lng, radius_m]
