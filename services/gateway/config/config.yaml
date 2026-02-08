@@ -52,3 +52,6 @@ observability:
 
 notify:
   base_url: "http://notify:8090"
+
+user:
+  base_url: "http://user:8081"

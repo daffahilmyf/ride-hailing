@@ -13,6 +13,7 @@ type Config struct {
 	Observability          ObservabilityConfig
 	HTTP                   HTTPConfig
 	Notify                 NotifyConfig
+	User                   UserConfig
 }
 
 type AuthConfig struct {
@@ -60,6 +61,10 @@ type HTTPConfig struct {
 }
 
 type NotifyConfig struct {
+	BaseURL string
+}
+
+type UserConfig struct {
 	BaseURL string
 }
 
@@ -115,6 +120,9 @@ func DefaultConfig() Config {
 		},
 		Notify: NotifyConfig{
 			BaseURL: "http://notify:8090",
+		},
+		User: UserConfig{
+			BaseURL: "http://user:8081",
 		},
 	}
 }

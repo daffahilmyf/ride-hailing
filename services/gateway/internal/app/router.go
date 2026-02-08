@@ -86,6 +86,9 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 			GRPC:  grpcConns,
 			Cache: readyCache,
 		}))
+		v1.POST("/auth/register", handlers.ProxyUser(cfg.User.BaseURL, false))
+		v1.POST("/auth/login", handlers.ProxyUser(cfg.User.BaseURL, false))
+		v1.POST("/auth/refresh", handlers.ProxyUser(cfg.User.BaseURL, false))
 
 		authGroup := v1.Group("/")
 		authGroup.Use(middleware.AuthMiddleware(logger, middleware.AuthConfig{
@@ -122,6 +125,10 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		driverGroup.POST("/offers/:offer_id/accept", handlers.AcceptOffer(deps.RideClient, cfg.GRPC.InternalToken))
 		driverGroup.POST("/offers/:offer_id/decline", handlers.DeclineOffer(deps.RideClient, cfg.GRPC.InternalToken))
 		driverGroup.POST("/offers/:offer_id/expire", handlers.ExpireOffer(deps.RideClient, cfg.GRPC.InternalToken))
+
+		userGroup := authGroup.Group("/")
+		userGroup.Use(middleware.RequireRole(middleware.RoleRider, middleware.RoleDriver))
+		userGroup.GET("/users/me", handlers.ProxyUser(cfg.User.BaseURL, true))
 
 		authGroup.GET("/notify/sse",
 			middleware.RateLimitMiddleware(notifyLimiter, cfg.RateLimit.NotifyRequests),
