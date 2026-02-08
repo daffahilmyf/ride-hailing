@@ -94,15 +94,7 @@ func (cb *CircuitBreaker) beforeRequest() error {
 
 	now := time.Now()
 	if cb.state == StateOpen {
-		if cb.settings.Timeout > 0 && now.Sub(cb.openedAt) >= cb.settings.Timeout {
-			cb.setState(StateHalfOpen, now)
-		} else {
-			cb.rejectCount.Add(1)
-			if cb.settings.OnReject != nil {
-				cb.settings.OnReject(cb.settings.Name)
-			}
-			return ErrCircuitOpen
-		}
+		return cb.handleOpen(now)
 	}
 
 	if cb.state == StateHalfOpen {
@@ -159,6 +151,25 @@ func (cb *CircuitBreaker) afterRequest(err error) {
 			cb.setState(StateOpen, cb.openedAt)
 		}
 	}
+}
+
+func (cb *CircuitBreaker) shouldHalfOpen(now time.Time) bool {
+	if cb.settings.Timeout <= 0 {
+		return false
+	}
+	return now.Sub(cb.openedAt) >= cb.settings.Timeout
+}
+
+func (cb *CircuitBreaker) handleOpen(now time.Time) error {
+	if !cb.shouldHalfOpen(now) {
+		cb.rejectCount.Add(1)
+		if cb.settings.OnReject != nil {
+			cb.settings.OnReject(cb.settings.Name)
+		}
+		return ErrCircuitOpen
+	}
+	cb.setState(StateHalfOpen, now)
+	return nil
 }
 
 func (cb *CircuitBreaker) shouldTrip() bool {
