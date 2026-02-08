@@ -12,6 +12,7 @@ services:
       - GATEWAY_HTTP_ADDR=:8080
       - GATEWAY_AUTH_ENABLED=true
       - GATEWAY_AUTH_JWT_SECRET=${GATEWAY_JWT_SECRET}
+      - GATEWAY_USER_INTERNAL_TOKEN=${INTERNAL_AUTH_TOKEN}
     mem_limit: 256m
     cpus: "0.50"
     depends_on:
