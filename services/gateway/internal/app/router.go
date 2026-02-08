@@ -114,6 +114,8 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		userGroup.Use(middleware.RequireRole(middleware.RoleRider, middleware.RoleDriver))
 		userGroup.GET("/users/me", handlers.ProxyUser(cfg.User.BaseURL, true, cfg.User.InternalToken))
 		userGroup.POST("/auth/logout_all", handlers.ProxyUser(cfg.User.BaseURL, true, cfg.User.InternalToken))
+		userGroup.POST("/auth/logout_device", handlers.ProxyUser(cfg.User.BaseURL, true, cfg.User.InternalToken))
+		userGroup.GET("/auth/sessions", handlers.ProxyUser(cfg.User.BaseURL, true, cfg.User.InternalToken))
 
 		authGroup.GET("/notify/sse",
 			middleware.RateLimitMiddleware(notifyLimiter, cfg.RateLimit.NotifyRequests),

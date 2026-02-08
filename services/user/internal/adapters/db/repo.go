@@ -141,3 +141,15 @@ func (r *Repo) RevokeDeviceSessions(ctx context.Context, userID string, deviceID
 		Where("user_id = ? AND device_id = ? AND revoked_at IS NULL", userID, deviceID).
 		Update("revoked_at", now).Error
 }
+
+func (r *Repo) ListActiveDeviceSessions(ctx context.Context, userID string) ([]RefreshToken, error) {
+	if userID == "" {
+		return []RefreshToken{}, nil
+	}
+	var tokens []RefreshToken
+	err := r.DB.WithContext(ctx).
+		Where("user_id = ? AND revoked_at IS NULL AND expires_at > NOW()", userID).
+		Order("created_at DESC").
+		Find(&tokens).Error
+	return tokens, err
+}

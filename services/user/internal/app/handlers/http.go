@@ -46,6 +46,10 @@ type verifyRequest struct {
 	Code    string `json:"code"`
 }
 
+type logoutDeviceRequest struct {
+	DeviceID string `json:"device_id"`
+}
+
 type tokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
@@ -76,6 +80,8 @@ func RegisterRoutes(r *gin.Engine, svc *usecase.Service, logger *zap.Logger, aut
 	protected.Use(InternalAuthMiddleware(internalAuthEnabled, internalAuthToken))
 	protected.GET("/users/me", h.Me)
 	protected.POST("/auth/logout_all", h.LogoutAll)
+	protected.POST("/auth/logout_device", h.LogoutDevice)
+	protected.GET("/auth/sessions", h.ListSessions)
 
 	v1.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
 }
@@ -231,6 +237,58 @@ func (h *Handler) LogoutAll(c *gin.Context) {
 	h.audit(c, "logout_all", userID, "ok")
 	h.respondWithMetrics(c, "logout_all", "ok", start)
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func (h *Handler) LogoutDevice(c *gin.Context) {
+	start := time.Now()
+	userID := c.GetHeader("X-User-Id")
+	if userID == "" {
+		h.respondWithMetrics(c, "logout_device", "unauthorized", start)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	var req logoutDeviceRequest
+	if err := c.ShouldBindJSON(&req); err != nil || strings.TrimSpace(req.DeviceID) == "" {
+		h.respondWithMetrics(c, "logout_device", "bad_request", start)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request"})
+		return
+	}
+	if err := h.Service.Repo.RevokeDeviceSessions(c.Request.Context(), userID, strings.TrimSpace(req.DeviceID)); err != nil {
+		h.respondWithMetrics(c, "logout_device", "error", start)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal"})
+		return
+	}
+	h.audit(c, "logout_device", userID, "ok")
+	h.respondWithMetrics(c, "logout_device", "ok", start)
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func (h *Handler) ListSessions(c *gin.Context) {
+	start := time.Now()
+	userID := c.GetHeader("X-User-Id")
+	if userID == "" {
+		h.respondWithMetrics(c, "sessions", "unauthorized", start)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	tokens, err := h.Service.Repo.ListActiveDeviceSessions(c.Request.Context(), userID)
+	if err != nil {
+		h.respondWithMetrics(c, "sessions", "error", start)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal"})
+		return
+	}
+	out := make([]gin.H, 0, len(tokens))
+	for _, t := range tokens {
+		out = append(out, gin.H{
+			"device_id":  t.DeviceID,
+			"user_agent": t.UserAgent,
+			"ip":         t.IP,
+			"created_at": t.CreatedAt.UTC().Format(time.RFC3339),
+			"expires_at": t.ExpiresAt.UTC().Format(time.RFC3339),
+		})
+	}
+	h.respondWithMetrics(c, "sessions", "ok", start)
+	c.JSON(http.StatusOK, gin.H{"sessions": out})
 }
 
 func (h *Handler) Verify(c *gin.Context) {
