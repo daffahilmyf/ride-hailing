@@ -43,6 +43,9 @@ func (DriverProfile) TableName() string { return "driver_profiles" }
 type RefreshToken struct {
 	ID        string     `gorm:"column:id;type:uuid;primaryKey"`
 	UserID    string     `gorm:"column:user_id;type:uuid"`
+	DeviceID  string     `gorm:"column:device_id"`
+	UserAgent string     `gorm:"column:user_agent"`
+	IP        string     `gorm:"column:ip"`
 	TokenHash string     `gorm:"column:token_hash"`
 	ExpiresAt time.Time  `gorm:"column:expires_at"`
 	RevokedAt *time.Time `gorm:"column:revoked_at"`

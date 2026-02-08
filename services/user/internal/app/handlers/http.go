@@ -25,16 +25,19 @@ type registerRequest struct {
 	Password string `json:"password"`
 	Role     string `json:"role"`
 	Name     string `json:"name"`
+	DeviceID string `json:"device_id"`
 }
 
 type loginRequest struct {
 	Email    string `json:"email"`
 	Phone    string `json:"phone"`
 	Password string `json:"password"`
+	DeviceID string `json:"device_id"`
 }
 
 type refreshRequest struct {
 	RefreshToken string `json:"refresh_token"`
+	DeviceID     string `json:"device_id"`
 }
 
 type verifyRequest struct {
@@ -86,11 +89,14 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 	user, tokens, code, err := h.Service.Register(c.Request.Context(), usecase.RegisterInput{
-		Email:    strings.TrimSpace(req.Email),
-		Phone:    strings.TrimSpace(req.Phone),
-		Password: req.Password,
-		Role:     req.Role,
-		Name:     req.Name,
+		Email:     strings.TrimSpace(req.Email),
+		Phone:     strings.TrimSpace(req.Phone),
+		Password:  req.Password,
+		Role:      req.Role,
+		Name:      req.Name,
+		DeviceID:  deviceID(c, req.DeviceID),
+		UserAgent: c.GetHeader("User-Agent"),
+		IP:        c.ClientIP(),
 	})
 	if err != nil {
 		switch err {
@@ -132,9 +138,12 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 	user, tokens, err := h.Service.Login(c.Request.Context(), usecase.LoginInput{
-		Email:    strings.TrimSpace(req.Email),
-		Phone:    strings.TrimSpace(req.Phone),
-		Password: req.Password,
+		Email:     strings.TrimSpace(req.Email),
+		Phone:     strings.TrimSpace(req.Phone),
+		Password:  req.Password,
+		DeviceID:  deviceID(c, req.DeviceID),
+		UserAgent: c.GetHeader("User-Agent"),
+		IP:        c.ClientIP(),
 	})
 	if err != nil {
 		if err == usecase.ErrAccountLocked {
@@ -169,7 +178,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request"})
 		return
 	}
-	user, tokens, err := h.Service.Refresh(c.Request.Context(), req.RefreshToken)
+	user, tokens, err := h.Service.Refresh(c.Request.Context(), req.RefreshToken, deviceID(c, req.DeviceID))
 	if err != nil {
 		h.respondWithMetrics(c, "refresh", "unauthorized", start)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_refresh"})
@@ -196,7 +205,7 @@ func (h *Handler) Logout(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request"})
 		return
 	}
-	if err := h.Service.Logout(c.Request.Context(), req.RefreshToken); err != nil {
+	if err := h.Service.Logout(c.Request.Context(), req.RefreshToken, deviceID(c, req.DeviceID)); err != nil {
 		h.respondWithMetrics(c, "logout", "unauthorized", start)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_refresh"})
 		return
@@ -332,4 +341,11 @@ func userResponse(user db.User, rider *db.RiderProfile, driver *db.DriverProfile
 		}
 	}
 	return resp
+}
+
+func deviceID(c *gin.Context, fallback string) string {
+	if v := c.GetHeader("X-Device-Id"); v != "" {
+		return v
+	}
+	return strings.TrimSpace(fallback)
 }

@@ -24,6 +24,8 @@ var (
 	ErrAlreadyExists      = errors.New("already exists")
 	ErrAccountLocked      = errors.New("account locked")
 	ErrWeakPassword       = errors.New("weak password")
+	ErrDeviceRequired     = errors.New("device required")
+	ErrDeviceActive       = errors.New("device already active")
 )
 
 type Service struct {
@@ -39,17 +41,23 @@ type Tokens struct {
 }
 
 type RegisterInput struct {
-	Email    string
-	Phone    string
-	Password string
-	Role     string
-	Name     string
+	Email     string
+	Phone     string
+	Password  string
+	Role      string
+	Name      string
+	DeviceID  string
+	UserAgent string
+	IP        string
 }
 
 type LoginInput struct {
-	Email    string
-	Phone    string
-	Password string
+	Email     string
+	Phone     string
+	Password  string
+	DeviceID  string
+	UserAgent string
+	IP        string
 }
 
 func (s *Service) Register(ctx context.Context, in RegisterInput) (db.User, Tokens, string, error) {
@@ -62,6 +70,9 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (db.User, Toke
 	}
 	if !validPassword(in.Password) {
 		return db.User{}, Tokens{}, "", ErrWeakPassword
+	}
+	if in.DeviceID == "" {
+		return db.User{}, Tokens{}, "", ErrDeviceRequired
 	}
 
 	if in.Email != "" {
@@ -106,7 +117,7 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (db.User, Toke
 		return db.User{}, Tokens{}, "", err
 	}
 	code, _ := s.issueVerification(ctx, user)
-	tokens, err := s.issueTokens(ctx, user)
+	tokens, err := s.issueTokens(ctx, user, in.DeviceID, in.UserAgent, in.IP)
 	if err != nil {
 		return db.User{}, Tokens{}, "", err
 	}
@@ -116,6 +127,9 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (db.User, Toke
 func (s *Service) Login(ctx context.Context, in LoginInput) (db.User, Tokens, error) {
 	if in.Email == "" && in.Phone == "" {
 		return db.User{}, Tokens{}, ErrInvalidCredentials
+	}
+	if in.DeviceID == "" {
+		return db.User{}, Tokens{}, ErrDeviceRequired
 	}
 	var user db.User
 	var err error
@@ -135,21 +149,30 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (db.User, Tokens, er
 		return db.User{}, Tokens{}, ErrInvalidCredentials
 	}
 	_ = s.Repo.ResetFailedLogin(ctx, user.ID)
-	tokens, err := s.issueTokens(ctx, user)
+	if active, err := s.Repo.HasActiveDeviceSession(ctx, user.ID, in.DeviceID); err == nil && active {
+		return db.User{}, Tokens{}, ErrDeviceActive
+	}
+	tokens, err := s.issueTokens(ctx, user, in.DeviceID, in.UserAgent, in.IP)
 	if err != nil {
 		return db.User{}, Tokens{}, err
 	}
 	return user, tokens, nil
 }
 
-func (s *Service) Refresh(ctx context.Context, refreshToken string) (db.User, Tokens, error) {
+func (s *Service) Refresh(ctx context.Context, refreshToken string, deviceID string) (db.User, Tokens, error) {
 	if refreshToken == "" {
 		return db.User{}, Tokens{}, ErrInvalidCredentials
 	}
+	if deviceID == "" {
+		return db.User{}, Tokens{}, ErrDeviceRequired
+	}
 	hash := hashToken(refreshToken)
-	rt, err := s.Repo.GetRefreshToken(ctx, hash)
+	rt, err := s.Repo.GetRefreshTokenForDevice(ctx, hash, deviceID)
 	if err != nil {
 		if any, anyErr := s.Repo.GetRefreshTokenAny(ctx, hash); anyErr == nil && any.RevokedAt != nil {
+			_ = s.Repo.RevokeAllRefreshTokens(ctx, any.UserID)
+		}
+		if any, anyErr := s.Repo.GetRefreshTokenAny(ctx, hash); anyErr == nil && any.DeviceID != deviceID {
 			_ = s.Repo.RevokeAllRefreshTokens(ctx, any.UserID)
 		}
 		return db.User{}, Tokens{}, ErrInvalidCredentials
@@ -159,7 +182,7 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (db.User, To
 		return db.User{}, Tokens{}, ErrInvalidCredentials
 	}
 	_ = s.Repo.RevokeRefreshToken(ctx, rt.ID)
-	tokens, err := s.issueTokens(ctx, user)
+	tokens, err := s.issueTokens(ctx, user, deviceID, "", "")
 	if err != nil {
 		return db.User{}, Tokens{}, err
 	}
@@ -173,12 +196,15 @@ func (s *Service) GetUser(ctx context.Context, userID string) (db.User, error) {
 	return s.Repo.GetUserByID(ctx, userID)
 }
 
-func (s *Service) Logout(ctx context.Context, refreshToken string) error {
+func (s *Service) Logout(ctx context.Context, refreshToken string, deviceID string) error {
 	if refreshToken == "" {
 		return ErrInvalidCredentials
 	}
+	if deviceID == "" {
+		return ErrDeviceRequired
+	}
 	hash := hashToken(refreshToken)
-	rt, err := s.Repo.GetRefreshToken(ctx, hash)
+	rt, err := s.Repo.GetRefreshTokenForDevice(ctx, hash, deviceID)
 	if err != nil {
 		return ErrInvalidCredentials
 	}
@@ -220,7 +246,7 @@ func (s *Service) Verify(ctx context.Context, channel string, target string, cod
 	return ErrInvalidCredentials
 }
 
-func (s *Service) issueTokens(ctx context.Context, user db.User) (Tokens, error) {
+func (s *Service) issueTokens(ctx context.Context, user db.User, deviceID string, userAgent string, ip string) (Tokens, error) {
 	now := s.now()
 	accessTTL := time.Duration(s.AuthConfig.AccessTTLSeconds) * time.Second
 	if accessTTL <= 0 {
@@ -241,6 +267,9 @@ func (s *Service) issueTokens(ctx context.Context, user db.User) (Tokens, error)
 	rt := db.RefreshToken{
 		ID:        uuid.NewString(),
 		UserID:    user.ID,
+		DeviceID:  deviceID,
+		UserAgent: userAgent,
+		IP:        ip,
 		TokenHash: refreshHash,
 		ExpiresAt: now.Add(refreshTTL),
 		CreatedAt: now,

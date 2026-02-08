@@ -78,6 +78,17 @@ func (r *Repo) GetRefreshToken(ctx context.Context, tokenHash string) (RefreshTo
 	return token, err
 }
 
+func (r *Repo) GetRefreshTokenForDevice(ctx context.Context, tokenHash string, deviceID string) (RefreshToken, error) {
+	var token RefreshToken
+	err := r.DB.WithContext(ctx).
+		Where("token_hash = ? AND device_id = ? AND revoked_at IS NULL AND expires_at > NOW()", tokenHash, deviceID).
+		First(&token).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return RefreshToken{}, ErrNotFound
+	}
+	return token, err
+}
+
 func (r *Repo) GetRefreshTokenAny(ctx context.Context, tokenHash string) (RefreshToken, error) {
 	var token RefreshToken
 	err := r.DB.WithContext(ctx).
@@ -103,4 +114,19 @@ func (r *Repo) RevokeAllRefreshTokens(ctx context.Context, userID string) error 
 		Model(&RefreshToken{}).
 		Where("user_id = ? AND revoked_at IS NULL", userID).
 		Update("revoked_at", now).Error
+}
+
+func (r *Repo) HasActiveDeviceSession(ctx context.Context, userID string, deviceID string) (bool, error) {
+	if userID == "" || deviceID == "" {
+		return false, nil
+	}
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&RefreshToken{}).
+		Where("user_id = ? AND device_id = ? AND revoked_at IS NULL AND expires_at > NOW()", userID, deviceID).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
