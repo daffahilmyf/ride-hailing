@@ -611,6 +611,16 @@ components:
           $ref: "#/components/schemas/ApiError"
         meta:
           $ref: "#/components/schemas/Meta"
+      example:
+        error:
+          type: BAD_REQUEST
+          code: VALIDATION_ERROR
+          message: invalid request
+          details:
+            field: ride_id
+        meta:
+          request_id: "req-123"
+          trace_id: "trace-abc"
     HealthResponse:
       type: object
       properties:
@@ -632,6 +642,12 @@ components:
           $ref: "#/components/schemas/StatusData"
         meta:
           $ref: "#/components/schemas/Meta"
+      example:
+        data:
+          status: ok
+        meta:
+          request_id: "req-123"
+          trace_id: "trace-abc"
     RideResponse:
       type: object
       properties:
@@ -639,6 +655,13 @@ components:
           $ref: "#/components/schemas/RideData"
         meta:
           $ref: "#/components/schemas/Meta"
+      example:
+        data:
+          ride_id: "ride-uuid"
+          status: REQUESTED
+        meta:
+          request_id: "req-123"
+          trace_id: "trace-abc"
     OfferResponse:
       type: object
       properties:
@@ -646,6 +669,16 @@ components:
           $ref: "#/components/schemas/OfferData"
         meta:
           $ref: "#/components/schemas/Meta"
+      example:
+        data:
+          offer_id: "offer-uuid"
+          ride_id: "ride-uuid"
+          driver_id: "driver-uuid"
+          status: PENDING
+          expires_at: "2026-02-08T12:00:00Z"
+        meta:
+          request_id: "req-123"
+          trace_id: "trace-abc"
     NearbyDriversResponse:
       type: object
       properties:
@@ -653,6 +686,16 @@ components:
           $ref: "#/components/schemas/NearbyDriversData"
         meta:
           $ref: "#/components/schemas/Meta"
+      example:
+        data:
+          drivers:
+            - driver_id: "driver-uuid"
+              lat: -6.2
+              lng: 106.8167
+              distance_m: 120.5
+        meta:
+          request_id: "req-123"
+          trace_id: "trace-abc"
     StatusData:
       type: object
       properties:
@@ -717,6 +760,12 @@ components:
       oneOf:
         - required: [email]
         - required: [phone]
+      example:
+        email: rider@example.com
+        password: "StrongPass123!"
+        role: rider
+        name: "Rider One"
+        device_id: "device-ios-001"
     LoginRequest:
       type: object
       properties:
@@ -733,6 +782,10 @@ components:
       oneOf:
         - required: [email]
         - required: [phone]
+      example:
+        email: rider@example.com
+        password: "StrongPass123!"
+        device_id: "device-ios-001"
     RefreshRequest:
       type: object
       properties:
@@ -741,6 +794,9 @@ components:
         device_id:
           type: string
       required: [refresh_token]
+      example:
+        refresh_token: "refresh-token-value"
+        device_id: "device-ios-001"
     LogoutRequest:
       type: object
       properties:
@@ -749,6 +805,9 @@ components:
         device_id:
           type: string
       required: [refresh_token]
+      example:
+        refresh_token: "refresh-token-value"
+        device_id: "device-ios-001"
     VerifyRequest:
       type: object
       properties:
@@ -759,17 +818,25 @@ components:
         code:
           type: string
       required: [channel, target, code]
+      example:
+        channel: email
+        target: rider@example.com
+        code: "123456"
     LogoutDeviceRequest:
       type: object
       properties:
         device_id:
           type: string
       required: [device_id]
+      example:
+        device_id: "device-ios-001"
     UserErrorResponse:
       type: object
       properties:
         error:
           type: string
+      example:
+        error: invalid_request
     TokenResponse:
       type: object
       properties:
@@ -782,6 +849,11 @@ components:
         expires_in:
           type: integer
           format: int64
+      example:
+        access_token: "access-token-value"
+        refresh_token: "refresh-token-value"
+        token_type: bearer
+        expires_in: 900
     RegisterResponse:
       type: object
       properties:
@@ -791,6 +863,18 @@ components:
           $ref: "#/components/schemas/TokenResponse"
         verification_code:
           type: string
+      example:
+        user:
+          id: "user-uuid"
+          role: rider
+          name: "Rider One"
+          email: rider@example.com
+        tokens:
+          access_token: "access-token-value"
+          refresh_token: "refresh-token-value"
+          token_type: bearer
+          expires_in: 900
+        verification_code: "123456"
     LoginResponse:
       type: object
       properties:
@@ -798,6 +882,17 @@ components:
           $ref: "#/components/schemas/User"
         tokens:
           $ref: "#/components/schemas/TokenResponse"
+      example:
+        user:
+          id: "user-uuid"
+          role: rider
+          name: "Rider One"
+          email: rider@example.com
+        tokens:
+          access_token: "access-token-value"
+          refresh_token: "refresh-token-value"
+          token_type: bearer
+          expires_in: 900
     RefreshResponse:
       type: object
       properties:
@@ -805,11 +900,24 @@ components:
           $ref: "#/components/schemas/User"
         tokens:
           $ref: "#/components/schemas/TokenResponse"
+      example:
+        user:
+          id: "user-uuid"
+          role: rider
+          name: "Rider One"
+          email: rider@example.com
+        tokens:
+          access_token: "access-token-value"
+          refresh_token: "refresh-token-value"
+          token_type: bearer
+          expires_in: 900
     UserStatusResponse:
       type: object
       properties:
         status:
           type: string
+      example:
+        status: ok
     SessionsResponse:
       type: object
       properties:
@@ -817,6 +925,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Session"
+      example:
+        sessions:
+          - device_id: "device-ios-001"
+            user_agent: "iOS/17"
+            ip: "203.0.113.1"
+            created_at: "2026-02-08T10:00:00Z"
+            expires_at: "2026-02-08T11:00:00Z"
     Session:
       type: object
       properties:
@@ -837,6 +952,15 @@ components:
       properties:
         user:
           $ref: "#/components/schemas/User"
+      example:
+        user:
+          id: "user-uuid"
+          role: rider
+          name: "Rider One"
+          email: rider@example.com
+          rider_profile:
+            rating: 4.9
+            preferred_language: en
     User:
       type: object
       properties:
@@ -892,12 +1016,19 @@ components:
         dropoff_lng:
           type: number
       required: [pickup_lat, pickup_lng, dropoff_lat, dropoff_lng]
+      example:
+        pickup_lat: -6.2
+        pickup_lng: 106.8167
+        dropoff_lat: -6.2146
+        dropoff_lng: 106.8451
     CancelRideRequest:
       type: object
       properties:
         reason:
           type: string
       required: [reason]
+      example:
+        reason: "changed_mind"
     CreateOfferRequest:
       type: object
       properties:
@@ -907,6 +1038,9 @@ components:
           type: integer
           format: int64
       required: [driver_id]
+      example:
+        driver_id: "driver-uuid"
+        offer_ttl_seconds: 60
     UpdateDriverStatusRequest:
       type: object
       properties:
@@ -914,6 +1048,8 @@ components:
           type: string
           enum: [OFFLINE, ONLINE_AVAILABLE]
       required: [status]
+      example:
+        status: ONLINE_AVAILABLE
     UpdateDriverLocationRequest:
       type: object
       properties:
@@ -924,6 +1060,10 @@ components:
         accuracy_m:
           type: number
       required: [lat, lng, accuracy_m]
+      example:
+        lat: -6.2
+        lng: 106.8167
+        accuracy_m: 8.5
     NearbyDriversRequest:
       type: object
       properties:
@@ -937,3 +1077,8 @@ components:
           type: integer
           format: int32
       required: [lat, lng, radius_m]
+      example:
+        lat: -6.2
+        lng: 106.8167
+        radius_m: 1500
+        limit: 20
