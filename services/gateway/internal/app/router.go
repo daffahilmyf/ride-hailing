@@ -119,6 +119,13 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		driverGroup.POST("/offers/:offer_id/decline", handlers.DeclineOffer(deps.RideClient, cfg.GRPC.InternalToken))
 		driverGroup.POST("/offers/:offer_id/expire", handlers.ExpireOffer(deps.RideClient, cfg.GRPC.InternalToken))
 
+		adminGroup := authGroup.Group("/admin")
+		adminGroup.Use(middleware.RequireRole(middleware.RoleAdmin))
+		adminGroup.Use(middleware.RequireScope("admin:drivers:write"))
+		adminGroup.Use(middleware.AuditLogger(logger, "admin:drivers:write"))
+		adminGroup.POST("/drivers/:driver_id/status", handlers.UpdateDriverStatusFor(deps.MatchingClient))
+		adminGroup.POST("/drivers/:driver_id/location", handlers.UpdateDriverLocationFor(deps.LocationClient, cfg.GRPC.InternalToken))
+
 		userGroup := authGroup.Group("/")
 		userGroup.Use(middleware.RequireRole(middleware.RoleRider, middleware.RoleDriver))
 		userGroup.GET("/users/me", handlers.MeAuth(deps.AuthClient, cfg.GRPC.InternalToken))

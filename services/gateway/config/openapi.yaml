@@ -12,6 +12,8 @@ tags:
     description: Session management for logged-in users.
   - name: Users
     description: User profile endpoints.
+  - name: Admin
+    description: Admin-only operations.
   - name: Rides
     description: Ride creation and lifecycle.
   - name: Offers
@@ -540,6 +542,92 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
+  /v1/admin/drivers/{driver_id}/status:
+    post:
+      summary: Admin update driver status
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: driver_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDriverStatusRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
+  /v1/admin/drivers/{driver_id}/location:
+    post:
+      summary: Admin update driver location
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: driver_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDriverLocationRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponse"
         "503":
           description: Upstream unavailable
           content:

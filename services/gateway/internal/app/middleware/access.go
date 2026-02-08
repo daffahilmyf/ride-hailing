@@ -13,6 +13,7 @@ import (
 const (
 	RoleRider   = "rider"
 	RoleDriver  = "driver"
+	RoleAdmin   = "admin"
 	scopesClaim = "scopes"
 )
 
