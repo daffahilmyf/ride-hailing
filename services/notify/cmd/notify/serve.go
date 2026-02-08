@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/notify/internal/app/workers"
 	"github.com/daffahilmyf/ride-hailing/services/notify/internal/infra"
 	"github.com/nats-io/nats.go"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -24,12 +27,58 @@ var serveCmd = &cobra.Command{
 	Short: "Start notification service",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg := infra.LoadConfig()
+		if err := infra.ValidateConfig(cfg); err != nil {
+			return err
+		}
 		logger := infra.NewLogger()
 		defer logger.Sync()
 
-		hub := app.NewHub(cfg.SSEBufferSize)
+		hub := app.NewHub(cfg.SSEBufferSize, cfg.ReplayBufferSize)
+		ready := &serviceReadiness{}
 
 		mux := http.NewServeMux()
+		mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("ok"))
+		})
+		mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+			if cfg.EventsEnabled && !ready.NATSReady() {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				_, _ = w.Write([]byte("nats not ready"))
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("ok"))
+		})
+
+		var sseClients prometheus.Gauge
+		var broadcastTotal prometheus.Counter
+		var droppedTotal prometheus.Counter
+		var consumeErrors prometheus.Counter
+
+		if cfg.MetricsEnabled {
+			sseClients = prometheus.NewGauge(prometheus.GaugeOpts{
+				Name: "notify_sse_clients",
+				Help: "Number of active SSE clients",
+			})
+			broadcastTotal = prometheus.NewCounter(prometheus.CounterOpts{
+				Name: "notify_events_broadcast_total",
+				Help: "Total number of events broadcast to SSE clients",
+			})
+			droppedTotal = prometheus.NewCounter(prometheus.CounterOpts{
+				Name: "notify_events_dropped_total",
+				Help: "Total number of events dropped due to slow clients",
+			})
+			consumeErrors = prometheus.NewCounter(prometheus.CounterOpts{
+				Name: "notify_event_consume_errors_total",
+				Help: "Total number of event consume errors",
+			})
+
+			registry := prometheus.NewRegistry()
+			registry.MustRegister(sseClients, broadcastTotal, droppedTotal, consumeErrors)
+			mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+		}
+
 		mux.HandleFunc("/sse", func(w http.ResponseWriter, r *http.Request) {
 			userID := r.Header.Get("X-User-Id")
 			role := r.Header.Get("X-Role")
@@ -60,12 +109,26 @@ var serveCmd = &cobra.Command{
 				return
 			}
 
-			sub := hub.Subscribe(id, filters)
+			lastEventID := uint64(0)
+			if raw := r.Header.Get("Last-Event-ID"); raw != "" {
+				if parsed, err := app.ParseEventID(raw); err == nil {
+					lastEventID = parsed
+				}
+			}
+			sub := hub.SubscribeWithReplay(id, filters, lastEventID)
+			if sseClients != nil {
+				sseClients.Set(float64(hub.Count()))
+			}
 			defer hub.Unsubscribe(id)
+			defer func() {
+				if sseClients != nil {
+					sseClients.Set(float64(hub.Count()))
+				}
+			}()
 
 			ctx := r.Context()
 			keepAlive := time.Duration(cfg.SSEKeepaliveSeconds) * time.Second
-			go app.KeepAlive(w, keepAlive)
+			go app.KeepAlive(ctx, w, keepAlive)
 
 			for {
 				select {
@@ -105,6 +168,7 @@ var serveCmd = &cobra.Command{
 				logger.Fatal("nats.jetstream_failed", zap.Error(err))
 			}
 			logger.Info("nats.jetstream_ready")
+			ready.SetNATSReady(true)
 
 			ensureStream(logger, js, "RIDES", []string{"ride.>"}, cfg.NATSSelfHeal)
 			ensureStream(logger, js, "DRIVERS", []string{"driver.>"}, cfg.NATSSelfHeal)
@@ -113,9 +177,19 @@ var serveCmd = &cobra.Command{
 			handler := func(subject string, payload []byte) error {
 				n, data, err := toNotification(subject, payload)
 				if err != nil {
+					if consumeErrors != nil {
+						consumeErrors.Inc()
+					}
 					return err
 				}
-				hub.Broadcast(n, data)
+				sent, dropped := hub.Broadcast(n, data)
+				if broadcastTotal != nil {
+					broadcastTotal.Add(float64(sent))
+				}
+				if droppedTotal != nil && dropped > 0 {
+					droppedTotal.Add(float64(dropped))
+					logger.Warn("sse.drop", zap.Int("dropped", dropped))
+				}
 				return nil
 			}
 
@@ -251,4 +325,16 @@ func ensureStream(logger *zap.Logger, js nats.JetStreamContext, name string, sub
 		return
 	}
 	logger.Info("nats.stream_created", zap.String("stream", name))
+}
+
+type serviceReadiness struct {
+	natsReady atomic.Bool
+}
+
+func (s *serviceReadiness) SetNATSReady(ready bool) {
+	s.natsReady.Store(ready)
+}
+
+func (s *serviceReadiness) NATSReady() bool {
+	return s.natsReady.Load()
 }

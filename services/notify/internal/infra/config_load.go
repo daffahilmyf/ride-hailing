@@ -14,5 +14,7 @@ func LoadConfig() Config {
 	cfg.DriverSubject = viper.GetString("events.driver_subject")
 	cfg.SSEBufferSize = viper.GetInt("sse.buffer_size")
 	cfg.SSEKeepaliveSeconds = viper.GetInt("sse.keepalive_seconds")
+	cfg.ReplayBufferSize = viper.GetInt("sse.replay_buffer_size")
+	cfg.MetricsEnabled = viper.GetBool("observability.metrics_enabled")
 	return cfg
 }

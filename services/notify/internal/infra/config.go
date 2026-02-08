@@ -11,6 +11,8 @@ type Config struct {
 	DriverSubject          string
 	SSEBufferSize          int
 	SSEKeepaliveSeconds    int
+	ReplayBufferSize       int
+	MetricsEnabled         bool
 }
 
 func DefaultConfig() Config {
@@ -25,5 +27,7 @@ func DefaultConfig() Config {
 		DriverSubject:          "driver.>",
 		SSEBufferSize:          64,
 		SSEKeepaliveSeconds:    15,
+		ReplayBufferSize:       256,
+		MetricsEnabled:         true,
 	}
 }

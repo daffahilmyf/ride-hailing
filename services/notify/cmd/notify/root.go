@@ -36,6 +36,8 @@ func init() {
 	rootCmd.PersistentFlags().String("events.driver_subject", "driver.>", "driver events subject")
 	rootCmd.PersistentFlags().Int("sse.buffer_size", 64, "SSE channel buffer size")
 	rootCmd.PersistentFlags().Int("sse.keepalive_seconds", 15, "SSE keepalive interval in seconds")
+	rootCmd.PersistentFlags().Int("sse.replay_buffer_size", 256, "SSE replay buffer size")
+	rootCmd.PersistentFlags().Bool("observability.metrics_enabled", true, "enable metrics endpoint")
 
 	_ = viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
 	_ = viper.BindPFlag("http.addr", rootCmd.PersistentFlags().Lookup("http.addr"))
@@ -47,6 +49,8 @@ func init() {
 	_ = viper.BindPFlag("events.driver_subject", rootCmd.PersistentFlags().Lookup("events.driver_subject"))
 	_ = viper.BindPFlag("sse.buffer_size", rootCmd.PersistentFlags().Lookup("sse.buffer_size"))
 	_ = viper.BindPFlag("sse.keepalive_seconds", rootCmd.PersistentFlags().Lookup("sse.keepalive_seconds"))
+	_ = viper.BindPFlag("sse.replay_buffer_size", rootCmd.PersistentFlags().Lookup("sse.replay_buffer_size"))
+	_ = viper.BindPFlag("observability.metrics_enabled", rootCmd.PersistentFlags().Lookup("observability.metrics_enabled"))
 }
 
 func initConfig() {
