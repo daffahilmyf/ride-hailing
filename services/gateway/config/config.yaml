@@ -47,3 +47,6 @@ observability:
   tracing_enabled: false
   tracing_endpoint: ""
   tracing_insecure: true
+
+notify:
+  base_url: "http://notify:8090"

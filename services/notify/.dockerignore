@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.env.*
+*.md
+*.log
+bin/
+dist/
+tmp/
+coverage/
+node_modules/
+vendor/

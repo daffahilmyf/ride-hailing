@@ -110,6 +110,8 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		driverGroup.POST("/offers/:offer_id/accept", handlers.AcceptOffer(deps.RideClient, cfg.GRPC.InternalToken))
 		driverGroup.POST("/offers/:offer_id/decline", handlers.DeclineOffer(deps.RideClient, cfg.GRPC.InternalToken))
 		driverGroup.POST("/offers/:offer_id/expire", handlers.ExpireOffer(deps.RideClient, cfg.GRPC.InternalToken))
+
+		authGroup.GET("/notify/sse", handlers.StreamNotifications(cfg.Notify.BaseURL))
 	}
 
 	return r

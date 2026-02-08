@@ -1,0 +1,22 @@
+service:
+  name: "notify-service"
+
+http:
+  addr: ":8090"
+
+shutdown:
+  timeout: 10
+
+nats:
+  url: "nats://nats:4222"
+  self_heal: true
+
+events:
+  enabled: true
+  ride_subject: "ride.>"
+  driver_subject: "driver.>"
+
+sse:
+  buffer_size: 64
+  keepalive_seconds: 15
+

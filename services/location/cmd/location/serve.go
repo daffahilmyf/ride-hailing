@@ -79,7 +79,7 @@ var serveCmd = &cobra.Command{
 				logger.Fatal("nats.jetstream_failed", zap.Error(err))
 			}
 			logger.Info("nats.jetstream_ready")
-			ensureStream(logger, js, "DRIVERS", []string{"driver.*"}, cfg.NATSSelfHeal)
+			ensureStream(logger, js, "DRIVERS", []string{"driver.>"}, cfg.NATSSelfHeal)
 			publisher = broker.NewPublisher(js)
 		}
 		if nc != nil {

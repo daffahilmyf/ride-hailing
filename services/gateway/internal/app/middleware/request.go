@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -70,6 +71,10 @@ func LogGeneralError(c *gin.Context, logger *zap.Logger, msg string, err error) 
 
 func RequestTimeout(timeout time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if c.Request.URL.Path == "/v1/notify/sse" || strings.Contains(c.Request.Header.Get("Accept"), "text/event-stream") {
+			c.Next()
+			return
+		}
 		if timeout <= 0 {
 			c.Next()
 			return

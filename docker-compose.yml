@@ -77,6 +77,26 @@ services:
       ride:
         condition: service_started
 
+  notify:
+    container_name: service-notify
+    build:
+      context: .
+      dockerfile: services/notify/Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      - NOTIFY_HTTP_ADDR=:8090
+      - NOTIFY_NATS_URL=nats://nats:4222
+      - NOTIFY_NATS_SELF_HEAL=true
+      - NOTIFY_EVENTS_ENABLED=true
+      - NOTIFY_EVENTS_RIDE_SUBJECT=ride.>
+      - NOTIFY_EVENTS_DRIVER_SUBJECT=driver.>
+    mem_limit: 128m
+    cpus: "0.25"
+    depends_on:
+      nats:
+        condition: service_started
+
   nats:
     container_name: nats
     image: nats:2.10

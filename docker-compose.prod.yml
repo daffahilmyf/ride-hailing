@@ -64,6 +64,22 @@ services:
       ride:
         condition: service_started
 
+  notify:
+    env_file:
+      - .env.prod
+    environment:
+      - NOTIFY_NATS_URL=nats://nats:4222
+      - NOTIFY_NATS_SELF_HEAL=true
+      - NOTIFY_EVENTS_ENABLED=true
+      - NOTIFY_EVENTS_RIDE_SUBJECT=ride.>
+      - NOTIFY_EVENTS_DRIVER_SUBJECT=driver.>
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.50"
+    depends_on:
+      nats:
+        condition: service_started
+
   nats:
     restart: unless-stopped
     mem_limit: 256m

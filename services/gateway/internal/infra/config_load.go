@@ -39,6 +39,7 @@ func LoadConfig() Config {
 	cfg.Observability.TracingInsecure = viper.GetBool("observability.tracing_insecure")
 	cfg.HTTP.RequestTimeoutSeconds = viper.GetInt("http.request_timeout_seconds")
 	cfg.HTTP.GzipEnabled = viper.GetBool("http.gzip_enabled")
+	cfg.Notify.BaseURL = viper.GetString("notify.base_url")
 
 	return cfg
 }

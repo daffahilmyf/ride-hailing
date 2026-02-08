@@ -12,6 +12,7 @@ type Config struct {
 	Cache                  CacheConfig
 	Observability          ObservabilityConfig
 	HTTP                   HTTPConfig
+	Notify                 NotifyConfig
 }
 
 type AuthConfig struct {
@@ -54,6 +55,10 @@ type CacheConfig struct {
 type HTTPConfig struct {
 	RequestTimeoutSeconds int
 	GzipEnabled           bool
+}
+
+type NotifyConfig struct {
+	BaseURL string
 }
 
 func DefaultConfig() Config {
@@ -103,6 +108,9 @@ func DefaultConfig() Config {
 		HTTP: HTTPConfig{
 			RequestTimeoutSeconds: 5,
 			GzipEnabled:           true,
+		},
+		Notify: NotifyConfig{
+			BaseURL: "http://notify:8090",
 		},
 	}
 }
