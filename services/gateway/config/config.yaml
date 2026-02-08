@@ -32,6 +32,8 @@ rate_limit:
   window_seconds: 60
   nearby_requests: 20
   nearby_window_seconds: 30
+  notify_requests: 10
+  notify_window_seconds: 60
 
 redis:
   addr: "redis:6379"

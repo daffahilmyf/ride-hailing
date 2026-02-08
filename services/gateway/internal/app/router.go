@@ -53,6 +53,12 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.NearbyWindowSeconds)*time.Second),
 		cache.WithLimiterPrefix("rl:nearby"),
 	)
+	notifyLimiter := cache.NewRedisLimiter(
+		redisClient,
+		cache.WithLimiterRequests(cfg.RateLimit.NotifyRequests),
+		cache.WithLimiterWindow(time.Duration(cfg.RateLimit.NotifyWindowSeconds)*time.Second),
+		cache.WithLimiterPrefix("rl:notify"),
+	)
 
 	var readyCache = handlers.ReadinessCache{Key: "gateway:readyz"}
 	if cfg.Cache.Enabled {
@@ -112,6 +118,7 @@ func NewRouter(cfg infra.Config, logger *zap.Logger, deps Deps, redisClient *red
 		driverGroup.POST("/offers/:offer_id/expire", handlers.ExpireOffer(deps.RideClient, cfg.GRPC.InternalToken))
 
 		authGroup.GET("/notify/sse",
+			middleware.RateLimitMiddleware(notifyLimiter, cfg.RateLimit.NotifyRequests),
 			middleware.RequireScope("notify:read"),
 			handlers.StreamNotifications(cfg.Notify.BaseURL),
 		)

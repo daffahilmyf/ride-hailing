@@ -10,11 +10,12 @@ A simplified ride‑hailing backend built for learning distributed systems, stat
 ## Study case
 Build a small ride‑hailing backend that still feels real: riders request trips, drivers get matched, and rides move through clear states from “requested” to “completed.” The focus is on async events, idempotency, and race‑condition handling.
 
-This repo is a monorepo with four services + shared protobufs:
+This repo is a monorepo with five services + shared protobufs:
 - `services/gateway` — HTTP API gateway (Gin)
 - `services/ride` — ride lifecycle and state machine (Postgres)
 - `services/matching` — sequential matching and offer orchestration (Redis + NATS JetStream)
 - `services/location` — driver location ingestion and geo index (Redis)
+- `services/notify` — real-time notifications (SSE + NATS JetStream)
 - `proto` — shared gRPC contracts
 
 ## Tech stack
@@ -24,6 +25,7 @@ This repo is a monorepo with four services + shared protobufs:
 - Events: NATS JetStream
 - Database: PostgreSQL
 - Cache/Geo: Redis
+- Metrics: Prometheus (service-level)
 - Validation: go-playground/validator
 - Nullable types: guregu/null
 - Migrations: goose
@@ -47,6 +49,7 @@ This repo is a monorepo with four services + shared protobufs:
 - [x] Ride service state machine + outbox
 - [x] Matching service (sequential offers)
 - [x] Location service (geo index + updates)
+- [x] Notification service (SSE via gateway)
 - [x] gRPC contracts in `proto/`
 - [x] Docker Compose for local dev
 - [x] CI test + build workflows
@@ -69,6 +72,7 @@ Run tests per service:
 - `cd services/ride && go test ./...`
 - `cd services/matching && go test ./...`
 - `cd services/location && go test ./...`
+- `cd services/notify && go test ./...`
 
 ## Repo layout
 - `services/` — service code

@@ -27,6 +27,8 @@ func LoadConfig() Config {
 	cfg.RateLimit.WindowSeconds = viper.GetInt("rate_limit.window_seconds")
 	cfg.RateLimit.NearbyRequests = viper.GetInt("rate_limit.nearby_requests")
 	cfg.RateLimit.NearbyWindowSeconds = viper.GetInt("rate_limit.nearby_window_seconds")
+	cfg.RateLimit.NotifyRequests = viper.GetInt("rate_limit.notify_requests")
+	cfg.RateLimit.NotifyWindowSeconds = viper.GetInt("rate_limit.notify_window_seconds")
 	cfg.MaxBodyBytes = viper.GetInt64("http.max_body_bytes")
 	cfg.Redis.Addr = viper.GetString("redis.addr")
 	cfg.Redis.Password = viper.GetString("redis.password")

@@ -39,6 +39,8 @@ type RateLimitConfig struct {
 	WindowSeconds       int
 	NearbyRequests      int
 	NearbyWindowSeconds int
+	NotifyRequests      int
+	NotifyWindowSeconds int
 }
 
 type RedisConfig struct {
@@ -88,6 +90,8 @@ func DefaultConfig() Config {
 			WindowSeconds:       60,
 			NearbyRequests:      20,
 			NearbyWindowSeconds: 30,
+			NotifyRequests:      10,
+			NotifyWindowSeconds: 60,
 		},
 		MaxBodyBytes: 1_048_576,
 		Redis: RedisConfig{
