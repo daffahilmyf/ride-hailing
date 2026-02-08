@@ -33,6 +33,7 @@ services:
       - RIDE_NATS_URL=nats://nats:4222
       - RIDE_NATS_SELF_HEAL=true
       - RIDE_OUTBOX_ENABLED=true
+      - RIDE_GRPC_USER_ADDR=user:50054
     mem_limit: 256m
     cpus: "0.50"
     depends_on:
@@ -100,6 +101,27 @@ services:
       nats:
         condition: service_started
 
+  user:
+    container_name: service-user
+    build:
+      context: .
+      dockerfile: services/user/Dockerfile
+    ports:
+      - "8081:8081"
+      - "50054:50054"
+    environment:
+      - USER_HTTP_ADDR=:8081
+      - USER_GRPC_ADDR=:50054
+      - USER_POSTGRES_DSN=postgres://ride:ride@postgres:5432/users?sslmode=disable
+      - USER_AUTH_JWT_SECRET=${GATEWAY_JWT_SECRET}
+      - USER_AUTH_ISSUER=ride-hailing
+      - USER_AUTH_AUDIENCE=ride-hailing-clients
+    mem_limit: 256m
+    cpus: "0.50"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   nats:
     container_name: nats
     image: nats:2.10
@@ -128,6 +150,17 @@ services:
       retries: 10
     mem_limit: 512m
     cpus: "1.0"
+
+  user-db-init:
+    image: postgres:16-alpine
+    container_name: user-db-init
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - PGPASSWORD=ride
+    command: ["sh", "-c", "psql -h postgres -U ride -d postgres -c \"CREATE DATABASE users\" || true"]
 
   redis:
     container_name: redis
@@ -159,6 +192,21 @@ services:
       GOOSE_DBSTRING: postgresql://ride:ride@postgres:5432/rides?sslmode=disable
     volumes:
       - ./services/ride/migrations:/migrations
+
+  user-migrate:
+    image: kukymbr/goose-docker
+    container_name: user-migrate
+    restart: "no"
+    mem_limit: 256m
+    cpus: "0.25"
+    depends_on:
+      user-db-init:
+        condition: service_completed_successfully
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: postgresql://ride:ride@postgres:5432/users?sslmode=disable
+    volumes:
+      - ./services/user/migrations:/migrations
 
 volumes:
   nats_data:
