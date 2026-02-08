@@ -3,12 +3,30 @@ info:
   title: Ride Hailing Gateway API
   version: 0.1.0
   description: Public HTTP API served by the gateway. Some endpoints proxy to internal services.
+tags:
+  - name: System
+    description: Health and readiness checks.
+  - name: Auth
+    description: Registration, login, and verification.
+  - name: Sessions
+    description: Session management for logged-in users.
+  - name: Users
+    description: User profile endpoints.
+  - name: Rides
+    description: Ride creation and lifecycle.
+  - name: Offers
+    description: Driver offers for rides.
+  - name: Drivers
+    description: Driver location and status updates.
+  - name: Notifications
+    description: Server-sent events for notifications.
 servers:
   - url: http://localhost:8080
 paths:
   /readyz:
     get:
       summary: Gateway readiness
+      tags: [System]
       responses:
         "200":
           description: OK
@@ -27,6 +45,7 @@ paths:
   /v1/healthz:
     get:
       summary: Service health
+      tags: [System]
       responses:
         "200":
           description: OK
@@ -37,6 +56,7 @@ paths:
   /v1/readyz:
     get:
       summary: Service readiness
+      tags: [System]
       responses:
         "200":
           description: OK
@@ -55,6 +75,7 @@ paths:
   /v1/auth/register:
     post:
       summary: Register user
+      tags: [Auth]
       parameters:
         - name: X-Device-Id
           in: header
@@ -91,6 +112,7 @@ paths:
   /v1/auth/login:
     post:
       summary: Login
+      tags: [Auth]
       parameters:
         - name: X-Device-Id
           in: header
@@ -125,6 +147,7 @@ paths:
   /v1/auth/refresh:
     post:
       summary: Refresh tokens
+      tags: [Auth]
       parameters:
         - name: X-Device-Id
           in: header
@@ -153,6 +176,7 @@ paths:
   /v1/auth/logout:
     post:
       summary: Logout
+      tags: [Auth]
       parameters:
         - name: X-Device-Id
           in: header
@@ -181,6 +205,7 @@ paths:
   /v1/auth/verify:
     post:
       summary: Verify email or phone
+      tags: [Auth]
       requestBody:
         required: true
         content:
@@ -209,6 +234,7 @@ paths:
   /v1/users/me:
     get:
       summary: Get current user profile
+      tags: [Users]
       security:
         - bearerAuth: []
       responses:
@@ -233,6 +259,7 @@ paths:
   /v1/auth/logout_all:
     post:
       summary: Logout all sessions
+      tags: [Sessions]
       security:
         - bearerAuth: []
       responses:
@@ -251,6 +278,7 @@ paths:
   /v1/auth/logout_device:
     post:
       summary: Logout a specific device
+      tags: [Sessions]
       security:
         - bearerAuth: []
       requestBody:
@@ -281,6 +309,7 @@ paths:
   /v1/auth/sessions:
     get:
       summary: List active sessions
+      tags: [Sessions]
       security:
         - bearerAuth: []
       responses:
@@ -299,6 +328,7 @@ paths:
   /v1/rides:
     post:
       summary: Create ride
+      tags: [Rides]
       security:
         - bearerAuth: []
       parameters:
@@ -341,6 +371,7 @@ paths:
   /v1/rides/{ride_id}/cancel:
     post:
       summary: Cancel ride
+      tags: [Rides]
       security:
         - bearerAuth: []
       parameters:
@@ -377,6 +408,7 @@ paths:
   /v1/rides/{ride_id}/offers:
     post:
       summary: Create offer for ride
+      tags: [Offers]
       security:
         - bearerAuth: []
       parameters:
@@ -418,6 +450,7 @@ paths:
   /v1/drivers/{driver_id}/location:
     post:
       summary: Update driver location
+      tags: [Drivers]
       security:
         - bearerAuth: []
       parameters:
@@ -454,6 +487,7 @@ paths:
   /v1/drivers/{driver_id}/status:
     post:
       summary: Update driver status
+      tags: [Drivers]
       security:
         - bearerAuth: []
       parameters:
@@ -490,6 +524,7 @@ paths:
   /v1/drivers/nearby:
     post:
       summary: List nearby drivers
+      tags: [Drivers]
       security:
         - bearerAuth: []
       requestBody:
@@ -526,6 +561,7 @@ paths:
   /v1/offers/{offer_id}/accept:
     post:
       summary: Accept offer
+      tags: [Offers]
       security:
         - bearerAuth: []
       parameters:
@@ -561,6 +597,7 @@ paths:
   /v1/offers/{offer_id}/decline:
     post:
       summary: Decline offer
+      tags: [Offers]
       security:
         - bearerAuth: []
       parameters:
@@ -596,6 +633,7 @@ paths:
   /v1/offers/{offer_id}/expire:
     post:
       summary: Expire offer
+      tags: [Offers]
       security:
         - bearerAuth: []
       parameters:
@@ -631,6 +669,7 @@ paths:
   /v1/notify/sse:
     get:
       summary: Notification SSE stream
+      tags: [Notifications]
       security:
         - bearerAuth: []
       parameters:
