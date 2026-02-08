@@ -75,7 +75,10 @@ services:
   nats-init:
     restart: "no"
     entrypoint: ["sh", "-c"]
-    command: "until nats --server nats:4222 stream ls >/dev/null 2>&1; do echo 'waiting for nats'; sleep 1; done; nats --server nats:4222 --yes stream add RIDES --subjects 'ride.*' --storage file --retention limits || true; nats --server nats:4222 --yes stream add DRIVERS --subjects 'driver.*' --storage file --retention limits || true"
+    command: >
+      until nats --server nats:4222 stream ls >/dev/null 2>&1; do echo 'waiting for nats'; sleep 1; done;
+      nats --server nats:4222 --yes stream add RIDES --subjects 'ride.*' --storage file --retention limits || true;
+      nats --server nats:4222 --yes stream add DRIVERS --subjects 'driver.*' --storage file --retention limits || true
 
   postgres:
     restart: unless-stopped
