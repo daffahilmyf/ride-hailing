@@ -86,6 +86,12 @@ func splitScopes(raw interface{}) map[string]struct{} {
 		for _, s := range v {
 			out[s] = struct{}{}
 		}
+	case []interface{}:
+		for _, item := range v {
+			if s, ok := item.(string); ok {
+				out[s] = struct{}{}
+			}
+		}
 	}
 	return out
 }
