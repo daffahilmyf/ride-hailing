@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "github.com/daffahilmyf/ride-hailing/proto/user/v1;userv1";
+
+// UserService defines profile lookups for internal use.
+service UserService {
+  // GetUserProfile returns the profile for a user id.
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
+}
+
+message GetUserProfileRequest {
+  // User identifier.
+  string user_id = 1;
+  // Trace identifier for cross-service correlation.
+  string trace_id = 2;
+  // Request identifier for idempotency/tracing.
+  string request_id = 3;
+}
+
+message GetUserProfileResponse {
+  // User identifier.
+  string user_id = 1;
+  // Role of the user (rider/driver).
+  string role = 2;
+  // Display name.
+  string name = 3;
+  // Phone number.
+  string phone = 4;
+}
