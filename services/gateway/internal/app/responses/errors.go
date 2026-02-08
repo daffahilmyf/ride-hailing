@@ -14,6 +14,7 @@ const (
 	CodeUnauthorized    ErrorCode = "UNAUTHORIZED"
 	CodeForbidden       ErrorCode = "FORBIDDEN"
 	CodeNotFound        ErrorCode = "NOT_FOUND"
+	CodeUpstream        ErrorCode = "UPSTREAM_UNAVAILABLE"
 	CodeInternal        ErrorCode = "INTERNAL_ERROR"
 	CodeNotImplemented  ErrorCode = "NOT_IMPLEMENTED"
 )
@@ -45,6 +46,8 @@ func ErrorByCode(code ErrorCode) ErrorDef {
 		return ErrorDef{Type: "FORBIDDEN", Code: string(code), Message: "forbidden", HTTPStatus: http.StatusForbidden}
 	case CodeNotFound:
 		return ErrorDef{Type: "NOT_FOUND", Code: string(code), Message: "not found", HTTPStatus: http.StatusNotFound}
+	case CodeUpstream:
+		return ErrorDef{Type: "UNAVAILABLE", Code: string(code), Message: "upstream unavailable", HTTPStatus: http.StatusServiceUnavailable}
 	case CodeNotImplemented:
 		return ErrorDef{Type: "NOT_IMPLEMENTED", Code: string(code), Message: "endpoint not implemented", HTTPStatus: http.StatusNotImplemented}
 	default:

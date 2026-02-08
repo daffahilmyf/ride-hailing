@@ -27,7 +27,7 @@ func MapGRPCError(err error) (ErrorCode, interface{}) {
 	case codes.ResourceExhausted:
 		return CodeRateLimited, nil
 	case codes.Unavailable:
-		return CodeInternal, map[string]string{"reason": "UPSTREAM_UNAVAILABLE"}
+		return CodeUpstream, map[string]string{"reason": "UPSTREAM_UNAVAILABLE"}
 	default:
 		return CodeInternal, nil
 	}

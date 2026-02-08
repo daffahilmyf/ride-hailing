@@ -59,6 +59,7 @@ var serveCmd = &cobra.Command{
 
 		var userBreaker *grpcadapter.CircuitBreaker
 		if cfg.UserBreaker.Enabled {
+			var breakerRef *grpcadapter.CircuitBreaker
 			settings := grpcadapter.CircuitBreakerSettings{
 				Name:         "user-grpc",
 				MaxRequests:  cfg.UserBreaker.MaxRequests,
@@ -67,14 +68,31 @@ var serveCmd = &cobra.Command{
 				FailureRatio: cfg.UserBreaker.FailureRatio,
 				MinRequests:  cfg.UserBreaker.MinRequests,
 				OnStateChange: func(name string, from grpcadapter.State, to grpcadapter.State) {
+					if breakerRef != nil {
+						stats := breakerRef.Stats()
+						logger.Warn("circuit_breaker.metrics",
+							zap.String("name", name),
+							zap.String("state", stats.State.String()),
+							zap.Uint32("requests", stats.Requests),
+							zap.Uint32("failures", stats.TotalFailures),
+							zap.Uint64("opens", stats.OpenCount),
+							zap.Uint64("half_opens", stats.HalfOpenCount),
+							zap.Uint64("closes", stats.ClosedCount),
+							zap.Uint64("rejects", stats.RejectCount),
+						)
+					}
 					logger.Warn("circuit_breaker.state_change",
 						zap.String("name", name),
 						zap.String("from", from.String()),
 						zap.String("to", to.String()),
 					)
 				},
+				OnReject: func(name string) {
+					logger.Warn("circuit_breaker.reject", zap.String("name", name))
+				},
 			}
 			userBreaker = grpcadapter.NewCircuitBreaker(settings)
+			breakerRef = userBreaker
 		}
 
 		userClient, err := grpcadapter.NewUserClient(

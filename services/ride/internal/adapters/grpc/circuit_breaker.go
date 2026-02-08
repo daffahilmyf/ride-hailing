@@ -3,6 +3,7 @@ package grpc
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -37,6 +38,7 @@ type CircuitBreakerSettings struct {
 	FailureRatio  float64
 	MinRequests   uint32
 	OnStateChange func(name string, from State, to State)
+	OnReject      func(name string)
 }
 
 type Counts struct {
@@ -52,7 +54,21 @@ type CircuitBreaker struct {
 	intervalStarted  time.Time
 	halfOpenRequests uint32
 	halfOpenSuccess  uint32
+	openCount        atomic.Uint64
+	halfOpenCount    atomic.Uint64
+	closedCount      atomic.Uint64
+	rejectCount      atomic.Uint64
 	mu               sync.Mutex
+}
+
+type CircuitBreakerStats struct {
+	State         State
+	Requests      uint32
+	TotalFailures uint32
+	OpenCount     uint64
+	HalfOpenCount uint64
+	ClosedCount   uint64
+	RejectCount   uint64
 }
 
 func NewCircuitBreaker(settings CircuitBreakerSettings) *CircuitBreaker {
@@ -81,6 +97,10 @@ func (cb *CircuitBreaker) beforeRequest() error {
 		if cb.settings.Timeout > 0 && now.Sub(cb.openedAt) >= cb.settings.Timeout {
 			cb.setState(StateHalfOpen, now)
 		} else {
+			cb.rejectCount.Add(1)
+			if cb.settings.OnReject != nil {
+				cb.settings.OnReject(cb.settings.Name)
+			}
 			return ErrCircuitOpen
 		}
 	}
@@ -91,6 +111,10 @@ func (cb *CircuitBreaker) beforeRequest() error {
 			maxRequests = 1
 		}
 		if cb.halfOpenRequests >= maxRequests {
+			cb.rejectCount.Add(1)
+			if cb.settings.OnReject != nil {
+				cb.settings.OnReject(cb.settings.Name)
+			}
 			return ErrCircuitOpen
 		}
 		cb.halfOpenRequests++
@@ -157,9 +181,14 @@ func (cb *CircuitBreaker) setState(state State, now time.Time) {
 	if state == StateHalfOpen {
 		cb.halfOpenRequests = 0
 		cb.halfOpenSuccess = 0
+		cb.halfOpenCount.Add(1)
 	}
 	if state == StateClosed {
 		cb.resetCounts(now)
+		cb.closedCount.Add(1)
+	}
+	if state == StateOpen {
+		cb.openCount.Add(1)
 	}
 	if cb.settings.OnStateChange != nil {
 		cb.settings.OnStateChange(cb.settings.Name, from, state)
@@ -169,4 +198,19 @@ func (cb *CircuitBreaker) setState(state State, now time.Time) {
 func (cb *CircuitBreaker) resetCounts(now time.Time) {
 	cb.counts = Counts{}
 	cb.intervalStarted = now
+}
+
+func (cb *CircuitBreaker) Stats() CircuitBreakerStats {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+
+	return CircuitBreakerStats{
+		State:         cb.state,
+		Requests:      cb.counts.Requests,
+		TotalFailures: cb.counts.TotalFailures,
+		OpenCount:     cb.openCount.Load(),
+		HalfOpenCount: cb.halfOpenCount.Load(),
+		ClosedCount:   cb.closedCount.Load(),
+		RejectCount:   cb.rejectCount.Load(),
+	}
 }

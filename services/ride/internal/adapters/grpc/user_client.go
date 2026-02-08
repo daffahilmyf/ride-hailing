@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"math"
+	"math/rand"
+	"sync"
 	"time"
 
 	userv1 "github.com/daffahilmyf/ride-hailing/proto/user/v1"
@@ -124,7 +126,24 @@ func backoffForAttempt(base time.Duration, attempt int) time.Duration {
 	if backoff > max {
 		return max
 	}
-	return backoff
+	return addJitter(backoff)
+}
+
+var jitterRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+var jitterMu sync.Mutex
+
+func addJitter(d time.Duration) time.Duration {
+	if d <= 0 {
+		return d
+	}
+	jitterMu.Lock()
+	defer jitterMu.Unlock()
+	maxJitter := d / 2
+	if maxJitter <= 0 {
+		return d
+	}
+	jitter := time.Duration(jitterRand.Int63n(int64(maxJitter) + 1))
+	return d + jitter
 }
 
 type UserClientWithToken struct {
