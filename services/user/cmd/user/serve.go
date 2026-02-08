@@ -11,9 +11,12 @@ import (
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/adapters/db"
 	grpcadapter "github.com/daffahilmyf/ride-hailing/services/user/internal/adapters/grpc"
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/handlers"
+	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/metrics"
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/app/usecase"
 	"github.com/daffahilmyf/ride-hailing/services/user/internal/infra"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -50,14 +53,30 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
+		var authMetrics *metrics.AuthMetrics
+		var registry *prometheus.Registry
+		if cfg.Observability.MetricsEnabled {
+			authMetrics = &metrics.AuthMetrics{}
+			promMetrics := metrics.NewPromMetrics(cfg.ServiceName)
+			registry = prometheus.NewRegistry()
+			registry.MustRegister(promMetrics.Requests, promMetrics.Latency)
+			authMetrics.AttachProm(promMetrics)
+		}
+
 		router := gin.New()
 		router.Use(gin.Recovery())
-		handlers.RegisterRoutes(router, uc)
+		limiter := handlers.NewRateLimiter(cfg.RateLimit.AuthRequests, time.Duration(cfg.RateLimit.WindowSeconds)*time.Second)
+		handlers.RegisterRoutes(router, uc, logger, authMetrics, limiter, cfg.InternalAuth.Enabled, cfg.InternalAuth.Token)
+
 		httpSrv := &http.Server{
 			Addr:         cfg.HTTPAddr,
 			Handler:      router,
 			ReadTimeout:  time.Duration(cfg.HTTPReadTimeoutSeconds) * time.Second,
 			WriteTimeout: time.Duration(cfg.HTTPWriteTimeoutSeconds) * time.Second,
+		}
+
+		if cfg.Observability.MetricsEnabled && registry != nil {
+			go serveMetrics(cfg.Observability.MetricsAddr, registry, logger)
 		}
 
 		go func() {
@@ -106,4 +125,17 @@ func waitForShutdown(httpSrv *http.Server, grpcSrv *grpc.Server, timeoutSeconds 
 	}
 
 	logger.Info("shutdown.complete")
+}
+
+func serveMetrics(addr string, registry *prometheus.Registry, logger *zap.Logger) {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	server := &http.Server{
+		Addr:              addr,
+		ReadHeaderTimeout: 3 * time.Second,
+		Handler:           mux,
+	}
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		logger.Warn("metrics.listen_failed", zap.Error(err))
+	}
 }

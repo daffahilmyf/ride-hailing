@@ -17,7 +17,7 @@ var userHTTPClient = &http.Client{
 	Timeout: 5 * time.Second,
 }
 
-func ProxyUser(baseURL string, includeIdentity bool) gin.HandlerFunc {
+func ProxyUser(baseURL string, includeIdentity bool, internalToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if baseURL == "" {
 			responses.RespondErrorCode(c, responses.CodeInternal, map[string]string{"reason": "USER_UNCONFIGURED"})
@@ -44,6 +44,9 @@ func ProxyUser(baseURL string, includeIdentity bool) gin.HandlerFunc {
 			if role != "" {
 				req.Header.Set("X-Role", role)
 			}
+		}
+		if internalToken != "" {
+			req.Header.Set("X-Internal-Token", internalToken)
 		}
 
 		resp, err := userHTTPClient.Do(req)

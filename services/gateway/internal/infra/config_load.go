@@ -43,6 +43,7 @@ func LoadConfig() Config {
 	cfg.HTTP.GzipEnabled = viper.GetBool("http.gzip_enabled")
 	cfg.Notify.BaseURL = viper.GetString("notify.base_url")
 	cfg.User.BaseURL = viper.GetString("user.base_url")
+	cfg.User.InternalToken = viper.GetString("user.internal_token")
 
 	return cfg
 }

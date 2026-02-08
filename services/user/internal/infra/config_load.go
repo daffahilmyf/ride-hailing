@@ -18,6 +18,8 @@ func LoadConfig() Config {
 	cfg.Auth.RefreshTTLSeconds = viper.GetInt("auth.refresh_ttl_seconds")
 	cfg.InternalAuth.Enabled = viper.GetBool("internal_auth.enabled")
 	cfg.InternalAuth.Token = viper.GetString("internal_auth.token")
+	cfg.RateLimit.AuthRequests = viper.GetInt("rate_limit.auth_requests")
+	cfg.RateLimit.WindowSeconds = viper.GetInt("rate_limit.window_seconds")
 	cfg.Observability.MetricsEnabled = viper.GetBool("observability.metrics_enabled")
 	cfg.Observability.MetricsAddr = viper.GetString("observability.metrics_addr")
 	return cfg

@@ -10,6 +10,7 @@ type Config struct {
 	PostgresDSN             string
 	Auth                    AuthConfig
 	InternalAuth            InternalAuthConfig
+	RateLimit               RateLimitConfig
 	Observability           ObservabilityConfig
 }
 
@@ -24,6 +25,11 @@ type AuthConfig struct {
 type InternalAuthConfig struct {
 	Enabled bool
 	Token   string
+}
+
+type RateLimitConfig struct {
+	AuthRequests  int
+	WindowSeconds int
 }
 
 type ObservabilityConfig struct {
@@ -50,6 +56,10 @@ func DefaultConfig() Config {
 		InternalAuth: InternalAuthConfig{
 			Enabled: false,
 			Token:   "",
+		},
+		RateLimit: RateLimitConfig{
+			AuthRequests:  30,
+			WindowSeconds: 60,
 		},
 		Observability: ObservabilityConfig{
 			MetricsEnabled: true,

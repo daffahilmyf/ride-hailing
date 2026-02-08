@@ -65,7 +65,8 @@ type NotifyConfig struct {
 }
 
 type UserConfig struct {
-	BaseURL string
+	BaseURL       string
+	InternalToken string
 }
 
 func DefaultConfig() Config {
@@ -122,7 +123,8 @@ func DefaultConfig() Config {
 			BaseURL: "http://notify:8090",
 		},
 		User: UserConfig{
-			BaseURL: "http://user:8081",
+			BaseURL:       "http://user:8081",
+			InternalToken: "",
 		},
 	}
 }

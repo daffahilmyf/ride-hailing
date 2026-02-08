@@ -38,8 +38,10 @@ func init() {
 	rootCmd.PersistentFlags().String("auth.audience", "ride-hailing-clients", "JWT audience")
 	rootCmd.PersistentFlags().Int("auth.access_ttl_seconds", 1800, "access token TTL in seconds")
 	rootCmd.PersistentFlags().Int("auth.refresh_ttl_seconds", 2592000, "refresh token TTL in seconds")
-	rootCmd.PersistentFlags().Bool("internal_auth.enabled", false, "enable internal gRPC auth")
+	rootCmd.PersistentFlags().Bool("internal_auth.enabled", false, "enable internal auth")
 	rootCmd.PersistentFlags().String("internal_auth.token", "", "internal auth token")
+	rootCmd.PersistentFlags().Int("rate_limit.auth_requests", 30, "auth requests per window")
+	rootCmd.PersistentFlags().Int("rate_limit.window_seconds", 60, "rate limit window seconds")
 	rootCmd.PersistentFlags().Bool("observability.metrics_enabled", true, "enable metrics")
 	rootCmd.PersistentFlags().String("observability.metrics_addr", ":9096", "metrics listen addr")
 
@@ -57,6 +59,8 @@ func init() {
 	_ = viper.BindPFlag("auth.refresh_ttl_seconds", rootCmd.PersistentFlags().Lookup("auth.refresh_ttl_seconds"))
 	_ = viper.BindPFlag("internal_auth.enabled", rootCmd.PersistentFlags().Lookup("internal_auth.enabled"))
 	_ = viper.BindPFlag("internal_auth.token", rootCmd.PersistentFlags().Lookup("internal_auth.token"))
+	_ = viper.BindPFlag("rate_limit.auth_requests", rootCmd.PersistentFlags().Lookup("rate_limit.auth_requests"))
+	_ = viper.BindPFlag("rate_limit.window_seconds", rootCmd.PersistentFlags().Lookup("rate_limit.window_seconds"))
 	_ = viper.BindPFlag("observability.metrics_enabled", rootCmd.PersistentFlags().Lookup("observability.metrics_enabled"))
 	_ = viper.BindPFlag("observability.metrics_addr", rootCmd.PersistentFlags().Lookup("observability.metrics_addr"))
 }

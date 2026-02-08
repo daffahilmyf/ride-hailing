@@ -85,3 +85,11 @@ func (r *Repo) RevokeRefreshToken(ctx context.Context, id string) error {
 		Where("id = ? AND revoked_at IS NULL", id).
 		Update("revoked_at", now).Error
 }
+
+func (r *Repo) RevokeAllRefreshTokens(ctx context.Context, userID string) error {
+	now := time.Now().UTC()
+	return r.DB.WithContext(ctx).
+		Model(&RefreshToken{}).
+		Where("user_id = ? AND revoked_at IS NULL", userID).
+		Update("revoked_at", now).Error
+}

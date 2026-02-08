@@ -55,3 +55,4 @@ notify:
 
 user:
   base_url: "http://user:8081"
+  internal_token: ""

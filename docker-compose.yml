@@ -34,6 +34,7 @@ services:
       - RIDE_NATS_SELF_HEAL=true
       - RIDE_OUTBOX_ENABLED=true
       - RIDE_GRPC_USER_ADDR=user:50054
+      - RIDE_INTERNAL_AUTH_TOKEN=${INTERNAL_AUTH_TOKEN}
     mem_limit: 256m
     cpus: "0.50"
     depends_on:
@@ -116,6 +117,8 @@ services:
       - USER_AUTH_JWT_SECRET=${GATEWAY_JWT_SECRET}
       - USER_AUTH_ISSUER=ride-hailing
       - USER_AUTH_AUDIENCE=ride-hailing-clients
+      - USER_INTERNAL_AUTH_ENABLED=true
+      - USER_INTERNAL_AUTH_TOKEN=${INTERNAL_AUTH_TOKEN}
     mem_limit: 256m
     cpus: "0.50"
     depends_on:

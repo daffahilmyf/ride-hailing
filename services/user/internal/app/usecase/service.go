@@ -161,6 +161,25 @@ func (s *Service) GetUser(ctx context.Context, userID string) (db.User, error) {
 	return s.Repo.GetUserByID(ctx, userID)
 }
 
+func (s *Service) Logout(ctx context.Context, refreshToken string) error {
+	if refreshToken == "" {
+		return ErrInvalidCredentials
+	}
+	hash := hashToken(refreshToken)
+	rt, err := s.Repo.GetRefreshToken(ctx, hash)
+	if err != nil {
+		return ErrInvalidCredentials
+	}
+	return s.Repo.RevokeRefreshToken(ctx, rt.ID)
+}
+
+func (s *Service) LogoutAll(ctx context.Context, userID string) error {
+	if userID == "" {
+		return ErrInvalidCredentials
+	}
+	return s.Repo.RevokeAllRefreshTokens(ctx, userID)
+}
+
 func (s *Service) issueTokens(ctx context.Context, user db.User) (Tokens, error) {
 	now := s.now()
 	accessTTL := time.Duration(s.AuthConfig.AccessTTLSeconds) * time.Second

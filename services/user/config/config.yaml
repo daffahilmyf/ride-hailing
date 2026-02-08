@@ -23,8 +23,12 @@ auth:
   refresh_ttl_seconds: 2592000
 
 internal_auth:
-  enabled: false
+  enabled: true
   token: ""
+
+rate_limit:
+  auth_requests: 30
+  window_seconds: 60
 
 observability:
   metrics_enabled: true
