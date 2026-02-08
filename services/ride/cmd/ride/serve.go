@@ -57,7 +57,27 @@ var serveCmd = &cobra.Command{
 			IDGen:        uuid.NewString,
 		}
 
-		userClient, err := grpcadapter.NewUserClient(cfg.UserAddr, 3*time.Second)
+		var userBreaker *grpcadapter.CircuitBreaker
+		if cfg.UserBreaker.Enabled {
+			settings := grpcadapter.CircuitBreakerSettings{
+				Name:         "user-grpc",
+				MaxRequests:  cfg.UserBreaker.MaxRequests,
+				Interval:     time.Duration(cfg.UserBreaker.IntervalSeconds) * time.Second,
+				Timeout:      time.Duration(cfg.UserBreaker.TimeoutSeconds) * time.Second,
+				FailureRatio: cfg.UserBreaker.FailureRatio,
+				MinRequests:  cfg.UserBreaker.MinRequests,
+				OnStateChange: func(name string, from grpcadapter.State, to grpcadapter.State) {
+					logger.Warn("circuit_breaker.state_change",
+						zap.String("name", name),
+						zap.String("from", from.String()),
+						zap.String("to", to.String()),
+					)
+				},
+			}
+			userBreaker = grpcadapter.NewCircuitBreaker(settings)
+		}
+
+		userClient, err := grpcadapter.NewUserClient(cfg.UserAddr, 3*time.Second, userBreaker)
 		if err != nil {
 			logger.Warn("user_client.connect_failed", zap.Error(err))
 		} else {

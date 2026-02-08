@@ -10,18 +10,19 @@ import (
 )
 
 type UserClient struct {
-	conn   *grpc.ClientConn
-	client userv1.UserServiceClient
+	conn    *grpc.ClientConn
+	client  userv1.UserServiceClient
+	breaker *CircuitBreaker
 }
 
-func NewUserClient(addr string, timeout time.Duration) (*UserClient, error) {
+func NewUserClient(addr string, timeout time.Duration, breaker *CircuitBreaker) (*UserClient, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		return nil, err
 	}
-	return &UserClient{conn: conn, client: userv1.NewUserServiceClient(conn)}, nil
+	return &UserClient{conn: conn, client: userv1.NewUserServiceClient(conn), breaker: breaker}, nil
 }
 
 func (c *UserClient) Close() error {
@@ -32,7 +33,16 @@ func (c *UserClient) Close() error {
 }
 
 func (c *UserClient) GetUserProfile(ctx context.Context, in *userv1.GetUserProfileRequest, opts ...grpc.CallOption) (*userv1.GetUserProfileResponse, error) {
-	return c.client.GetUserProfile(ctx, in, opts...)
+	if c.breaker == nil {
+		return c.client.GetUserProfile(ctx, in, opts...)
+	}
+	res, err := c.breaker.Execute(func() (any, error) {
+		return c.client.GetUserProfile(ctx, in, opts...)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res.(*userv1.GetUserProfileResponse), nil
 }
 
 type UserClientWithToken struct {

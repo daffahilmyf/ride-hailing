@@ -33,3 +33,12 @@ offer_expiry:
 internal_auth:
   enabled: false
   token: ""
+
+circuit_breaker:
+  user:
+    enabled: true
+    max_requests: 5
+    interval_seconds: 30
+    timeout_seconds: 10
+    failure_ratio: 0.5
+    min_requests: 20

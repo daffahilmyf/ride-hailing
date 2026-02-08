@@ -19,6 +19,16 @@ type Config struct {
 	InternalAuthEnabled    bool
 	InternalAuthToken      string
 	UserAddr               string
+	UserBreaker            CircuitBreakerConfig
+}
+
+type CircuitBreakerConfig struct {
+	Enabled         bool
+	MaxRequests     uint32
+	IntervalSeconds int
+	TimeoutSeconds  int
+	FailureRatio    float64
+	MinRequests     uint32
 }
 
 func DefaultConfig() Config {
@@ -41,5 +51,13 @@ func DefaultConfig() Config {
 		InternalAuthEnabled:    false,
 		InternalAuthToken:      "",
 		UserAddr:               "user:50054",
+		UserBreaker: CircuitBreakerConfig{
+			Enabled:         true,
+			MaxRequests:     5,
+			IntervalSeconds: 30,
+			TimeoutSeconds:  10,
+			FailureRatio:    0.5,
+			MinRequests:     20,
+		},
 	}
 }

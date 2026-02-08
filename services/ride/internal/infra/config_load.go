@@ -22,5 +22,11 @@ func LoadConfig() Config {
 	cfg.InternalAuthEnabled = viper.GetBool("internal_auth.enabled")
 	cfg.InternalAuthToken = viper.GetString("internal_auth.token")
 	cfg.UserAddr = viper.GetString("grpc.user_addr")
+	cfg.UserBreaker.Enabled = viper.GetBool("circuit_breaker.user.enabled")
+	cfg.UserBreaker.MaxRequests = uint32(viper.GetInt("circuit_breaker.user.max_requests"))
+	cfg.UserBreaker.IntervalSeconds = viper.GetInt("circuit_breaker.user.interval_seconds")
+	cfg.UserBreaker.TimeoutSeconds = viper.GetInt("circuit_breaker.user.timeout_seconds")
+	cfg.UserBreaker.FailureRatio = viper.GetFloat64("circuit_breaker.user.failure_ratio")
+	cfg.UserBreaker.MinRequests = uint32(viper.GetInt("circuit_breaker.user.min_requests"))
 	return cfg
 }
