@@ -77,7 +77,14 @@ var serveCmd = &cobra.Command{
 			userBreaker = grpcadapter.NewCircuitBreaker(settings)
 		}
 
-		userClient, err := grpcadapter.NewUserClient(cfg.UserAddr, 3*time.Second, userBreaker)
+		userClient, err := grpcadapter.NewUserClient(
+			cfg.UserAddr,
+			3*time.Second,
+			userBreaker,
+			time.Duration(cfg.UserRequestTimeoutSec)*time.Second,
+			cfg.UserRetryMax,
+			time.Duration(cfg.UserRetryBackoffMs)*time.Millisecond,
+		)
 		if err != nil {
 			logger.Warn("user_client.connect_failed", zap.Error(err))
 		} else {

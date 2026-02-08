@@ -28,5 +28,8 @@ func LoadConfig() Config {
 	cfg.UserBreaker.TimeoutSeconds = viper.GetInt("circuit_breaker.user.timeout_seconds")
 	cfg.UserBreaker.FailureRatio = viper.GetFloat64("circuit_breaker.user.failure_ratio")
 	cfg.UserBreaker.MinRequests = uint32(viper.GetInt("circuit_breaker.user.min_requests"))
+	cfg.UserRequestTimeoutSec = viper.GetInt("grpc.user_request_timeout_seconds")
+	cfg.UserRetryMax = viper.GetInt("grpc.user_retry_max")
+	cfg.UserRetryBackoffMs = viper.GetInt("grpc.user_retry_backoff_ms")
 	return cfg
 }

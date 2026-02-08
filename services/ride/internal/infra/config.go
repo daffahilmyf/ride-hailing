@@ -20,6 +20,9 @@ type Config struct {
 	InternalAuthToken      string
 	UserAddr               string
 	UserBreaker            CircuitBreakerConfig
+	UserRequestTimeoutSec  int
+	UserRetryMax           int
+	UserRetryBackoffMs     int
 }
 
 type CircuitBreakerConfig struct {
@@ -59,5 +62,8 @@ func DefaultConfig() Config {
 			FailureRatio:    0.5,
 			MinRequests:     20,
 		},
+		UserRequestTimeoutSec: 2,
+		UserRetryMax:          1,
+		UserRetryBackoffMs:    100,
 	}
 }

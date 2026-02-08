@@ -4,6 +4,9 @@ service:
 grpc:
   addr: ":50051"
   user_addr: "user:50054"
+  user_request_timeout_seconds: 2
+  user_retry_max: 1
+  user_retry_backoff_ms: 100
 
 shutdown:
   timeout: 10
