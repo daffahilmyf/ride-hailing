@@ -21,7 +21,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GatewayErrorResponse"
+                oneOf:
+                  - $ref: "#/components/schemas/GatewayErrorResponse"
+                  - $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/healthz:
     get:
       summary: Service health
@@ -47,7 +49,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GatewayErrorResponse"
+                oneOf:
+                  - $ref: "#/components/schemas/GatewayErrorResponse"
+                  - $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/auth/register:
     post:
       summary: Register user
@@ -75,13 +79,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                oneOf:
+                  - $ref: "#/components/schemas/UserErrorResponse"
+                  - $ref: "#/components/schemas/UserErrorResponseInvalidCode"
         "409":
           description: Conflict
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseAlreadyExists"
   /v1/auth/login:
     post:
       summary: Login
@@ -109,13 +115,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseInvalidCredentials"
         "429":
           description: Account locked
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseAccountLocked"
   /v1/auth/refresh:
     post:
       summary: Refresh tokens
@@ -143,7 +149,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseInvalidCredentials"
   /v1/auth/logout:
     post:
       summary: Logout
@@ -171,7 +177,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseInvalidCredentials"
   /v1/auth/verify:
     post:
       summary: Verify email or phone
@@ -199,7 +205,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseInvalidCode"
   /v1/users/me:
     get:
       summary: Get current user profile
@@ -217,13 +223,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseInvalidCredentials"
         "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseNotFound"
   /v1/auth/logout_all:
     post:
       summary: Logout all sessions
@@ -241,7 +247,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseInvalidCredentials"
   /v1/auth/logout_device:
     post:
       summary: Logout a specific device
@@ -271,7 +277,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseInvalidCredentials"
   /v1/auth/sessions:
     get:
       summary: List active sessions
@@ -289,7 +295,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserErrorResponse"
+                $ref: "#/components/schemas/UserErrorResponseInvalidCredentials"
   /v1/rides:
     post:
       summary: Create ride
@@ -320,6 +326,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/rides/{ride_id}/cancel:
     post:
       summary: Cancel ride
@@ -350,6 +368,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/rides/{ride_id}/offers:
     post:
       summary: Create offer for ride
@@ -385,6 +409,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/drivers/{driver_id}/location:
     post:
       summary: Update driver location
@@ -415,6 +445,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/drivers/{driver_id}/status:
     post:
       summary: Update driver status
@@ -445,6 +481,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/drivers/nearby:
     post:
       summary: List nearby drivers
@@ -469,6 +511,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseRateLimited"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/offers/{offer_id}/accept:
     post:
       summary: Accept offer
@@ -498,6 +552,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/offers/{offer_id}/decline:
     post:
       summary: Decline offer
@@ -527,6 +587,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/offers/{offer_id}/expire:
     post:
       summary: Expire offer
@@ -556,6 +622,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayErrorResponse"
+        "503":
+          description: Upstream unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayErrorResponseUpstream"
   /v1/notify/sse:
     get:
       summary: Notification SSE stream
@@ -604,6 +676,12 @@ components:
           type: string
         details:
           type: object
+      example:
+        type: BAD_REQUEST
+        code: VALIDATION_ERROR
+        message: invalid request
+        details:
+          field: ride_id
     GatewayErrorResponse:
       type: object
       properties:
@@ -621,6 +699,38 @@ components:
         meta:
           request_id: "req-123"
           trace_id: "trace-abc"
+    GatewayErrorResponseRateLimited:
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/ApiError"
+        meta:
+          $ref: "#/components/schemas/Meta"
+      example:
+        error:
+          type: RATE_LIMITED
+          code: RATE_LIMITED
+          message: rate limited
+        meta:
+          request_id: "req-456"
+          trace_id: "trace-def"
+    GatewayErrorResponseUpstream:
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/ApiError"
+        meta:
+          $ref: "#/components/schemas/Meta"
+      example:
+        error:
+          type: UNAVAILABLE
+          code: UPSTREAM_UNAVAILABLE
+          message: upstream unavailable
+          details:
+            reason: UPSTREAM_UNAVAILABLE
+        meta:
+          request_id: "req-789"
+          trace_id: "trace-ghi"
     HealthResponse:
       type: object
       properties:
@@ -837,6 +947,41 @@ components:
           type: string
       example:
         error: invalid_request
+    UserErrorResponseInvalidCredentials:
+      type: object
+      properties:
+        error:
+          type: string
+      example:
+        error: invalid_credentials
+    UserErrorResponseAccountLocked:
+      type: object
+      properties:
+        error:
+          type: string
+      example:
+        error: account_locked
+    UserErrorResponseAlreadyExists:
+      type: object
+      properties:
+        error:
+          type: string
+      example:
+        error: already_exists
+    UserErrorResponseInvalidCode:
+      type: object
+      properties:
+        error:
+          type: string
+      example:
+        error: invalid_code
+    UserErrorResponseNotFound:
+      type: object
+      properties:
+        error:
+          type: string
+      example:
+        error: not_found
     TokenResponse:
       type: object
       properties:
