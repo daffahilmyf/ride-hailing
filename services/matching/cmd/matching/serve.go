@@ -122,7 +122,7 @@ var serveCmd = &cobra.Command{
 				logger.Fatal("nats.jetstream_failed", zap.Error(err))
 			}
 			logger.Info("nats.jetstream_ready")
-			ensureStream(logger, js, "RIDES", []string{"ride.*"}, cfg.NATSSelfHeal)
+			ensureStream(logger, js, "RIDES", []string{"ride.>"}, cfg.NATSSelfHeal)
 			ensureStream(logger, js, "DRIVERS", []string{"driver.>"}, cfg.NATSSelfHeal)
 			consumer := broker.NewConsumer(js)
 
