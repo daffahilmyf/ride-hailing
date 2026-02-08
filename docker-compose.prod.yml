@@ -13,6 +13,13 @@ services:
     restart: unless-stopped
     mem_limit: 512m
     cpus: "1.0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
 
   ride:
     env_file:
@@ -23,6 +30,11 @@ services:
     restart: unless-stopped
     mem_limit: 512m
     cpus: "1.0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
 
   location:
     env_file:
@@ -33,6 +45,11 @@ services:
     restart: unless-stopped
     mem_limit: 512m
     cpus: "1.0"
+    depends_on:
+      redis:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
 
   matching:
     env_file:
@@ -44,6 +61,13 @@ services:
     restart: unless-stopped
     mem_limit: 512m
     cpus: "1.0"
+    depends_on:
+      redis:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
+      ride:
+        condition: service_started
 
   nats:
     restart: unless-stopped

@@ -11,6 +11,13 @@ services:
       - GATEWAY_OBSERVABILITY_METRICS_ENABLED=false
       - GATEWAY_OBSERVABILITY_TRACING_ENABLED=false
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
 
   ride:
     env_file:
@@ -21,6 +28,11 @@ services:
       - RIDE_OBSERVABILITY_METRICS_ENABLED=false
       - RIDE_OBSERVABILITY_TRACING_ENABLED=false
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
 
   location:
     env_file:
@@ -31,6 +43,11 @@ services:
       - LOCATION_OBSERVABILITY_METRICS_ENABLED=false
       - LOCATION_OBSERVABILITY_TRACING_ENABLED=false
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
 
   matching:
     env_file:
@@ -42,6 +59,13 @@ services:
       - MATCHING_OBSERVABILITY_METRICS_ENABLED=false
       - MATCHING_OBSERVABILITY_TRACING_ENABLED=false
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      nats-init:
+        condition: service_completed_successfully
+      ride:
+        condition: service_started
 
   nats:
     restart: unless-stopped
