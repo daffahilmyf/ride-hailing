@@ -1,17 +1,18 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: ride-hailing-staging
+namePrefix: staging-
 resources:
   - ../../base
+  - secrets.yaml
 configMapGenerator:
   - name: matching-config
     envs:
       - config.env
-secretGenerator:
-  - name: matching-secrets
-    envs:
-      - secret.env
 generatorOptions:
   disableNameSuffixHash: true
 images:
   - name: ride-hailing/matching
     newTag: staging
+patchesStrategicMerge:
+  - patch.yaml

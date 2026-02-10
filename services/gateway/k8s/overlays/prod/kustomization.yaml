@@ -1,17 +1,18 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: ride-hailing-prod
+namePrefix: prod-
 resources:
   - ../../base
+  - secrets.yaml
 configMapGenerator:
   - name: gateway-config
     envs:
       - config.env
-secretGenerator:
-  - name: gateway-secrets
-    envs:
-      - secret.env
 generatorOptions:
   disableNameSuffixHash: true
 images:
   - name: ride-hailing/gateway
     newTag: prod
+patchesStrategicMerge:
+  - patch.yaml
