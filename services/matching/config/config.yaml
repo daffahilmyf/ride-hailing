@@ -23,6 +23,15 @@ matching:
   offer_retry_max: 3
   offer_retry_backoff_ms: 200
   offer_retry_max_backoff_ms: 1500
+  candidate_ttl_seconds: 30
+  active_offer_ttl_seconds: 12
+  cooldown_seconds: 20
+  lock_ttl_seconds: 15
+  radius_step_meters: 1000
+  radius_max_meters: 5000
+  max_offers: 5
+  avg_speed_kmh: 24
+  eta_jitter_ms: 200
 
 nats:
   url: "nats://nats:4222"

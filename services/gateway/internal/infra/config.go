@@ -104,7 +104,7 @@ func DefaultConfig() Config {
 			NearbyWindowSeconds: 30,
 			NotifyRequests:      10,
 			NotifyWindowSeconds: 60,
-			DriverLocRequests:   120,
+			DriverLocRequests:   300,
 			DriverLocWindow:     60,
 			OfferRequests:       30,
 			OfferWindowSeconds:  60,

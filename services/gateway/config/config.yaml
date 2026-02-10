@@ -35,7 +35,7 @@ rate_limit:
   nearby_window_seconds: 30
   notify_requests: 10
   notify_window_seconds: 60
-  driver_location_requests: 120
+  driver_location_requests: 300
   driver_location_window_seconds: 60
   offer_requests: 30
   offer_window_seconds: 60

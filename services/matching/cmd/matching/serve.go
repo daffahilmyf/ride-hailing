@@ -76,6 +76,15 @@ var serveCmd = &cobra.Command{
 			OfferRetryMax:   cfg.OfferRetryMax,
 			OfferBackoffMs:  cfg.OfferRetryBackoffMs,
 			OfferMaxBackoff: cfg.OfferRetryMaxBackoffMs,
+			CandidateTTL:    cfg.CandidateTTLSeconds,
+			ActiveOfferTTL:  cfg.ActiveOfferTTLSeconds,
+			CooldownSeconds: cfg.CooldownSeconds,
+			LockTTLSeconds:  cfg.LockTTLSeconds,
+			RadiusStep:      cfg.RadiusStepMeters,
+			RadiusMax:       cfg.RadiusMaxMeters,
+			MaxOffers:       cfg.MaxOffers,
+			AvgSpeedKmh:     cfg.AvgSpeedKmh,
+			EtaJitterMs:     cfg.EtaJitterMs,
 			Sleep:           time.Sleep,
 			Rand:            rand.New(rand.NewSource(time.Now().UnixNano())),
 		}
@@ -151,6 +160,48 @@ var serveCmd = &cobra.Command{
 			go func() {
 				if err := locationConsumer.Run(ctx); err != nil {
 					logger.Warn("event.consumer_stopped", zap.String("subject", cfg.DriverLocationSubject), zap.Error(err))
+				}
+			}()
+
+			offerExpiredConsumer := &workers.EventConsumer{
+				Consumer: consumer,
+				Subject:  "ride.offer.expired",
+				Durable:  "matching-offer-expired",
+				Batch:    50,
+				Logger:   logger,
+				Handler:  uc.HandleOfferExpired,
+			}
+			go func() {
+				if err := offerExpiredConsumer.Run(ctx); err != nil {
+					logger.Warn("event.consumer_stopped", zap.String("subject", "ride.offer.expired"), zap.Error(err))
+				}
+			}()
+
+			offerDeclinedConsumer := &workers.EventConsumer{
+				Consumer: consumer,
+				Subject:  "ride.offer.declined",
+				Durable:  "matching-offer-declined",
+				Batch:    50,
+				Logger:   logger,
+				Handler:  uc.HandleOfferDeclined,
+			}
+			go func() {
+				if err := offerDeclinedConsumer.Run(ctx); err != nil {
+					logger.Warn("event.consumer_stopped", zap.String("subject", "ride.offer.declined"), zap.Error(err))
+				}
+			}()
+
+			offerAcceptedConsumer := &workers.EventConsumer{
+				Consumer: consumer,
+				Subject:  "ride.offer.accepted",
+				Durable:  "matching-offer-accepted",
+				Batch:    50,
+				Logger:   logger,
+				Handler:  uc.HandleOfferAccepted,
+			}
+			go func() {
+				if err := offerAcceptedConsumer.Run(ctx); err != nil {
+					logger.Warn("event.consumer_stopped", zap.String("subject", "ride.offer.accepted"), zap.Error(err))
 				}
 			}()
 		}

@@ -17,6 +17,15 @@ type Config struct {
 	OfferRetryMax          int
 	OfferRetryBackoffMs    int
 	OfferRetryMaxBackoffMs int
+	CandidateTTLSeconds    int
+	ActiveOfferTTLSeconds  int
+	CooldownSeconds        int
+	LockTTLSeconds         int
+	RadiusStepMeters       float64
+	RadiusMaxMeters        float64
+	MaxOffers              int
+	AvgSpeedKmh            float64
+	EtaJitterMs            int
 	NATSURL                string
 	NATSSelfHeal           bool
 	EventsEnabled          bool
@@ -55,6 +64,15 @@ func DefaultConfig() Config {
 		OfferRetryMax:          3,
 		OfferRetryBackoffMs:    200,
 		OfferRetryMaxBackoffMs: 1500,
+		CandidateTTLSeconds:    30,
+		ActiveOfferTTLSeconds:  12,
+		CooldownSeconds:        20,
+		LockTTLSeconds:         15,
+		RadiusStepMeters:       1000,
+		RadiusMaxMeters:        5000,
+		MaxOffers:              5,
+		AvgSpeedKmh:            24,
+		EtaJitterMs:            200,
 		NATSURL:                "nats://nats:4222",
 		NATSSelfHeal:           true,
 		EventsEnabled:          true,
