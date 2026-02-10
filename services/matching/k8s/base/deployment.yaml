@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matching
+  labels:
+    app: matching
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matching
+  template:
+    metadata:
+      labels:
+        app: matching
+    spec:
+      containers:
+        - name: matching
+          image: ride-hailing/matching:latest
+          ports:
+            - containerPort: 50052
+              name: grpc
+          envFrom:
+            - configMapRef:
+                name: matching-config
+            - secretRef:
+                name: matching-secrets

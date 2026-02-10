@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+configMapGenerator:
+  - name: location-config
+    envs:
+      - config.env
+secretGenerator:
+  - name: location-secrets
+    envs:
+      - secret.env
+generatorOptions:
+  disableNameSuffixHash: true
+images:
+  - name: ride-hailing/location
+    newTag: staging

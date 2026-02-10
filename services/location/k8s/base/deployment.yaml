@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: location
+  labels:
+    app: location
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: location
+  template:
+    metadata:
+      labels:
+        app: location
+    spec:
+      containers:
+        - name: location
+          image: ride-hailing/location:latest
+          ports:
+            - containerPort: 50053
+              name: grpc
+          envFrom:
+            - configMapRef:
+                name: location-config
+            - secretRef:
+                name: location-secrets

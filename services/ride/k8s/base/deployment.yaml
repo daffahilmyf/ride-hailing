@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ride
+  labels:
+    app: ride
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ride
+  template:
+    metadata:
+      labels:
+        app: ride
+    spec:
+      containers:
+        - name: ride
+          image: ride-hailing/ride:latest
+          ports:
+            - containerPort: 50051
+              name: grpc
+          envFrom:
+            - configMapRef:
+                name: ride-config
+            - secretRef:
+                name: ride-secrets

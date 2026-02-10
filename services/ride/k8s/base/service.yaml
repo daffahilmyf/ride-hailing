@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ride
+  labels:
+    app: ride
+spec:
+  type: ClusterIP
+  selector:
+    app: ride
+  ports:
+    - name: grpc
+      port: 50051
+      targetPort: grpc

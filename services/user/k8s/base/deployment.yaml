@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user
+  labels:
+    app: user
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user
+  template:
+    metadata:
+      labels:
+        app: user
+    spec:
+      containers:
+        - name: user
+          image: ride-hailing/user:latest
+          ports:
+            - containerPort: 8081
+              name: http
+            - containerPort: 50054
+              name: grpc
+          envFrom:
+            - configMapRef:
+                name: user-config
+            - secretRef:
+                name: user-secrets
