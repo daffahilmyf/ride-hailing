@@ -36,6 +36,9 @@ This repo is a monorepo with five services + shared protobufs:
    - `docker compose up -d nats postgres redis migrate`
 2. Run a service (example: ride):
    - `docker compose up --build ride`
+3. Use a different environment:
+   - `docker compose --env-file .env.staging up -d`
+   - `docker compose --env-file .env.production up -d`
 
 ## Key principles
 - Correctness over cleverness

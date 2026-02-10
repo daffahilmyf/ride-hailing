@@ -4,8 +4,6 @@ services:
     build:
       context: .
       dockerfile: services/gateway/Dockerfile
-    env_file:
-      - .env
     ports:
       - "8080:8080"
     environment:
@@ -35,8 +33,8 @@ services:
       - "50051:50051"
     environment:
       - RIDE_GRPC_ADDR=:50051
-      - RIDE_POSTGRES_DSN=postgres://ride:ride@postgres:5432/rides?sslmode=disable
-      - RIDE_NATS_URL=nats://nats:4222
+      - RIDE_POSTGRES_DSN=${RIDE_POSTGRES_DSN:-postgres://ride:ride@postgres:5432/rides?sslmode=disable}
+      - RIDE_NATS_URL=${RIDE_NATS_URL:-nats://nats:4222}
       - RIDE_NATS_SELF_HEAL=true
       - RIDE_OUTBOX_ENABLED=true
       - RIDE_GRPC_USER_ADDR=user:50054
@@ -65,8 +63,8 @@ services:
       - "50053:50053"
     environment:
       - LOCATION_GRPC_ADDR=:50053
-      - LOCATION_REDIS_ADDR=redis:6379
-      - LOCATION_NATS_URL=nats://nats:4222
+      - LOCATION_REDIS_ADDR=${LOCATION_REDIS_ADDR:-redis:6379}
+      - LOCATION_NATS_URL=${LOCATION_NATS_URL:-nats://nats:4222}
       - LOCATION_NATS_SELF_HEAL=true
       - LOCATION_EVENTS_ENABLED=true
     mem_limit: 256m
@@ -84,11 +82,11 @@ services:
       - "50052:50052"
     environment:
       - MATCHING_GRPC_ADDR=:50052
-      - MATCHING_REDIS_ADDR=redis:6379
-      - MATCHING_NATS_URL=nats://nats:4222
+      - MATCHING_REDIS_ADDR=${MATCHING_REDIS_ADDR:-redis:6379}
+      - MATCHING_NATS_URL=${MATCHING_NATS_URL:-nats://nats:4222}
       - MATCHING_NATS_SELF_HEAL=true
       - MATCHING_EVENTS_ENABLED=true
-      - MATCHING_RIDE_ADDR=ride:50051
+      - MATCHING_RIDE_ADDR=${MATCHING_RIDE_ADDR:-ride:50051}
       - MATCHING_OFFER_TTL_SECONDS=12
       - MATCHING_CANDIDATE_TTL_SECONDS=30
       - MATCHING_ACTIVE_OFFER_TTL_SECONDS=12
@@ -116,7 +114,7 @@ services:
       - "8090:8090"
     environment:
       - NOTIFY_HTTP_ADDR=:8090
-      - NOTIFY_NATS_URL=nats://nats:4222
+      - NOTIFY_NATS_URL=${NOTIFY_NATS_URL:-nats://nats:4222}
       - NOTIFY_NATS_SELF_HEAL=true
       - NOTIFY_EVENTS_ENABLED=true
       - NOTIFY_EVENTS_RIDE_SUBJECT=ride.>
@@ -138,8 +136,8 @@ services:
     environment:
       - USER_HTTP_ADDR=:8081
       - USER_GRPC_ADDR=:50054
-      - USER_POSTGRES_DSN=postgres://ride:ride@postgres:5432/users?sslmode=disable
-      - USER_REDIS_ADDR=redis:6379
+      - USER_POSTGRES_DSN=${USER_POSTGRES_DSN:-postgres://ride:ride@postgres:5432/users?sslmode=disable}
+      - USER_REDIS_ADDR=${USER_REDIS_ADDR:-redis:6379}
       - USER_REDIS_PASSWORD=
       - USER_REDIS_DB=0
       - USER_AUTH_JWT_SECRET=${GATEWAY_JWT_SECRET}
